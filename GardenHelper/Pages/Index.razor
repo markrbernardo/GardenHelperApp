@@ -1,7 +1,8 @@
-﻿@page "/home"
+﻿@page "/"
 @inject UserSessionService Session
 @inject NavigationManager Nav
 
+<PageTitle>Home</PageTitle>
 <h3>Welcome</h3>
 
 @if (Session.CurrentUserId == null)

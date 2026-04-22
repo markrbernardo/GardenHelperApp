@@ -1,0 +1,11 @@
+.home-container {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.home-links {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
