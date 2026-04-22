@@ -1,5 +1,6 @@
-﻿using System.Net.Http.Json;
-using GardenHelperApp.Shared.Models;
+﻿using GardenHelperApp.Shared.Models;
+using System.Net.Http.Json;
+using static System.Net.WebRequestMethods;
 
 namespace GardenHelperApp.Client.Services;
 
@@ -22,6 +23,12 @@ public class PlantService
     {
         return await _http.GetFromJsonAsync<PlantModel>($"api/plants/{id}");
     }
+
+    public async Task<List<PlantModel>> GetPlantsByGarden(int gardenId)
+    {
+        return await _http.GetFromJsonAsync<List<PlantModel>>($"api/plants/garden/{gardenId}");
+    }
+
 
     public async Task<List<PlantModel>> GetByLocation(int locationId)
     {

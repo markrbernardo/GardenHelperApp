@@ -24,5 +24,20 @@ namespace GardenHelperApp.Client.Services
         }
 
         private void NotifyStateChanged() => OnChange?.Invoke();
+
+
+
+        // Location List Stays Visible when Navigating outside Garden Links
+        public int? CurrentGardenId { get; private set; }
+
+        public void SetGarden(int gardenId)
+        {
+            CurrentGardenId = gardenId;
+            NotifyStateChanged();
+        }
+
+
+
+
     }
 }

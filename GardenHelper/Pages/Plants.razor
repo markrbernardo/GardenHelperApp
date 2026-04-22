@@ -52,16 +52,30 @@ else
 }
 
 @code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? GardenId { get; set; }
+
     List<PlantModel>? plants;
     List<LocationModel>? locations;
     List<PlantInformationModel>? plantInfoList;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
-        plants = await PlantService.GetAll();
+        if (GardenId != null)
+        {
+            plants = await PlantService.GetPlantsByGarden(GardenId.Value);
+        }
+        else
+        {
+            plants = await PlantService.GetAll();
+        }
+
         locations = await LocationService.GetAll();
         plantInfoList = await PlantInfoService.GetAll();
     }
+
+
 
     string GetLocationName(int locationId)
     {

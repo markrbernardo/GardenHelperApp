@@ -7,6 +7,7 @@ public class PlantModel
     [Key]
     public int PlantId { get; set; }
     public int LocationId { get; set; }
+    public int GardenId { get; set; }
     public int PlantInformationId { get; set; }
     public string? Name { get; set; }
 }

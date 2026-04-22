@@ -30,6 +30,17 @@ public class PlantsController : ControllerBase
         return plant;
     }
 
+    [HttpGet("garden/{gardenId}")]
+    public async Task<ActionResult<List<PlantModel>>> GetPlantsByGarden(int gardenId)
+    {
+        var plants = await _context.Plants
+            .Where(p => p.GardenId == gardenId)
+            .ToListAsync();
+
+        return Ok(plants);
+    }
+
+
     [HttpGet("location/{locationId}")]
     public async Task<ActionResult<List<PlantModel>>> GetByLocation(int locationId)
     {
