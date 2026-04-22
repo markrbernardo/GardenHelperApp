@@ -1,0 +1,43 @@
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 60px;
+    text-align: center;
+}
+
+.user-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    max-width: 600px;
+    width: 100%;
+    margin-top: 30px;
+}
+
+.user-tile {
+    background: #f0f4f1;
+    border-radius: 12px;
+    padding: 25px;
+    cursor: pointer;
+    transition: 0.2s ease;
+    border: 2px solid transparent;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+    .user-tile:hover {
+        border-color: #A3B18A; /* your sage green */
+        transform: translateY(-3px);
+    }
+
+.add-tile {
+    background: #e8efe8;
+    color: #6b7a6a;
+}
+
+.add-symbol {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
