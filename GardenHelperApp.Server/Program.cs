@@ -1,0 +1,43 @@
+﻿using GardenHelperApp.Server.Data;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllers();
+builder.Services.AddOpenApi();
+
+builder.Services.AddDbContext<GardenContext>(options =>
+    options.UseSqlite("Data Source=Data/GardenHelper.db"));
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<GardenContext>();
+    db.Database.EnsureCreated();
+}
+
+app.UseHttpsRedirection();
+
+// ⭐ CORS must be BEFORE MapControllers
+app.UseCors();
+
+app.UseAuthorization();
+
+// ⭐ Controllers handle ALL API routes
+app.MapControllers();
+
+app.MapFallbackToFile("index.html");
+
+app.Run();

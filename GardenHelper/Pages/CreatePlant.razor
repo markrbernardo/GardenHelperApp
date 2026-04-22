@@ -1,0 +1,84 @@
+﻿@page "/plants/create"
+@inject PlantService PlantService
+@inject LocationService LocationService
+@inject PlantInformationService PlantInfoService
+@inject NavigationManager Nav
+
+<h3>Create Plant</h3>
+
+@if (locations == null || plantInfoList == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@plant" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>Plant Name</label>
+            <InputText class="form-control" @bind-Value="plant.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label>Plant Information</label>
+            <select class="form-select" @bind="plant.PlantInformationId">
+                @foreach (var info in plantInfoList)
+                {
+                    <option value="@info.PlantInformationId">
+                        @info.CommonName (@info.ScientificName)
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Location</label>
+            <select class="form-select" @bind="plant.LocationId">
+                @foreach (var loc in locations)
+                {
+                    <option value="@loc.LocationId">@loc.Name</option>
+                }
+            </select>
+        </div>
+
+        <button class="btn btn-success">Create</button>
+        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    // Default LocationId = 1 ("Undecided")
+    PlantModel plant = new()
+    {
+        LocationId = 1
+    };
+
+    List<LocationModel>? locations;
+    List<PlantInformationModel>? plantInfoList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        locations = await LocationService.GetAll();
+        plantInfoList = await PlantInfoService.GetAll();
+
+        // Optional: ensure "Undecided" appears first
+        locations = locations.OrderBy(l => l.LocationId != 1).ToList();
+
+        // Default PlantInformationId to the first item if available
+        if (plantInfoList.Count > 0)
+            plant.PlantInformationId = plantInfoList.First().PlantInformationId;
+    }
+
+    async Task HandleSubmit()
+    {
+        await PlantService.Create(plant);
+        Nav.NavigateTo("/plants");
+    }
+
+    void GoBack()
+    {
+        Nav.NavigateTo("/plants");
+    }
+}

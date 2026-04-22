@@ -1,0 +1,51 @@
+﻿@page "/users/edit/{id:int}"
+@inject UserService UserService
+@inject NavigationManager Nav
+
+<h3>Edit User</h3>
+
+@if (user == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <p>Loaded ID: @id</p>
+
+    <EditForm Model="@user" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Name</label>
+            <InputText class="form-control" @bind-Value="user.Name" />
+        </div>
+
+        <button class="btn btn-success" type="submit">Save</button>
+        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int id { get; set; }
+    UserModel? user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine($"EditUser loading ID: {id}");
+        user = await UserService.GetUser(id);
+        Console.WriteLine($"User loaded: {user != null}");
+    }
+
+
+    private async Task HandleSubmit()
+    {
+        await UserService.UpdateUser(user!);
+        Nav.NavigateTo("/users");
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/users");
+    }
+}

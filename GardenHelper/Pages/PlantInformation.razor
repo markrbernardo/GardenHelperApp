@@ -1,0 +1,74 @@
+﻿@page "/plantinformation"
+@inject PlantInformationService PlantInfoService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<h3>Plant Information</h3>
+
+<button class="btn btn-primary mb-3" @onclick="CreatePlantInfo">
+    Create New Plant Information
+</button>
+
+@if (plantInfoList == null)
+{
+    <p>Loading...</p>
+}
+else if (plantInfoList.Count == 0)
+{
+    <p>No plant information found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Common Name</th>
+                <th>Scientific Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in plantInfoList)
+            {
+                <tr>
+                    <td>@p.PlantInformationId</td>
+                    <td>@p.CommonName</td>
+                    <td>@p.ScientificName</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="() => EditPlantInfo(p.PlantInformationId)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeletePlantInfo(p.PlantInformationId)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<PlantInformationModel>? plantInfoList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        plantInfoList = await PlantInfoService.GetAll();
+    }
+
+    void CreatePlantInfo()
+    {
+        Nav.NavigateTo("/plantinformation/create");
+    }
+
+    void EditPlantInfo(int id)
+    {
+        Nav.NavigateTo($"/plantinformation/edit/{id}");
+    }
+
+    async Task DeletePlantInfo(int id)
+    {
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Delete this plant information?");
+        if (!confirm) return;
+
+        await PlantInfoService.Delete(id);
+        plantInfoList = await PlantInfoService.GetAll();
+    }
+}

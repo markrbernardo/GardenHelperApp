@@ -1,0 +1,78 @@
+﻿@page "/journalentries/create"
+@inject JournalEntryService JournalEntryService
+@inject UserService UserService
+@inject GardenService GardenService
+@inject NavigationManager Nav
+
+<h3>Create Journal Entry</h3>
+
+@if (users == null || gardens == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@entry" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>User</label>
+            <select class="form-select" @bind="entry.UserId">
+                @foreach (var u in users)
+                {
+                    <option value="@u.UserId">@u.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Garden</label>
+            <select class="form-select" @bind="entry.GardenId">
+                @foreach (var g in gardens)
+                {
+                    <option value="@g.GardenId">@g.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Entry</label>
+            <InputTextArea class="form-control" @bind-Value="entry.Entry" rows="5" />
+        </div>
+
+        <button class="btn btn-success">Create</button>
+        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    JournalEntryModel entry = new();
+
+    List<UserModel>? users;
+    List<GardenModel>? gardens;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserService.GetUsers();
+        gardens = await GardenService.GetAllGardens();
+
+        // Default to first user and first garden if available
+        if (users.Count > 0)
+            entry.UserId = users.First().UserId;
+
+        if (gardens.Count > 0)
+            entry.GardenId = gardens.First().GardenId;
+    }
+
+    async Task HandleSubmit()
+    {
+        await JournalEntryService.Create(entry);
+        Nav.NavigateTo("/journalentries");
+    }
+
+    void GoBack()
+    {
+        Nav.NavigateTo("/journalentries");
+    }
+}

@@ -1,0 +1,38 @@
+﻿@page "/plantinformation/create"
+@inject PlantInformationService PlantInfoService
+@inject NavigationManager Nav
+
+<h3>Create Plant Information</h3>
+
+<EditForm Model="@plantInfo" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Common Name</label>
+        <InputText class="form-control" @bind-Value="plantInfo.CommonName" />
+    </div>
+
+    <div class="mb-3">
+        <label>Scientific Name</label>
+        <InputText class="form-control" @bind-Value="plantInfo.ScientificName" />
+    </div>
+
+    <button class="btn btn-success">Create</button>
+    <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+</EditForm>
+
+@code {
+    PlantInformationModel plantInfo = new();
+
+    async Task HandleSubmit()
+    {
+        await PlantInfoService.Create(plantInfo);
+        Nav.NavigateTo("/plantinformation");
+    }
+
+    void GoBack()
+    {
+        Nav.NavigateTo("/plantinformation");
+    }
+}

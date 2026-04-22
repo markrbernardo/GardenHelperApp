@@ -1,0 +1,86 @@
+﻿@page "/locations"
+@inject LocationService LocationService
+@inject GardenService GardenService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<h3>Locations</h3>
+
+<button class="btn btn-primary mb-3" @onclick="CreateLocation">
+    Create New Location
+</button>
+
+@if (locations == null || gardens == null)
+{
+    <p>Loading...</p>
+}
+else if (locations.Count == 0)
+{
+    <p>No locations found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Garden</th>
+                <th>Name</th>
+                <th>Lighting</th>
+                <th>Is Outside?</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var l in locations)
+            {
+                <tr>
+                    <td>@l.LocationId</td>
+                    <td>@GetGardenName(l.GardenId)</td>
+                    <td>@l.Name</td>
+                    <td>@l.Lighting</td>
+                    <td>@(l.IsOutside == 1 ? "Yes" : "No")</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="() => EditLocation(l.LocationId)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteLocation(l.LocationId)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<LocationModel>? locations;
+    List<GardenModel>? gardens;
+
+    protected override async Task OnInitializedAsync()
+    {
+        locations = await LocationService.GetAll();
+        gardens = await GardenService.GetAllGardens();
+    }
+
+    string GetGardenName(int gardenId)
+    {
+        return gardens?.FirstOrDefault(g => g.GardenId == gardenId)?.Name ?? "Unknown";
+    }
+
+    void CreateLocation()
+    {
+        Nav.NavigateTo("/locations/create");
+    }
+
+    void EditLocation(int id)
+    {
+        Nav.NavigateTo($"/locations/edit/{id}");
+    }
+
+    async Task DeleteLocation(int id)
+    {
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Delete this location?");
+        if (!confirm) return;
+
+        await LocationService.Delete(id);
+        locations = await LocationService.GetAll();
+    }
+}

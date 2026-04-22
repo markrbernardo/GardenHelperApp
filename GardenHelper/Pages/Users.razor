@@ -1,0 +1,71 @@
+﻿@page "/users"
+@inject UserService UserService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+
+<h3>Users</h3>
+
+@if (users == null)
+{
+    <p>Loading users...</p>
+}
+else if (users.Count == 0)
+{
+    <p>No users found.</p>
+}
+else
+{
+    <button class="btn btn-primary mb-3" @onclick='() => Nav.NavigateTo("/users/create")'>
+        Create New User
+    </button>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.UserId</td>
+                    <td>@user.Name</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="() => EditUser(user.UserId)">Edit</button>
+
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteUser(user.UserId)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<UserModel>? users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserService.GetUsers();
+    }
+
+    void EditUser(int id)
+    {
+        Nav.NavigateTo($"/users/edit/{id}");
+    }
+
+    async void DeleteUser(int id)
+    {
+        if (await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this user?"))
+        {
+            await UserService.DeleteUser(id);
+            users = await UserService.GetUsers(); //refresh list
+        }
+    }
+
+
+}

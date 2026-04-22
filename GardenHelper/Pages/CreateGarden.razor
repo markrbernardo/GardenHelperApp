@@ -1,0 +1,70 @@
+﻿@page "/gardens/create/{userId:int}"
+@inject GardenService GardenService
+@inject UserService UserService
+@inject NavigationManager Nav
+
+<h3>Create Garden</h3>
+
+@if (users == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@garden" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>User</label>
+            <select class="form-select" @bind="garden.UserId">
+                @foreach (var u in users)
+                {
+                    <option value="@u.UserId">@u.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Name</label>
+            <InputText class="form-control" @bind-Value="garden.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label>Zip Code</label>
+            <InputNumber class="form-control" @bind-Value="garden.ZipCode" />
+        </div>
+
+        <button class="btn btn-success">Create</button>
+        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int userId { get; set; }
+
+    GardenModel garden = new();
+    List<UserModel>? users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load users for dropdown
+        users = await UserService.GetUsers();
+
+        // Pre-select the user passed in the URL
+        garden.UserId = userId;
+    }
+
+    async Task HandleSubmit()
+    {
+        await GardenService.CreateGarden(garden);
+        Nav.NavigateTo($"/gardens?userId={garden.UserId}");
+
+    }
+
+    void GoBack()
+    {
+        Nav.NavigateTo($"/gardens?userId={garden.UserId}");
+
+    }
+}

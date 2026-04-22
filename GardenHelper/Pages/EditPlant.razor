@@ -1,0 +1,81 @@
+﻿@page "/plants/edit/{id:int}"
+@inject PlantService PlantService
+@inject LocationService LocationService
+@inject PlantInformationService PlantInfoService
+@inject NavigationManager Nav
+
+<h3>Edit Plant</h3>
+
+@if (plant == null || locations == null || plantInfoList == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@plant" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>Plant Name</label>
+            <InputText class="form-control" @bind-Value="plant.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label>Plant Information</label>
+            <select class="form-select" @bind="plant.PlantInformationId">
+                @foreach (var info in plantInfoList)
+                {
+                    <option value="@info.PlantInformationId">
+                        @info.CommonName (@info.ScientificName)
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Location</label>
+            <select class="form-select" @bind="plant.LocationId">
+                @foreach (var loc in locations)
+                {
+                    <option value="@loc.LocationId">@loc.Name</option>
+                }
+            </select>
+        </div>
+
+        <button class="btn btn-success">Save</button>
+        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int id { get; set; }
+
+    PlantModel? plant;
+    List<LocationModel>? locations;
+    List<PlantInformationModel>? plantInfoList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load dropdown data
+        locations = await LocationService.GetAll();
+        plantInfoList = await PlantInfoService.GetAll();
+
+        // Load the plant being edited
+        plant = await PlantService.Get(id);
+
+        // Optional: ensure "Undecided" (LocationId = 1) appears first
+        locations = locations.OrderBy(l => l.LocationId != 1).ToList();
+    }
+
+    async Task HandleSubmit()
+    {
+        await PlantService.Update(plant!);
+        Nav.NavigateTo("/plants");
+    }
+
+    void GoBack()
+    {
+        Nav.NavigateTo("/plants");
+    }
+}

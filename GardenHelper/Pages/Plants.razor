@@ -1,0 +1,105 @@
+﻿@page "/plants"
+@inject PlantService PlantService
+@inject LocationService LocationService
+@inject PlantInformationService PlantInfoService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<h3>Plants</h3>
+
+<button class="btn btn-primary mb-3" @onclick="CreatePlant">
+    Create New Plant
+</button>
+
+@if (plants == null || locations == null || plantInfoList == null)
+{
+    <p>Loading...</p>
+}
+else if (plants.Count == 0)
+{
+    <p>No plants found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Plant Name</th>
+                <th>Common Name</th>
+                <th>Scientific Name</th>
+                <th>Location</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in plants)
+            {
+                <tr>
+                    <td>@p.PlantId</td>
+                    <td>@p.Name</td>
+                    <td>@GetCommonName(p.PlantInformationId)</td>
+                    <td>@GetScientificName(p.PlantInformationId)</td>
+                    <td>@GetLocationName(p.LocationId)</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="() => EditPlant(p.PlantId)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeletePlant(p.PlantId)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<PlantModel>? plants;
+    List<LocationModel>? locations;
+    List<PlantInformationModel>? plantInfoList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        plants = await PlantService.GetAll();
+        locations = await LocationService.GetAll();
+        plantInfoList = await PlantInfoService.GetAll();
+    }
+
+    string GetLocationName(int locationId)
+    {
+        return locations?
+            .FirstOrDefault(l => l.LocationId == locationId)?
+            .Name ?? "Unknown";
+    }
+
+    string GetCommonName(int plantInfoId)
+    {
+        return plantInfoList?
+            .FirstOrDefault(pi => pi.PlantInformationId == plantInfoId)?
+            .CommonName ?? "Unknown";
+    }
+
+    string GetScientificName(int plantInfoId)
+    {
+        return plantInfoList?
+            .FirstOrDefault(pi => pi.PlantInformationId == plantInfoId)?
+            .ScientificName ?? "Unknown";
+    }
+
+    void CreatePlant()
+    {
+        Nav.NavigateTo("/plants/create");
+    }
+
+    void EditPlant(int id)
+    {
+        Nav.NavigateTo($"/plants/edit/{id}");
+    }
+
+    async Task DeletePlant(int id)
+    {
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Delete this plant?");
+        if (!confirm) return;
+
+        await PlantService.Delete(id);
+        plants = await PlantService.GetAll();
+    }
+}

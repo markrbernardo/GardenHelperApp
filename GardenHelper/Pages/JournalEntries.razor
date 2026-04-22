@@ -1,0 +1,96 @@
+﻿@page "/journalentries"
+@inject JournalEntryService JournalEntryService
+@inject UserService UserService
+@inject GardenService GardenService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<h3>Journal Entries</h3>
+
+<button class="btn btn-primary mb-3" @onclick="CreateEntry">
+    Create New Journal Entry
+</button>
+
+@if (entries == null || users == null || gardens == null)
+{
+    <p>Loading...</p>
+}
+else if (entries.Count == 0)
+{
+    <p>No journal entries found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>User</th>
+                <th>Garden</th>
+                <th>Entry</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in entries)
+            {
+                <tr>
+                    <td>@e.JournalEntryId</td>
+                    <td>@GetUserName(e.UserId)</td>
+                    <td>@GetGardenName(e.GardenId)</td>
+                    <td>@e.Entry</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="() => EditEntry(e.JournalEntryId)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteEntry(e.JournalEntryId)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<JournalEntryModel>? entries;
+    List<UserModel>? users;
+    List<GardenModel>? gardens;
+
+    protected override async Task OnInitializedAsync()
+    {
+        entries = await JournalEntryService.GetAll();
+        users = await UserService.GetUsers();
+        gardens = await GardenService.GetAllGardens();
+    }
+
+    string GetUserName(int userId)
+    {
+        return users?
+            .FirstOrDefault(u => u.UserId == userId)?
+            .Name ?? "Unknown";
+    }
+
+    string GetGardenName(int gardenId)
+    {
+        return gardens?
+            .FirstOrDefault(g => g.GardenId == gardenId)?
+            .Name ?? "Unknown";
+    }
+
+    void CreateEntry()
+    {
+        Nav.NavigateTo("/journalentries/create");
+    }
+
+    void EditEntry(int id)
+    {
+        Nav.NavigateTo($"/journalentries/edit/{id}");
+    }
+
+    async Task DeleteEntry(int id)
+    {
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Delete this journal entry?");
+        if (!confirm) return;
+
+        await JournalEntryService.Delete(id);
+        entries = await JournalEntryService.GetAll();
+    }
+}

@@ -1,0 +1,70 @@
+﻿@page "/observations/edit/{id:int}"
+@inject ObservationService ObservationService
+@inject PlantService PlantService
+@inject PlantInformationService PlantInfoService
+@inject NavigationManager Nav
+
+<h3>Edit Observation</h3>
+
+@if (observation == null || plants == null || plantInfoList == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@observation" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>Plant</label>
+            <select class="form-select" @bind="observation.PlantId">
+                @foreach (var p in plants)
+                {
+                    var info = plantInfoList.FirstOrDefault(pi => pi.PlantInformationId == p.PlantInformationId);
+
+                    <option value="@p.PlantId">
+                        @p.Name — @info?.CommonName (@info?.ScientificName)
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Observation</label>
+            <InputTextArea class="form-control" @bind-Value="observation.Observation" rows="4" />
+        </div>
+
+        <button class="btn btn-success">Save</button>
+        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int id { get; set; }
+
+    ObservationModel? observation;
+    List<PlantModel>? plants;
+    List<PlantInformationModel>? plantInfoList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load dropdown data
+        plants = await PlantService.GetAll();
+        plantInfoList = await PlantInfoService.GetAll();
+
+        // Load the observation being edited
+        observation = await ObservationService.Get(id);
+    }
+
+    async Task HandleSubmit()
+    {
+        await ObservationService.Update(observation!);
+        Nav.NavigateTo("/observations");
+    }
+
+    void GoBack()
+    {
+        Nav.NavigateTo("/observations");
+    }
+}

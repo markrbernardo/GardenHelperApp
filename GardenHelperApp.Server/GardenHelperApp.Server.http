@@ -1,0 +1,6 @@
+@GardenHelperApp.Server_HostAddress = http://localhost:5009
+
+GET {{GardenHelperApp.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

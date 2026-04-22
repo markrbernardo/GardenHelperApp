@@ -1,0 +1,95 @@
+﻿@page "/dbcheck"
+@inject UserService UserService
+@inject GardenService GardenService
+@inject LocationService LocationService
+@inject PlantInformationService PlantInformation
+@inject PlantService PlantService
+@inject JournalEntryService JournalEntryService
+@inject ObservationService  ObservationService
+
+<h3>Database Check</h3>
+
+@if (users == null)
+{
+    <p>Loading...</p>
+}
+else if (users.Count == 0)
+{
+    <p>No users found.</p>
+}
+else
+{
+    <h1>Users</h1>
+    <ul>
+        @foreach (var u in users)
+        {
+            <li>[@u.UserId] @u.Name</li>
+        }
+    </ul>
+
+    <h1>Gardens</h1>
+    <ul>
+        @foreach (var g in gardens)
+        {
+            <li>[@g.GardenId] @g.Name - @g.ZipCode</li>
+        }
+    </ul>
+
+    <h1>Locations</h1>
+    <ul>
+        @foreach (var l in locations)
+        {
+            <li>[@l.LocationId] @l.Name Garden:@l.GardenId -- @l.Lighting  Outdoors?:@l.IsOutside</li>
+        }
+    </ul>
+
+
+
+    <h1>Plants</h1>
+    <ul>
+        @foreach (var p in plants)
+        {
+            <li>[@p.PlantId] -- Name: @p.Name </li>
+        }
+    </ul>
+
+    <h1>Observations</h1>
+    <ul>
+        @foreach (var o in observations)
+        {
+            <li>[@o.ObservationId] - @o.Observation</li>
+        }
+    </ul>
+
+
+
+    <h1>Journal Entry</h1>
+    <ul>
+        @foreach (var e in journalEntries)
+        {
+            <li>[@e.JournalEntryId] - @e.Entry</li>
+        }
+    </ul>
+}    
+
+@code {
+    private List<UserModel>? users;
+    private List<GardenModel>? gardens;
+    private List<LocationModel>? locations;
+    private List<PlantInformationModel>? plantInformation;
+    private List<PlantModel>? plants;
+    private List<JournalEntryModel>? journalEntries;
+    private List<ObservationModel>? observations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserService.GetUsers();
+        gardens = await GardenService.GetAllGardens();
+        locations = await LocationService.GetLocation();
+
+        plants = await PlantService.GetPlants();
+        journalEntries = await JournalEntryService.GetJournalEntries();
+        observations = await ObservationService.GetObservations();
+    }
+
+}

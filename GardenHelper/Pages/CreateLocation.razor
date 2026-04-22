@@ -1,0 +1,72 @@
+﻿@page "/locations/create"
+@inject LocationService LocationService
+@inject GardenService GardenService
+@inject NavigationManager Nav
+
+<h3>Create Location</h3>
+
+@if (gardens == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@location" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>Garden</label>
+            <select class="form-select" @bind="location.GardenId">
+                @foreach (var g in gardens)
+                {
+                    <option value="@g.GardenId">@g.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label>Name</label>
+            <InputText class="form-control" @bind-Value="location.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label>Lighting</label>
+            <InputText class="form-control" @bind-Value="location.Lighting" />
+        </div>
+
+        <div class="mb-3">
+            <label>Is Outside?</label>
+            <select class="form-select" @bind="location.IsOutside">
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+            </select>
+        </div>
+
+        <button class="btn btn-success">Create</button>
+        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    LocationModel location = new();
+    List<GardenModel>? gardens;
+
+    protected override async Task OnInitializedAsync()
+    {
+        gardens = await GardenService.GetAllGardens();
+        if (gardens.Count > 0)
+            location.GardenId = gardens.First().GardenId;
+    }
+
+    async Task HandleSubmit()
+    {
+        await LocationService.Create(location);
+        Nav.NavigateTo("/locations");
+    }
+
+    void GoBack()
+    {
+        Nav.NavigateTo("/locations");
+    }
+}

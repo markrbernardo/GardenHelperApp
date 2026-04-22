@@ -1,0 +1,12 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace GardenHelperApp.Shared.Models;
+
+public class PlantModel
+{
+    [Key]
+    public int PlantId { get; set; }
+    public int LocationId { get; set; }
+    public int PlantInformationId { get; set; }
+    public string? Name { get; set; }
+}
