@@ -5,7 +5,7 @@
 
 <div class="top-row navbar navbar-dark">
     <div class="container-fluid" id="logo">
-        <a class="navbar-brand" href="">Garden Helper</a>
+        <a class="navbar-brand" href="/home"><i class="bi bi-flower1 me-2"></i>Garden Helper</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -219,6 +219,6 @@
     private void SignOut()
     {
         Session.Clear();
-        Nav.NavigateTo("/login", true);
+        Nav.NavigateTo("/login");
     }
 }

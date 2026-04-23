@@ -1,43 +1,74 @@
-﻿using GardenHelperApp.Shared.Models;
+﻿using Microsoft.JSInterop;
 
-namespace GardenHelperApp.Client.Services
+public class UserSessionService
 {
-    public class UserSessionService
+    private readonly IJSRuntime _js;
+
+    public int? CurrentUserId { get; private set; }
+    public string? CurrentUserName { get; private set; }
+    public int? CurrentGardenId { get; private set; }
+
+    public event Func<Task>? OnChange;
+
+    public UserSessionService(IJSRuntime js)
     {
-        public event Action? OnChange;
+        _js = js;
+    }
 
-        public int? CurrentUserId { get; private set; }
-        public string? CurrentUserName { get; private set; }
+    // Called once at startup in Program.cs
+    public async Task InitializeAsync()
+    {
+        var userIdString = await _js.InvokeAsync<string?>("localStorage.getItem", "userId");
+        var userNameString = await _js.InvokeAsync<string?>("localStorage.getItem", "userName");
+        var gardenIdString = await _js.InvokeAsync<string?>("localStorage.getItem", "gardenId");
 
-        public void SetUser(int userId, string userName)
-        {
-            CurrentUserId = userId;
-            CurrentUserName = userName;
-            NotifyStateChanged();
-        }
+        CurrentUserId = int.TryParse(userIdString, out var uid) ? uid : null;
+        CurrentUserName = userNameString;
+        CurrentGardenId = int.TryParse(gardenIdString, out var gid) ? gid : null;
 
-        public void Clear()
-        {
-            CurrentUserId = null;
-            CurrentUserName = null;
-            NotifyStateChanged();
-        }
-
-        private void NotifyStateChanged() => OnChange?.Invoke();
+        await NotifyStateChanged();
+    }
 
 
+    // Set the logged-in user
+    public async Task SetUser(int userId, string userName)
+    {
+        CurrentUserId = userId;
+        CurrentUserName = userName;
 
-        // Location List Stays Visible when Navigating outside Garden Links
-        public int? CurrentGardenId { get; private set; }
+        await _js.InvokeVoidAsync("localStorage.setItem", "userId", userId);
+        await _js.InvokeVoidAsync("localStorage.setItem", "userName", userName);
 
-        public void SetGarden(int gardenId)
-        {
-            CurrentGardenId = gardenId;
-            NotifyStateChanged();
-        }
+        await NotifyStateChanged();
+    }
 
+    // Set the selected garden
+    public async Task SetGarden(int gardenId)
+    {
+        CurrentGardenId = gardenId;
 
+        await _js.InvokeVoidAsync("localStorage.setItem", "gardenId", gardenId);
 
+        await NotifyStateChanged();
+    }
 
+    // Clear everything on sign-out
+    public async Task Clear()
+    {
+        CurrentUserId = null;
+        CurrentUserName = null;
+        CurrentGardenId = null;
+
+        await _js.InvokeVoidAsync("localStorage.removeItem", "userId");
+        await _js.InvokeVoidAsync("localStorage.removeItem", "userName");
+        await _js.InvokeVoidAsync("localStorage.removeItem", "gardenId");
+
+        await NotifyStateChanged();
+    }
+
+    private async Task NotifyStateChanged()
+    {
+        if (OnChange != null)
+            await OnChange.Invoke();
     }
 }

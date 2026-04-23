@@ -71,4 +71,31 @@ public class UsersController : ControllerBase
 
         return NoContent();
     }
+
+    //SET: Default Garden
+    [HttpPut("{id}/default-garden/{gardenId}")]
+    public async Task<IActionResult> SetDefaultGarden(int id, int gardenId)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound();
+
+        user.DefaultGardenId = gardenId;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+
+    //GET: Default Garden
+    [HttpGet("{id}/default-garden")]
+    public async Task<ActionResult<int?>> GetDefaultGarden(int id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound();
+
+        return user.DefaultGardenId;
+    }
+
+
+
 }

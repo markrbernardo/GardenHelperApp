@@ -15,8 +15,16 @@ builder.Services.AddScoped<PlantInformationService>();
 builder.Services.AddScoped<PlantService>();
 builder.Services.AddScoped<ObservationService>();
 builder.Services.AddScoped<JournalEntryService>();
+
+// Register session service
 builder.Services.AddScoped<UserSessionService>();
 
+// Build the host
+var host = builder.Build();
 
+// Initialize session BEFORE running the app
+var session = host.Services.GetRequiredService<UserSessionService>();
+await session.InitializeAsync();
 
-await builder.Build().RunAsync();
+// Run the app
+await host.RunAsync();

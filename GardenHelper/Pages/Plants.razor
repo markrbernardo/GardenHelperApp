@@ -1,128 +1,173 @@
 ﻿@page "/plants"
 @inject PlantService PlantService
-@inject LocationService LocationService
 @inject PlantInformationService PlantInfoService
+@inject ObservationService ObservationService
 @inject NavigationManager Nav
-@inject IJSRuntime JS
 
 <h3>Plants</h3>
 
-<button class="btn btn-primary mb-3" @onclick="CreatePlant">
-    Create New Plant
-</button>
-
-@if (plants == null || locations == null || plantInfoList == null)
-{
-    <p>Loading...</p>
-}
-else if (plants.Count == 0)
-{
-    <p>No plants found.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Plant Name</th>
-                <th>Common Name</th>
-                <th>Scientific Name</th>
-                <th>Location</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
+<!-- MOBILE DROPDOWN (visible only on small screens) -->
+<div class="plant-dropdown d-md-none mb-3">
+    @if (plants != null && plants.Count > 0)
+    {
+        <select class="form-select" @onchange="OnDropdownChange">
+            <option value="">Select a plant...</option>
             @foreach (var p in plants)
             {
-                <tr>
-                    <td>@p.PlantId</td>
-                    <td>@p.Name</td>
-                    <td>@GetCommonName(p.PlantInformationId)</td>
-                    <td>@GetScientificName(p.PlantInformationId)</td>
-                    <td>@GetLocationName(p.LocationId)</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" @onclick="() => EditPlant(p.PlantId)">Edit</button>
-                        <button class="btn btn-danger btn-sm" @onclick="() => DeletePlant(p.PlantId)">Delete</button>
-                    </td>
-                </tr>
+                <option value="@p.PlantId">@p.Name</option>
             }
-        </tbody>
-    </table>
-}
+        </select>
+    }
+</div>
 
-@code {
-    [Parameter]
-    [SupplyParameterFromQuery]
-    public int? GardenId { get; set; }
+<!-- DESKTOP LAYOUT (hidden on small screens) -->
+<div class="plant-layout d-none d-md-grid">
 
-    [Parameter]
-    [SupplyParameterFromQuery]
-    public int? LocationId { get; set; }
-
-    List<PlantModel>? plants;
-    List<LocationModel>? locations;
-    List<PlantInformationModel>? plantInfoList;
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (LocationId != null)
+    <!-- LEFT COLUMN: PLANT LIST -->
+    <div class="plant-list">
+        @if (plants == null)
         {
-            plants = await PlantService.GetPlantsByLocation(LocationId.Value);
+            <p>Loading plants...</p>
         }
-        else if (GardenId != null)
+        else if (plants.Count == 0)
         {
-            plants = await PlantService.GetPlantsByGarden(GardenId.Value);
+            <p>No plants found.</p>
         }
         else
         {
-            plants = await PlantService.GetAll();
+            @foreach (var p in plants)
+            {
+                <div class="plant-list-item @(selectedPlant?.PlantId == p.PlantId ? "selected" : "")"
+                     @onclick="() => SelectPlant(p)">
+                    @p.Name
+                </div>
+            }
+        }
+    </div>
+
+    <!-- RIGHT COLUMN: PLANT DETAILS (DESKTOP ONLY) -->
+    <div class="plant-details">
+        @if (selectedPlant == null)
+        {
+            <p class="placeholder">Select a plant to view its profile.</p>
+        }
+        else
+        {
+            <h2>@selectedPlant.Name</h2>
+
+            @if (plantInfo != null)
+            {
+                <details class="plant-info">
+                    <summary>Plant Information</summary>
+                    <p><strong>Common Name:</strong> @plantInfo.CommonName</p>
+                    <p><strong>Scientific Name:</strong> @plantInfo.ScientificName</p>
+                </details>
+            }
+
+            <h4 class="mt-4">Observations</h4>
+
+            @if (observations == null)
+            {
+                <p>Loading observations...</p>
+            }
+            else if (observations.Count == 0)
+            {
+                <p>No observations yet.</p>
+            }
+            else
+            {
+                <ul>
+                    @foreach (var o in observations)
+                    {
+                        <li>@o.Observation</li>
+                    }
+                </ul>
+            }
+
+            <button class="btn btn-primary mt-3" @onclick="AddObservation">
+                Add Observation
+            </button>
+        }
+    </div>
+
+</div>
+
+<!-- MOBILE DETAILS (visible only on small screens) -->
+<div class="plant-details d-md-none mt-3">
+    @if (selectedPlant == null)
+    {
+        <p class="placeholder">Select a plant to view its profile.</p>
+    }
+    else
+    {
+        <h2>@selectedPlant.Name</h2>
+
+        @if (plantInfo != null)
+        {
+            <details class="plant-info">
+                <summary>Plant Information</summary>
+                <p><strong>Common Name:</strong> @plantInfo.CommonName</p>
+                <p><strong>Scientific Name:</strong> @plantInfo.ScientificName</p>
+            </details>
         }
 
+        <h4 class="mt-4">Observations</h4>
 
-        locations = await LocationService.GetAll();
-        plantInfoList = await PlantInfoService.GetAll();
+        @if (observations == null)
+        {
+            <p>Loading observations...</p>
+        }
+        else if (observations.Count == 0)
+        {
+            <p>No observations yet.</p>
+        }
+        else
+        {
+            <ul>
+                @foreach (var o in observations)
+                {
+                    <li>@o.Observation</li>
+                }
+            </ul>
+        }
+
+        <button class="btn btn-primary mt-3" @onclick="AddObservation">
+            Add Observation
+        </button>
     }
+</div>
 
+@code {
+    List<PlantModel>? plants;
+    PlantModel? selectedPlant;
+    PlantInformationModel? plantInfo;
+    List<ObservationModel>? observations;
 
-
-    string GetLocationName(int locationId)
+    protected override async Task OnInitializedAsync()
     {
-        return locations?
-            .FirstOrDefault(l => l.LocationId == locationId)?
-            .Name ?? "Unknown";
-    }
-
-    string GetCommonName(int plantInfoId)
-    {
-        return plantInfoList?
-            .FirstOrDefault(pi => pi.PlantInformationId == plantInfoId)?
-            .CommonName ?? "Unknown";
-    }
-
-    string GetScientificName(int plantInfoId)
-    {
-        return plantInfoList?
-            .FirstOrDefault(pi => pi.PlantInformationId == plantInfoId)?
-            .ScientificName ?? "Unknown";
-    }
-
-    void CreatePlant()
-    {
-        Nav.NavigateTo("/plants/create");
-    }
-
-    void EditPlant(int id)
-    {
-        Nav.NavigateTo($"/plants/edit/{id}");
-    }
-
-    async Task DeletePlant(int id)
-    {
-        bool confirm = await JS.InvokeAsync<bool>("confirm", "Delete this plant?");
-        if (!confirm) return;
-
-        await PlantService.Delete(id);
         plants = await PlantService.GetAll();
+    }
+
+    async Task SelectPlant(PlantModel plant)
+    {
+        selectedPlant = plant;
+
+        plantInfo = await PlantInfoService.Get(plant.PlantInformationId);
+        observations = await ObservationService.GetByPlant(plant.PlantId);
+    }
+
+    async Task OnDropdownChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int plantId))
+        {
+            var plant = plants?.FirstOrDefault(p => p.PlantId == plantId);
+            if (plant != null)
+                await SelectPlant(plant);
+        }
+    }
+
+    void AddObservation()
+    {
+        Nav.NavigateTo($"/observations/create?plantId={selectedPlant.PlantId}");
     }
 }

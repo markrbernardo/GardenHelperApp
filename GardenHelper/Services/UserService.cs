@@ -35,4 +35,16 @@ public class UserService
     {
         await _http.DeleteAsync($"api/users/{id}");
     }
+
+    public async Task SetDefaultGarden(int userId, int gardenId)
+    {
+        await _http.PutAsync($"api/users/{userId}/default-garden/{gardenId}", null);
+    }
+
+    public async Task<int?> GetDefaultGarden(int userId)
+    {
+        return await _http.GetFromJsonAsync<int?>($"api/users/{userId}/default-garden");
+    }
+
+
 }

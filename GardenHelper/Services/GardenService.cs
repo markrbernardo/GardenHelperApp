@@ -49,4 +49,23 @@ public class GardenService
     {
         await _http.DeleteAsync($"api/gardens/{id}");
     }
+
+    // Get locations for a garden
+    public async Task<List<LocationModel>> GetLocationsByGarden(int gardenId)
+    {
+        return await _http.GetFromJsonAsync<List<LocationModel>>(
+            $"api/locations/garden/{gardenId}"
+        ) ?? new List<LocationModel>();
+    }
+
+    // Get plants for a garden
+    public async Task<List<PlantModel>> GetPlantsByGarden(int gardenId)
+    {
+        return await _http.GetFromJsonAsync<List<PlantModel>>(
+            $"api/plants/garden/{gardenId}"
+        ) ?? new List<PlantModel>();
+    }
+
+
+
 }
