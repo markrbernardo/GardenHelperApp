@@ -1,44 +1,9 @@
 ﻿@page "/"
-@inject UserSessionService Session
 @inject NavigationManager Nav
-
-<PageTitle>Home</PageTitle>
-<h3>Welcome</h3>
-
-@if (Session.CurrentUserId == null)
-{
-    <p>Redirecting...</p>
-}
-else
-{
-    <div class="home-container">
-        <h2>Hello, @Session.CurrentUserName!</h2>
-
-        <p>This is your personalized home page.</p>
-
-        <div class="home-links">
-            <button class="btn btn-primary" @onclick="GoToGardens">Your Gardens</button>
-            <button class="btn btn-secondary" @onclick="GoToJournal">Your Journal Entries</button>
-        </div>
-    </div>
-}
 
 @code {
     protected override void OnInitialized()
     {
-        if (Session.CurrentUserId == null)
-        {
-            Nav.NavigateTo("/login", true);
-        }
-    }
-
-    void GoToGardens()
-    {
-        Nav.NavigateTo($"/gardens?userId={Session.CurrentUserId}");
-    }
-
-    void GoToJournal()
-    {
-        Nav.NavigateTo("/journalentries");
+        Nav.NavigateTo("/login");
     }
 }

@@ -23,13 +23,7 @@ else
 }
 
 @code {
-    protected override void OnInitialized()
-    {
-        if (Session.CurrentUserId == null)
-        {
-            Nav.NavigateTo("/login", true);
-        }
-    }
+
 
     void GoToGardens()
     {
