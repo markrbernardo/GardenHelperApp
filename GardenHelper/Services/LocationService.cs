@@ -43,4 +43,20 @@ public class LocationService
     {
         await _http.DeleteAsync($"api/locations/{id}");
     }
+
+
+
+    public async Task<LocationModel?> GetLocation(int id)
+    {
+        return await _http.GetFromJsonAsync<LocationModel>($"api/locations/{id}");
+    }
+
+
+    public async Task<List<LocationModel>> GetLocationsByGarden(int gardenId)
+    {
+        return await _http.GetFromJsonAsync<List<LocationModel>>(
+            $"api/locations/garden/{gardenId}"
+        ) ?? new List<LocationModel>();
+    }
+
 }

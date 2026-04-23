@@ -1,0 +1,62 @@
+﻿@page "/location-profile/{locationId:int}"
+@inject LocationService LocationService
+@inject PlantService PlantService
+@inject NavigationManager Nav
+
+<h2>@location?.Name</h2>
+
+@if (location == null)
+{
+    <p>Loading location...</p>
+}
+else
+{
+    <div class="location-info">
+        <p><strong>Lighting:</strong> @location.Lighting</p>
+        <p><strong>Outside:</strong> @(location.IsOutside == 1 ? "Yes" : "No")</p>
+    </div>
+
+    <div class="location-profile-grid">
+
+        <!-- PLANTS COLUMN -->
+        <div class="lp-column">
+            <h4>Plants in this Location</h4>
+
+            @if (plants == null)
+            {
+                <p>Loading plants...</p>
+            }
+            else if (plants.Count == 0)
+            {
+                <p>No plants in this location.</p>
+            }
+            else
+            {
+                <div class="lp-scroll">
+                    @foreach (var p in plants)
+                    {
+                        <div class="lp-item"
+                             @onclick="@(() => Nav.NavigateTo($"/plants?plantId={p.PlantId}"))">
+                            <strong>@p.Name</strong>
+                            <div class="small">Species</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+    </div>
+}
+
+@code {
+    [Parameter] public int locationId { get; set; }
+
+    LocationModel? location;
+    List<PlantModel>? plants;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        location = await LocationService.GetLocation(locationId);
+        plants = await PlantService.GetPlantsByLocation(locationId);
+    }
+}
