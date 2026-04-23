@@ -16,12 +16,14 @@ public class PlantsController : ControllerBase
         _context = context;
     }
 
+    // GET: api/plants
     [HttpGet]
     public async Task<ActionResult<List<PlantModel>>> GetAll()
     {
         return await _context.Plants.ToListAsync();
     }
 
+    // GET: api/plants/5
     [HttpGet("{id}")]
     public async Task<ActionResult<PlantModel>> Get(int id)
     {
@@ -30,6 +32,7 @@ public class PlantsController : ControllerBase
         return plant;
     }
 
+    // GET: api/plants/garden/3
     [HttpGet("garden/{gardenId}")]
     public async Task<ActionResult<List<PlantModel>>> GetPlantsByGarden(int gardenId)
     {
@@ -40,15 +43,18 @@ public class PlantsController : ControllerBase
         return Ok(plants);
     }
 
-
+    // GET: api/plants/location/7
     [HttpGet("location/{locationId}")]
-    public async Task<ActionResult<List<PlantModel>>> GetByLocation(int locationId)
+    public async Task<ActionResult<List<PlantModel>>> GetPlantsByLocation(int locationId)
     {
-        return await _context.Plants
+        var plants = await _context.Plants
             .Where(p => p.LocationId == locationId)
             .ToListAsync();
+
+        return Ok(plants);
     }
 
+    // GET: api/plants/info/12
     [HttpGet("info/{plantInfoId}")]
     public async Task<ActionResult<List<PlantModel>>> GetByPlantInfo(int plantInfoId)
     {
@@ -57,6 +63,7 @@ public class PlantsController : ControllerBase
             .ToListAsync();
     }
 
+    // POST: api/plants
     [HttpPost]
     public async Task<IActionResult> Create(PlantModel model)
     {
@@ -65,6 +72,7 @@ public class PlantsController : ControllerBase
         return Ok(model);
     }
 
+    // PUT: api/plants/5
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, PlantModel model)
     {
@@ -76,6 +84,7 @@ public class PlantsController : ControllerBase
         return NoContent();
     }
 
+    // DELETE: api/plants/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {

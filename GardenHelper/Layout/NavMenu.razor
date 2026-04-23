@@ -25,110 +25,121 @@
                 </NavLink>
             </div>
 
-            <!-- GARDENS -->
-            <div class="nav-section px-3 mt-3">
+            <!-- GARDENS HEADER -->
+            <div class="nav-section px-3 mt-3" @onclick="ToggleGardens" style="cursor:pointer;">
                 <span class="nav-header">Gardens</span>
+                <span class="float-end">@((GardensOpen ? "▼" : "►"))</span>
             </div>
 
-            @if (gardens == null)
+            <!-- GARDENS LIST -->
+            @if (GardensOpen)
             {
-                <div class="nav-item px-3">Loading...</div>
-            }
-            else if (gardens.Count == 0)
-            {
-                <div class="nav-item px-3">No gardens</div>
-            }
-            else
-            {
-                @foreach (var g in gardens)
-                {
-                    <!-- Garden Link -->
-                    <div class="nav-item px-3">
-                        <NavLink class="nav-link" href="@($"/plants?gardenId={g.GardenId}")"
-                                 @onclick="() => SelectGarden(g.GardenId)">
-                            <span class="bi bi-list-nested-nav-menu"></span>
-                            @g.Name
-                        </NavLink>
-                    </div>
-                    }
-                }
-            }
-
-            <!-- LOCATIONS -->
-            @if (SelectedGardenId != null)
-            {
-                <div class="nav-section px-3 mt-3">
-                    <span class="nav-header">Locations</span>
-                </div>
-
-                @if (locations == null)
+                @if (gardens == null)
                 {
                     <div class="nav-item px-3">Loading...</div>
                 }
-                else if (!locations.Any(l => l.GardenId == SelectedGardenId))
+                else if (gardens.Count == 0)
                 {
-                    <div class="nav-item px-3">No locations</div>
+                    <div class="nav-item px-3">No gardens</div>
                 }
                 else
                 {
-                    @foreach (var loc in locations.Where(l => l.GardenId == SelectedGardenId))
+                    @foreach (var g in gardens)
                     {
                         <div class="nav-item px-3">
-                            <NavLink class="nav-link" href="@($"/plants?locationId={loc.LocationId}")">
+                            <NavLink class="nav-link" href="@($"/locations?gardenId={g.GardenId}")"
+                                     @onclick="() => SelectGarden(g.GardenId)">
                                 <span class="bi bi-list-nested-nav-menu"></span>
-                                @loc.Name
+                                @g.Name
                             </NavLink>
+
                         </div>
                     }
                 }
 
+            }
+
+            <!-- LOCATIONS HEADER -->
+            @if (SelectedGardenId != null)
+            {
+                <div class="nav-section px-3 mt-3" @onclick="ToggleLocations" style="cursor:pointer;">
+                    <span class="nav-header">Locations</span>
+                    <span class="float-end">@((LocationsOpen ? "▼" : "►"))</span>
+                </div>
+
+                <!-- LOCATIONS LIST -->
+                @if (LocationsOpen)
+                {
+                    @if (locations == null)
+                    {
+                        <div class="nav-item px-3">Loading...</div>
+                    }
+                    else if (!locations.Any(l => l.GardenId == SelectedGardenId))
+                    {
+                        <div class="nav-item px-3">No locations</div>
+                    }
+                    else
+                    {
+                        @foreach (var loc in locations.Where(l => l.GardenId == SelectedGardenId))
+                        {
+                            <div class="nav-item px-3">
+                                <NavLink class="nav-link" href="@($"/plants?locationId={loc.LocationId}")">
+                                    <span class="bi bi-list-nested-nav-menu"></span>
+                                    @loc.Name
+                                </NavLink>
+                            </div>
+                        }
+                    }
+                }
+            }
+
+            <!-- OBSERVATIONS HEADER -->
+            <div class="nav-section px-3 mt-3" @onclick="ToggleObservations" style="cursor:pointer;">
+                <span class="nav-header">Observations</span>
+                <span class="float-end">@((ObservationsOpen ? "▼" : "►"))</span>
+            </div>
+
+            <!-- OBSERVATIONS LIST -->
+            @if (ObservationsOpen)
+            {
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="@($"/locations/create?gardenId={SelectedGardenId}")">
+                    <NavLink class="nav-link" href="/observations">
+                        <span class="bi bi-list-nested-nav-menu"></span>
+                        Observations
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/observations/create">
                         <span class="bi bi-plus-square-fill-nav-menu"></span>
-                        Add Location
+                        Add Observation
                     </NavLink>
                 </div>
             }
 
-
-
-            <!-- OBSERVATIONS -->
-            <div class="nav-section px-3 mt-3">
-                <span class="nav-header">Observations</span>
-            </div>
-
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/observations">
-                    <span class="bi bi-list-nested-nav-menu"></span>
-                    Observations
-                </NavLink>
-            </div>
-
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/observations/create">
-                    <span class="bi bi-plus-square-fill-nav-menu"></span>
-                    Add Observation
-                </NavLink>
-            </div>
-
-            <!-- JOURNAL -->
-            <div class="nav-section px-3 mt-3">
+            <!-- JOURNAL HEADER -->
+            <div class="nav-section px-3 mt-3" @onclick="ToggleJournal" style="cursor:pointer;">
                 <span class="nav-header">Journal</span>
+                <span class="float-end">@((JournalOpen ? "▼" : "►"))</span>
             </div>
 
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/journalentries">
-                    <span class="bi bi-list-nested-nav-menu"></span>
-                    Journal Entries
-                </NavLink>
-            </div>
+            <!-- JOURNAL LIST -->
+            @if (JournalOpen)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/journalentries">
+                        <span class="bi bi-list-nested-nav-menu"></span>
+                        Journal Entries
+                    </NavLink>
+                </div>
 
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/journalentries/create">
-                    <span class="bi bi-plus-square-fill-nav-menu"></span>
-                    Add Journal Entry
-                </NavLink>
-            </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/journalentries/create">
+                        <span class="bi bi-plus-square-fill-nav-menu"></span>
+                        Add Journal Entry
+                    </NavLink>
+                </div>
+            }
 
             <!-- SIGN OUT (BOTTOM) -->
             <div class="nav-bottom px-3 mt-auto mb-3">
@@ -149,23 +160,24 @@
 
     public int? SelectedGardenId => Session.CurrentGardenId;
 
-
     List<LocationModel>? locations;
+    List<GardenModel>? gardens;
 
-    private async Task LoadLocations()
-    {
-        locations = await LocationService.GetAll();
-    }
+    // COLLAPSE STATES
+    bool GardensOpen = true;
+    bool LocationsOpen = true;
+    bool ObservationsOpen = false;
+    bool JournalOpen = false;
+
+    void ToggleGardens() => GardensOpen = !GardensOpen;
+    void ToggleLocations() => LocationsOpen = !LocationsOpen;
+    void ToggleObservations() => ObservationsOpen = !ObservationsOpen;
+    void ToggleJournal() => JournalOpen = !JournalOpen;
 
     void SelectGarden(int id)
     {
         Session.SetGarden(id);
     }
-
-    private bool collapseNavMenu = true;
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    List<GardenModel>? gardens;
 
     protected override void OnInitialized()
     {
@@ -177,26 +189,27 @@
         };
     }
 
-
     protected override async Task OnParametersSetAsync()
     {
         await LoadGardens();
         await LoadLocations();
     }
 
-
-
     private async Task LoadGardens()
     {
         if (Session.CurrentUserId != null)
-        {
             gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
-        }
         else
-        {
             gardens = null;
-        }
     }
+
+    private async Task LoadLocations()
+    {
+        locations = await LocationService.GetAll();
+    }
+
+    private bool collapseNavMenu = true;
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     private void ToggleNavMenu()
     {

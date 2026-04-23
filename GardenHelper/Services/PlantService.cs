@@ -29,6 +29,11 @@ public class PlantService
         return await _http.GetFromJsonAsync<List<PlantModel>>($"api/plants/garden/{gardenId}");
     }
 
+    public async Task<List<PlantModel>> GetPlantsByLocation(int locationId)
+    {
+        return await _http.GetFromJsonAsync<List<PlantModel>>($"api/plants/location/{locationId}");
+    }
+
 
     public async Task<List<PlantModel>> GetByLocation(int locationId)
     {

@@ -74,6 +74,14 @@
 }
 
 
+.nav-scrollable {
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+}
+
+    .nav-scrollable::-webkit-scrollbar {
+        display: none; /* Chrome, Edge, Safari */
+    }
 
 
 

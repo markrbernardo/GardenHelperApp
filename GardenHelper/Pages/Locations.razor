@@ -4,11 +4,8 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<h3>Locations</h3>
+<h3>Pick a Location...</h3>
 
-<button class="btn btn-primary mb-3" @onclick="CreateLocation">
-    Create New Location
-</button>
 
 @if (locations == null || gardens == null)
 {
@@ -20,45 +17,63 @@ else if (locations.Count == 0)
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Garden</th>
-                <th>Name</th>
-                <th>Lighting</th>
-                <th>Is Outside?</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var l in locations)
-            {
-                <tr>
-                    <td>@l.LocationId</td>
-                    <td>@GetGardenName(l.GardenId)</td>
-                    <td>@l.Name</td>
-                    <td>@l.Lighting</td>
-                    <td>@(l.IsOutside == 1 ? "Yes" : "No")</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" @onclick="() => EditLocation(l.LocationId)">Edit</button>
-                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteLocation(l.LocationId)">Delete</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="location-tiles">
+        @foreach (var l in locations)
+        {
+            <div class="location-tile" @onclick="() => GoToLocationPlants(l.LocationId)">
+                <div class="location-title">@l.Name</div>
+                <div class="location-sub">
+                    @GetGardenName(l.GardenId)
+                </div>
+                <div class="location-details">
+                    Lighting: @l.Lighting<br />
+                    @(l.IsOutside == 1 ? "Outside" : "Inside")
+                </div>
+            </div>
+        }
+
+        <!-- Add Location tile -->
+        <div class="location-tile add-tile" @onclick="CreateLocation">
+            <div class="location-title">+ Add Location</div>
+            <div class="location-sub">
+                Create a new location in this garden
+            </div>
+        </div>
+    </div>
 }
 
+
 @code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public int? GardenId { get; set; }
+
+
+    void GoToLocationPlants(int locationId)
+    {
+        Nav.NavigateTo($"/plants?locationId={locationId}");
+    }
+
+
     List<LocationModel>? locations;
     List<GardenModel>? gardens;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
-        locations = await LocationService.GetAll();
         gardens = await GardenService.GetAllGardens();
+
+        if (GardenId != null)
+        {
+            locations = (await LocationService.GetAll())
+                .Where(l => l.GardenId == GardenId.Value)
+                .ToList();
+        }
+        else
+        {
+            locations = await LocationService.GetAll();
+        }
     }
+
 
     string GetGardenName(int gardenId)
     {
@@ -67,8 +82,12 @@ else
 
     void CreateLocation()
     {
-        Nav.NavigateTo("/locations/create");
+        if (GardenId != null)
+            Nav.NavigateTo($"/locations/create?gardenId={GardenId.Value}");
+        else
+            Nav.NavigateTo("/locations/create");
     }
+
 
     void EditLocation(int id)
     {

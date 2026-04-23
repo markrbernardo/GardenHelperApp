@@ -1,0 +1,43 @@
+.location-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.location-tile {
+    flex: 0 0 220px;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: #f5f7f4;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+    .location-tile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    }
+
+.location-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.location-sub {
+    font-size: 0.85rem;
+    color: #6b7a6a;
+    margin-bottom: 0.5rem;
+}
+
+.location-details {
+    font-size: 0.85rem;
+    color: #444;
+}
+
+.add-tile {
+    border: 2px dashed #a3b18a;
+    background-color: #f9fbf7;
+    color: #556b2f;
+    text-align: center;
+}

@@ -28,14 +28,13 @@ using (var scope = app.Services.CreateScope())
     db.Database.EnsureCreated();
 }
 
-app.UseHttpsRedirection();
-
-// ⭐ CORS must be BEFORE MapControllers
+// ⭐ CORS MUST BE FIRST
 app.UseCors();
+
+app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-// ⭐ Controllers handle ALL API routes
 app.MapControllers();
 
 app.MapFallbackToFile("index.html");
