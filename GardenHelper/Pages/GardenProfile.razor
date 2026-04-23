@@ -1,0 +1,87 @@
+﻿@page "/garden-profile/{gardenId:int}"
+@inject GardenService GardenService
+@inject NavigationManager Nav
+
+<h2>@garden?.Name</h2>
+
+@if (garden == null)
+{
+    <p>Loading garden...</p>
+}
+else
+{
+    <p>@garden.ZipCode</p>
+
+    <div class="garden-profile-grid">
+
+        <!-- LOCATIONS COLUMN -->
+        <div class="gp-column">
+            <h4>Locations</h4>
+
+            @if (locations == null)
+            {
+                <p>Loading...</p>
+            }
+            else if (locations.Count == 0)
+            {
+                <p>No locations yet.</p>
+            }
+            else
+            {
+                <div class="gp-scroll">
+                    @foreach (var loc in locations)
+                    {
+                        <div class="gp-item"
+                             @onclick="@(() => Nav.NavigateTo($"/plants?locationId={loc.LocationId}"))">
+                            <strong>@loc.Name</strong>
+                            <div class="small">@loc.Lighting</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- PLANTS COLUMN -->
+        <div class="gp-column">
+            <h4>Plants</h4>
+
+            @if (plants == null)
+            {
+                <p>Loading...</p>
+            }
+            else if (plants.Count == 0)
+            {
+                <p>No plants yet.</p>
+            }
+            else
+            {
+                <div class="gp-scroll">
+                    @foreach (var p in plants)
+                    {
+                        <div class="gp-item"
+                             @onclick="@(() => Nav.NavigateTo($"/plants?plantId={p.PlantId}"))">
+                            <strong>@p.Name</strong>
+                            <div class="small">Species</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+    </div>
+}
+
+@code {
+    [Parameter] public int gardenId { get; set; }
+
+    GardenModel? garden;
+    List<LocationModel>? locations;
+    List<PlantModel>? plants;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        garden = await GardenService.GetGarden(gardenId);
+        locations = await GardenService.GetLocationsByGarden(gardenId);
+        plants = await GardenService.GetPlantsByGarden(gardenId);
+    }
+}
