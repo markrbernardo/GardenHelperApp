@@ -1,29 +1,171 @@
 ﻿@page "/home"
+@inject ObservationService ObservationService
+@inject JournalEntryService JournalEntryService
+@inject GardenService GardenService
 @inject UserSessionService Session
 @inject NavigationManager Nav
 
-<h3>Welcome</h3>
 
-@if (Session.CurrentUserId == null)
-{
-    <p>Redirecting...</p>
-}
-else
-{
-    <div class="home-container">
-        <h2>Hello, @Session.CurrentUserName!</h2>
+<h3>Welcome, @Session.CurrentUserName</h3>
 
-        <p>This is your personalized home page.</p>
+<div class="dashboard-grid">
 
-        <div class="home-links">
-            <button class="btn btn-primary" @onclick="GoToGardens">Your Gardens</button>
-            <button class="btn btn-secondary" @onclick="GoToJournal">Your Journal Entries</button>
-        </div>
+    <!-- WEATHER PLACEHOLDER -->
+    <div class="dash-tile">
+        <h4>Weather</h4>
+        <p class="placeholder">Weather feature coming soon…</p>
     </div>
-}
+
+    <!-- GARDENS TILE -->
+    @if (Session.CurrentGardenId != null)
+    {
+        <div class="dash-tile">
+            <h4>My Garden: @defaultGarden?.Name</h4>
+
+            @if (defaultGarden == null)
+            {
+                <p>Loading garden info…</p>
+            }
+            else
+            {
+                <ul>
+                    <li><strong>Locations:</strong> @locationCount</li>
+                    <li><strong>Plants:</strong> @plantCount</li>
+                </ul>
+
+                <button class="btn btn-sm btn-primary"
+                        @onclick="@(() => Nav.NavigateTo($"/locations?gardenId={defaultGarden.GardenId}"))">
+                    View Garden
+                </button>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="dash-tile">
+            <h4>Your Gardens</h4>
+
+            @if (gardens == null)
+            {
+                <p>Loading…</p>
+            }
+            else if (gardens.Count == 0)
+            {
+                <p>No gardens yet.</p>
+            }
+            else
+            {
+                <ul>
+                    @foreach (var g in gardens)
+                    {
+                        <li style="cursor:pointer;"
+                            @onclick="@(() => Nav.NavigateTo($"/locations?gardenId={g.GardenId}"))">
+                            @g.Name
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    }
+
+
+    <!-- RECENT OBSERVATIONS -->
+    <div class="dash-tile">
+        <h4>Recent Observations</h4>
+
+        @if (recentObservations == null)
+        {
+            <p>Loading…</p>
+        }
+        else if (recentObservations.Count == 0)
+        {
+            <p>No recent observations.</p>
+        }
+        else
+        {
+            <ul>
+                @foreach (var o in recentObservations)
+                {
+                    <li>@o.Observation</li>
+                }
+            </ul>
+        }
+
+        <button class="btn btn-sm btn-primary mt-2"
+                @onclick="@(() => Nav.NavigateTo("/observations/create"))">
+            Add Observation
+        </button>
+    </div>
+
+    <!-- RECENT JOURNAL ENTRIES -->
+    <div class="dash-tile">
+        <h4>Recent Journal Entries</h4>
+
+        @if (recentJournals == null)
+        {
+            <p>Loading…</p>
+        }
+        else if (recentJournals.Count == 0)
+        {
+            <p>No recent journal entries.</p>
+        }
+        else
+        {
+            <ul>
+                @foreach (var j in recentJournals)
+                {
+                    <li>@j.Entry</li>
+                }
+            </ul>
+        }
+
+        <button class="btn btn-sm btn-secondary mt-2"
+                @onclick="@(() => Nav.NavigateTo("/journalentries/create"))">
+            Add Journal Entry
+        </button>
+    </div>
+
+</div>
 
 @code {
+    List<ObservationModel>? recentObservations;
+    List<JournalEntryModel>? recentJournals;
+    List<GardenModel>? gardens;
 
+    protected override async Task OnInitializedAsync()
+    {
+        if (Session.CurrentUserId != null)
+        {
+            gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
+
+            // Load default garden info
+            if (Session.CurrentGardenId != null)
+            {
+                defaultGarden = await GardenService.GetGarden(Session.CurrentGardenId.Value);
+
+                if (defaultGarden != null)
+                {
+                    var locations = await GardenService.GetLocationsByGarden(defaultGarden.GardenId);
+                    locationCount = locations.Count;
+
+                    var plants = await GardenService.GetPlantsByGarden(defaultGarden.GardenId);
+                    plantCount = plants.Count;
+                }
+            }
+
+            // Load dashboard-wide recent items
+            recentObservations = (await ObservationService.GetAll())?.Take(5).ToList();
+            recentJournals = (await JournalEntryService.GetAll())?.Take(5).ToList();
+        }
+    }
+
+
+
+
+    //GardenTile
+    GardenModel? defaultGarden;
+    int locationCount = 0;
+    int plantCount = 0;
 
     void GoToGardens()
     {
