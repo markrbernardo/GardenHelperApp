@@ -96,4 +96,42 @@ public class PlantsController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<PlantModel>> GetPlant(int id)
+    {
+        var plant = await _context.Plants.FindAsync(id);
+        if (plant == null)
+            return NotFound();
+
+        return plant;
+    }
+
+
+    [HttpPost]
+    public async Task<ActionResult<PlantModel>> CreatePlant(PlantModel plant)
+    {
+        // Validate Garden exists
+        var gardenExists = await _context.Gardens.AnyAsync(g => g.GardenId == plant.GardenId);
+        if (!gardenExists)
+            return BadRequest($"Garden with ID {plant.GardenId} does not exist.");
+
+        // Find the Undecided location for this garden
+        var defaultLocation = await _context.Locations
+            .FirstOrDefaultAsync(l => l.GardenId == plant.GardenId && l.Name == "Undecided");
+
+        if (defaultLocation == null)
+            return BadRequest("No default 'Undecided' location exists for this garden.");
+
+        // Force plant to use the correct Undecided location
+        plant.LocationId = defaultLocation.LocationId;
+
+        _context.Plants.Add(plant);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetPlant), new { id = plant.PlantId }, plant);
+    }
+
+
+
 }

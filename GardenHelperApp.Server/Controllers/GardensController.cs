@@ -16,7 +16,7 @@ public class GardensController : ControllerBase
         _context = context;
     }
 
-    // GET: api/gardens/user/2   ← REQUIRED
+    // GET: api/gardens/user/2
     [HttpGet("user/{userId}")]
     public async Task<ActionResult<List<GardenModel>>> GetGardensByUser(int userId)
     {
@@ -45,12 +45,25 @@ public class GardensController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<GardenModel>> CreateGarden(GardenModel garden)
     {
-        // Enforce FK requirement
+        // Validate FK
         var userExists = await _context.Users.AnyAsync(u => u.UserId == garden.UserId);
         if (!userExists)
             return BadRequest($"User with ID {garden.UserId} does not exist.");
 
+        // Create the garden
         _context.Gardens.Add(garden);
+        await _context.SaveChangesAsync();
+
+        // Automatically create the default "Undecided" location
+        var undecided = new LocationModel
+        {
+            GardenId = garden.GardenId,
+            Name = "Undecided",
+            Lighting = "N/A",
+            IsOutside = null
+        };
+
+        _context.Locations.Add(undecided);
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetGarden), new { id = garden.GardenId }, garden);
@@ -63,7 +76,7 @@ public class GardensController : ControllerBase
         if (id != garden.GardenId)
             return BadRequest();
 
-        // Enforce FK requirement
+        // Validate FK
         var userExists = await _context.Users.AnyAsync(u => u.UserId == garden.UserId);
         if (!userExists)
             return BadRequest($"User with ID {garden.UserId} does not exist.");
@@ -81,6 +94,7 @@ public class GardensController : ControllerBase
         var garden = await _context.Gardens.FindAsync(id);
         if (garden == null) return NotFound();
 
+        // Cascade delete will remove Locations + Plants automatically
         _context.Gardens.Remove(garden);
         await _context.SaveChangesAsync();
 
