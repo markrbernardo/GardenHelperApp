@@ -1,0 +1,67 @@
+﻿@page "/user-profile"
+@inject UserSessionService Session
+@inject GardenService GardenService
+
+<h3>User Profile</h3>
+
+@if (Session.CurrentUserId == null)
+{
+    <p>You are not logged in.</p>
+}
+else
+{
+    <div class="card p-3">
+
+        <h5>User Information</h5>
+        <p><strong>Name:</strong> @Session.CurrentUserName</p>
+
+        <h5 class="mt-3">Default Garden</h5>
+
+        @if (gardens == null)
+        {
+            <p>Loading gardens...</p>
+        }
+        else if (!gardens.Any())
+        {
+            <p>You have no gardens.</p>
+        }
+        else
+        {
+            <select class="form-select" @bind="SelectedDefaultGardenId">
+                @foreach (var g in gardens)
+                {
+                    <option value="@g.GardenId">@g.Name</option>
+                }
+            </select>
+
+            <button class="btn btn-primary mt-2" @onclick="SaveDefaultGarden">
+                Save Default Garden
+            </button>
+        }
+    </div>
+}
+
+@code {
+    List<GardenModel>? gardens;
+    int SelectedDefaultGardenId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Session.CurrentUserId != null)
+        {
+            gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
+
+            // Pre-select current default
+            SelectedDefaultGardenId = Session.DefaultGardenId ?? gardens.First().GardenId;
+        }
+    }
+
+    private async Task SaveDefaultGarden()
+    {
+        if (Session.CurrentUserId == null)
+            return;
+
+        await GardenService.SetDefaultGarden(Session.CurrentUserId.Value, SelectedDefaultGardenId);
+        await Session.SetDefaultGarden(SelectedDefaultGardenId);
+    }
+}

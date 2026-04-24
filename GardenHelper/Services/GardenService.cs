@@ -72,5 +72,9 @@ public class GardenService
         return user?.DefaultGardenId;
     }
 
+    public async Task SetDefaultGarden(int userId, int gardenId)
+    {
+        await _http.PutAsync($"api/users/{userId}/default-garden/{gardenId}", null);
+    }
 
 }

@@ -100,4 +100,29 @@ public class GardensController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPut("{userId}/default-garden/{gardenId}")]
+    public async Task<IActionResult> SetDefaultGarden(int userId, int gardenId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return NotFound();
+
+        user.DefaultGardenId = gardenId;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpGet("{userId}/default-garden")]
+    public async Task<ActionResult<int?>> GetDefaultGarden(int userId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null)
+            return NotFound();
+
+        return user.DefaultGardenId;
+    }
+
+
 }
