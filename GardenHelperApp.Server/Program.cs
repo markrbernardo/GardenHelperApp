@@ -31,6 +31,8 @@ using (var scope = app.Services.CreateScope())
 // ⭐ CORS MUST BE FIRST
 app.UseCors();
 
+app.UseRouting();
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();

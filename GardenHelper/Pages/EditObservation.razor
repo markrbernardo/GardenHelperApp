@@ -50,7 +50,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         // Load dropdown data
-        plants = await PlantService.GetAll();
+        plants = await PlantService.GetAllPlants();
         plantInfoList = await PlantInfoService.GetAll();
 
         // Load the observation being edited

@@ -1,36 +1,78 @@
-.location-profile-grid {
+﻿/* MAIN 2‑COLUMN LAYOUT */
+.location-grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: 300px 1fr;
+    gap: 0px;
 }
 
-.location-info {
-    background: #ffffff;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
+/* LEFT COLUMN */
+.loc-left {
+    border-right: 1px solid #ccc;
+    padding-right: 10px;
 }
 
-.lp-column {
-    background: #ffffff;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-.lp-scroll {
-    max-height: 400px;
+.loc-scroll {
+    max-height: 70vh;
     overflow-y: auto;
-    padding-right: 5px;
 }
 
-.lp-item {
+/* PLANT LIST ITEMS */
+.loc-item {
     padding: 10px;
-    border-bottom: 1px solid #eee;
+    border-radius: 4px;
     cursor: pointer;
+    margin-bottom: 5px;
+    background-color: #f7f7f7;
 }
 
-    .lp-item:hover {
-        background: #f5f5f5;
+    .loc-item:hover {
+        background-color: #eee;
     }
+
+    .loc-item.selected {
+        background-color: #dcefe2;
+        font-weight: bold;
+    }
+
+/* RIGHT COLUMN */
+.loc-right {
+    padding-left: 10px;
+}
+
+/* PLANT DETAILS PANEL */
+.plant-details {
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.placeholder {
+    color: #777;
+    font-style: italic;
+}
+
+/* DETAILS DROPDOWN */
+.plant-info summary {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* MOBILE DROPDOWN */
+.plant-dropdown select {
+    font-size: 1rem;
+}
+
+/* RESPONSIVE BEHAVIOR */
+@media (max-width: 768px) {
+    .location-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .loc-left {
+        border-right: none;
+        padding-right: 0;
+    }
+
+    .loc-right {
+        padding-left: 0;
+    }
+}

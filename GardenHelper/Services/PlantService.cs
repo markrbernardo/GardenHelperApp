@@ -13,13 +13,13 @@ public class PlantService
         _http = http;
     }
 
-    public async Task<List<PlantModel>> GetAll()
+    public async Task<List<PlantModel>> GetAllPlants()
     {
         return await _http.GetFromJsonAsync<List<PlantModel>>("api/plants")
                ?? new List<PlantModel>();
     }
 
-    public async Task<PlantModel?> Get(int id)
+    public async Task<PlantModel?> GetPlant(int id)
     {
         return await _http.GetFromJsonAsync<PlantModel>($"api/plants/{id}");
     }

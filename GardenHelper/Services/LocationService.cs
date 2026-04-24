@@ -59,4 +59,10 @@ public class LocationService
         ) ?? new List<LocationModel>();
     }
 
+    public async Task UpdateLocation(LocationModel location)
+    {
+        await _http.PutAsJsonAsync($"api/locations/{location.LocationId}", location);
+    }
+
+
 }

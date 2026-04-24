@@ -59,7 +59,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         observations = await ObservationService.GetAll();
-        plants = await PlantService.GetAll();
+        plants = await PlantService.GetAllPlants();
         plantInfoList = await PlantInfoService.GetAll();
     }
 

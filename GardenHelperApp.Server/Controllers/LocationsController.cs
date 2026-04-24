@@ -71,5 +71,16 @@ public class LocationsController : ControllerBase
 
 
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateLocation(int id, LocationModel model)
+    {
+        if (id != model.LocationId)
+            return BadRequest();
+
+        _context.Locations.Update(model);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 
 }

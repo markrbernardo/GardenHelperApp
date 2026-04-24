@@ -1,6 +1,8 @@
 ﻿@page "/location-profile/{locationId:int}"
 @inject LocationService LocationService
 @inject PlantService PlantService
+@inject PlantInformationService PlantInfoService
+@inject ObservationService ObservationService
 @inject NavigationManager Nav
 
 <h2>@location?.Name</h2>
@@ -11,52 +13,214 @@
 }
 else
 {
-    <div class="location-info">
-        <p><strong>Lighting:</strong> @location.Lighting</p>
-        <p><strong>Outside:</strong> @(location.IsOutside == 1 ? "Yes" : "No")</p>
+    <!-- LOCATION HEADER -->
+    <div class="location-header card p-3 mb-3">
+        <h3>@location.Name</h3>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Lighting</label>
+                <input class="form-control" @bind="location.Lighting" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Outside?</label>
+                <select class="form-select" @bind="location.IsOutside">
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </div>
+
+            <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-primary w-100" @onclick="SaveLocation">
+                    Save Changes
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div class="location-profile-grid">
+    <!-- MAIN GRID -->
+    <div class="location-grid">
 
-        <!-- PLANTS COLUMN -->
-        <div class="lp-column">
-            <h4>Plants in this Location</h4>
+        <!-- LEFT COLUMN -->
+        <div class="loc-left">
 
-            @if (plants == null)
-            {
-                <p>Loading plants...</p>
-            }
-            else if (plants.Count == 0)
-            {
-                <p>No plants in this location.</p>
-            }
-            else
-            {
-                <div class="lp-scroll">
-                    @foreach (var p in plants)
+            <!-- MOBILE DROPDOWN -->
+            <div class="plant-dropdown d-md-none mb-3">
+                @if (plants != null && plants.Count > 0)
+                {
+                    <select class="form-select" @onchange="OnDropdownChange">
+                        <option value="">Select a plant...</option>
+                        @foreach (var p in plants)
+                        {
+                            <option value="@p.PlantId">@p.Name</option>
+                        }
+                    </select>
+                }
+            </div>
+
+            <!-- DESKTOP LIST -->
+            <div class="loc-scroll d-none d-md-block">
+                @foreach (var p in plants)
+                {
+                    <div class="loc-item @(selectedPlant?.PlantId == p.PlantId ? "selected" : "")"
+                         @onclick="() => SelectPlant(p)">
+                        @p.Name
+                    </div>
+                }
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="loc-right">
+
+            <!-- DESKTOP DETAILS -->
+            <div class="plant-details d-none d-md-block">
+                @if (selectedPlant == null)
+                {
+                    <p class="placeholder">Select a plant to view its profile.</p>
+                }
+                else
+                {
+                    <h2>@selectedPlant.Name</h2>
+
+                    @if (plantInfo != null)
                     {
-                        <div class="lp-item"
-                             @onclick="@(() => Nav.NavigateTo($"/plants?plantId={p.PlantId}"))">
-                            <strong>@p.Name</strong>
-                            <div class="small">Species</div>
-                        </div>
+                        <details class="plant-info">
+                            <summary>Plant Information</summary>
+                            <p><strong>Common Name:</strong> @plantInfo.CommonName</p>
+                            <p><strong>Scientific Name:</strong> @plantInfo.ScientificName</p>
+                        </details>
                     }
-                </div>
-            }
+
+                    <h4 class="mt-4">Observations</h4>
+
+                    @if (observations == null)
+                    {
+                        <p>Loading observations...</p>
+                    }
+                    else if (observations.Count == 0)
+                    {
+                        <p>No observations yet.</p>
+                    }
+                    else
+                    {
+                        <ul>
+                            @foreach (var o in observations)
+                            {
+                                <li>@o.Observation</li>
+                            }
+                        </ul>
+                    }
+
+                    <button class="btn btn-primary mt-3" @onclick="AddObservation">
+                        Add Observation
+                    </button>
+                }
+            </div>
+
+
+
         </div>
 
     </div>
+
+
+            <!-- MOBILE DETAILS -->
+            <div class="plant-details d-md-none mt-3">
+                @if (selectedPlant == null)
+                {
+                    <p class="placeholder">Select a plant to view its profile.</p>
+                }
+                else
+                {
+                    <h2>@selectedPlant.Name</h2>
+
+                    @if (plantInfo != null)
+                    {
+                        <details class="plant-info">
+                            <summary>Plant Information</summary>
+                            <p><strong>Common Name:</strong> @plantInfo.CommonName</p>
+                            <p><strong>Scientific Name:</strong> @plantInfo.ScientificName</p>
+                        </details>
+                    }
+
+                    <h4 class="mt-4">Observations</h4>
+
+                    @if (observations == null)
+                    {
+                        <p>Loading observations...</p>
+                    }
+                    else if (observations.Count == 0)
+                    {
+                        <p>No observations yet.</p>
+                    }
+                    else
+                    {
+                        <ul>
+                            @foreach (var o in observations)
+                            {
+                                <li>@o.Observation</li>
+                            }
+                        </ul>
+                    }
+
+                    <button class="btn btn-primary mt-3" @onclick="AddObservation">
+                        Add Observation
+                    </button>
+                }
+            </div>
 }
 
 @code {
-    [Parameter] public int locationId { get; set; }
-
-    LocationModel? location;
     List<PlantModel>? plants;
+    PlantModel? selectedPlant;
+    PlantInformationModel? plantInfo;
+    List<ObservationModel>? observations;
+
+    [Parameter] public int locationId { get; set; }
+    LocationModel? location;
+
+    protected override async Task OnInitializedAsync()
+    {
+        plants = await PlantService.GetAllPlants();
+    }
 
     protected override async Task OnParametersSetAsync()
     {
         location = await LocationService.GetLocation(locationId);
         plants = await PlantService.GetPlantsByLocation(locationId);
+
+        selectedPlant = null;
+        plantInfo = null;
+        observations = null;
+    }
+
+    async Task SelectPlant(PlantModel plant)
+    {
+        selectedPlant = plant;
+        plantInfo = await PlantInfoService.Get(plant.PlantInformationId);
+        observations = await ObservationService.GetByPlant(plant.PlantId);
+    }
+
+    async Task OnDropdownChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int plantId))
+        {
+            var plant = plants?.FirstOrDefault(p => p.PlantId == plantId);
+            if (plant != null)
+                await SelectPlant(plant);
+        }
+    }
+
+    void AddObservation()
+    {
+        Nav.NavigateTo($"/observations/create?plantId={selectedPlant.PlantId}");
+    }
+
+    private async Task SaveLocation()
+    {
+        await LocationService.UpdateLocation(location);
     }
 }

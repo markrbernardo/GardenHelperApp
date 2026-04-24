@@ -62,7 +62,7 @@ else
         plantInfoList = await PlantInfoService.GetAll();
 
         // Load the plant being edited
-        plant = await PlantService.Get(id);
+        plant = await PlantService.GetPlant(id);
 
         // Optional: ensure "Undecided" (LocationId = 1) appears first
         locations = locations.OrderBy(l => l.LocationId != 1).ToList();

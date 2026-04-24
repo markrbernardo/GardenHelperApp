@@ -48,7 +48,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        plants = await PlantService.GetAll();
+        plants = await PlantService.GetAllPlants();
         plantInfoList = await PlantInfoService.GetAll();
 
         // Default to first plant if available

@@ -145,7 +145,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        plants = await PlantService.GetAll();
+        plants = await PlantService.GetAllPlants();
     }
 
     async Task SelectPlant(PlantModel plant)
