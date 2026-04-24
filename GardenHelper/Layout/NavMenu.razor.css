@@ -84,6 +84,16 @@
     }
 
 
+.nav-dropdown {
+    width: 100%;
+    margin-top: 5px;
+    background-color: #dedede;
+    color: black;
+    border: 1px solid #444;
+    border-radius: 4px;
+}
+
+
 
 @media (min-width: 641px) {
     .navbar-toggler {

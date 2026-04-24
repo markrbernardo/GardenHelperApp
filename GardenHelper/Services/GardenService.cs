@@ -66,6 +66,11 @@ public class GardenService
         ) ?? new List<PlantModel>();
     }
 
+    public async Task<int?> GetDefaultGardenId(int userId)
+    {
+        var user = await _http.GetFromJsonAsync<UserModel>($"api/users/{userId}");
+        return user?.DefaultGardenId;
+    }
 
 
 }

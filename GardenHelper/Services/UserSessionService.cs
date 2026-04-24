@@ -7,6 +7,8 @@ public class UserSessionService
     public int? CurrentUserId { get; private set; }
     public string? CurrentUserName { get; private set; }
     public int? CurrentGardenId { get; private set; }
+    public int? DefaultGardenId { get; private set; }
+
 
     public event Func<Task>? OnChange;
 
@@ -21,7 +23,9 @@ public class UserSessionService
         var userIdString = await _js.InvokeAsync<string?>("localStorage.getItem", "userId");
         var userNameString = await _js.InvokeAsync<string?>("localStorage.getItem", "userName");
         var gardenIdString = await _js.InvokeAsync<string?>("localStorage.getItem", "gardenId");
+        var defaultGardenString = await _js.InvokeAsync<string?>("localStorage.getItem", "defaultGardenId");
 
+        DefaultGardenId = int.TryParse(defaultGardenString, out var dg) ? dg : null;
         CurrentUserId = int.TryParse(userIdString, out var uid) ? uid : null;
         CurrentUserName = userNameString;
         CurrentGardenId = int.TryParse(gardenIdString, out var gid) ? gid : null;
@@ -58,10 +62,13 @@ public class UserSessionService
         CurrentUserId = null;
         CurrentUserName = null;
         CurrentGardenId = null;
+        DefaultGardenId = null;
 
         await _js.InvokeVoidAsync("localStorage.removeItem", "userId");
         await _js.InvokeVoidAsync("localStorage.removeItem", "userName");
         await _js.InvokeVoidAsync("localStorage.removeItem", "gardenId");
+        await _js.InvokeVoidAsync("localStorage.removeItem", "defaultGardenId");
+        
 
         await NotifyStateChanged();
     }
@@ -71,4 +78,12 @@ public class UserSessionService
         if (OnChange != null)
             await OnChange.Invoke();
     }
+
+    public async Task SetDefaultGarden(int gardenId)
+    {
+        DefaultGardenId = gardenId;
+        await _js.InvokeVoidAsync("localStorage.setItem", "defaultGardenId", gardenId);
+        await NotifyStateChanged();
+    }
+
 }

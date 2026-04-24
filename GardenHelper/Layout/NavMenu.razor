@@ -25,40 +25,37 @@
                 </NavLink>
             </div>
 
-            <!-- GARDENS HEADER -->
-            <div class="nav-section px-3 mt-3" @onclick="ToggleGardens" style="cursor:pointer;">
-                <span class="nav-header">Gardens</span>
-                <span class="float-end">@((GardensOpen ? "▼" : "►"))</span>
+            <!-- GARDEN HEADER -->
+            <div class="nav-section px-3 mt-3">
+                <span class="nav-header">Garden</span>
             </div>
 
-            <!-- GARDENS LIST -->
-            @if (GardensOpen)
+            <!-- GARDEN DROPDOWN -->
+            @if (gardens == null)
             {
-                @if (gardens == null)
-                {
-                    <div class="nav-item px-3">Loading...</div>
-                }
-                else if (gardens.Count == 0)
-                {
-                    <div class="nav-item px-3">No gardens</div>
-                }
-                else
-                {
-                    @foreach (var g in gardens)
-                    {
-                        <div class="nav-item px-3">
-                            <NavLink class="nav-link" href="@($"/garden-profile/{g.GardenId}")"
-                                     @onclick="() => SelectGarden(g.GardenId)">
-                                <span class="bi bi-list-nested-nav-menu"></span>
-                                @g.Name
-                            </NavLink>
-                        </div>
-                    }
-                }
+                <div class="nav-item px-3">Loading...</div>
+            }
+            else if (gardens.Count == 0)
+            {
+                <div class="nav-item px-3">No gardens</div>
+            }
+            else
+            {
+                <div class="nav-item px-3">
+                    <select class="form-select nav-dropdown"
+                            @bind="SelectedGardenId"
+                            @bind:after="GardenChanged">
+                        @foreach (var g in gardens.OrderBy(g => g.Name))
+                        {
+                            <option value="@g.GardenId">@g.Name</option>
+                        }
+                    </select>
+
+                </div>
             }
 
             <!-- LOCATIONS HEADER -->
-            @if (SelectedGardenId != null)
+            @if (SelectedGardenId > 0)
             {
                 <div class="nav-section px-3 mt-3" @onclick="ToggleLocations" style="cursor:pointer;">
                     <span class="nav-header">Locations</span>
@@ -139,7 +136,7 @@
                 </div>
             }
 
-            <!-- SIGN OUT (BOTTOM) -->
+            <!-- SIGN OUT -->
             <div class="nav-bottom px-3 mt-auto mb-3">
                 <a class="nav-link signout" @onclick="SignOut">
                     <span class="bi bi-box-arrow-right"></span>
@@ -152,30 +149,25 @@
 }
 
 @code {
-    [Parameter]
-    [SupplyParameterFromQuery]
-    public int? gardenId { get; set; }
-
-    public int? SelectedGardenId => Session.CurrentGardenId;
-
     List<LocationModel>? locations;
     List<GardenModel>? gardens;
 
     // COLLAPSE STATES
-    bool GardensOpen = true;
     bool LocationsOpen = true;
     bool ObservationsOpen = false;
     bool JournalOpen = false;
 
-    void ToggleGardens() => GardensOpen = !GardensOpen;
     void ToggleLocations() => LocationsOpen = !LocationsOpen;
     void ToggleObservations() => ObservationsOpen = !ObservationsOpen;
     void ToggleJournal() => JournalOpen = !JournalOpen;
 
-    void SelectGarden(int id)
+    // Read/write SelectedGardenId
+    private int SelectedGardenId
     {
-        Session.SetGarden(id);
+        get => Session.CurrentGardenId ?? 0;
+        set => Session.SetGarden(value);
     }
+
 
     protected override void OnInitialized()
     {
@@ -194,33 +186,73 @@
     }
 
     private async Task LoadGardens()
+{
+    if (Session.CurrentUserId != null)
     {
-        if (Session.CurrentUserId != null)
-            gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
-        else
-            gardens = null;
+        gardens = (await GardenService.GetGardensByUser(Session.CurrentUserId.Value))
+            .OrderBy(g => g.Name)
+            .ToList();
+
+        // AUTO-SELECT DEFAULT GARDEN IF NONE IS SELECTED
+        if ((Session.CurrentGardenId == null || Session.CurrentGardenId == 0) && gardens.Any())
+        {
+            // Fetch default garden from DB
+            var defaultGardenId = await GardenService.GetDefaultGardenId(Session.CurrentUserId.Value);
+
+            if (defaultGardenId != null && gardens.Any(g => g.GardenId == defaultGardenId))
+            {
+                await Session.SetGarden(defaultGardenId.Value);
+            }
+            else
+            {
+                await Session.SetGarden(gardens.First().GardenId);
+            }
+        }
     }
+    else
+    {
+        gardens = null;
+    }
+}
+
+
 
     private async Task LoadLocations()
     {
-        if (SelectedGardenId != null)
-            locations = await LocationService.GetLocationsByGarden(SelectedGardenId.Value);
-        else
+        if (SelectedGardenId <= 0)
+        {
             locations = new List<LocationModel>();
+            return;
+        }
+
+        locations = await LocationService.GetLocationsByGarden(SelectedGardenId);
     }
 
 
     private bool collapseNavMenu = true;
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
-    private void ToggleNavMenu()
+    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
+
+    private async Task SignOut()
     {
-        collapseNavMenu = !collapseNavMenu;
+        await Session.Clear();   // Ensure session is fully cleared
+
+        // Reset NavMenu state BEFORE re-render
+        gardens = new List<GardenModel>();
+        locations = new List<LocationModel>();
+        SelectedGardenId = 0;
+
+        // Force full reload so no stale state survives
+        Nav.NavigateTo("/login", forceLoad: true);
     }
 
-    private void SignOut()
+
+
+    // Parameterless handler for @bind:after
+    private void GardenChanged()
     {
-        Session.Clear();
-        Nav.NavigateTo("/login");
+        Nav.NavigateTo($"/garden-profile/{SelectedGardenId}");
     }
+
 }
