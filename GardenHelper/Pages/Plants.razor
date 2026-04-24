@@ -1,173 +1,126 @@
 ﻿@page "/plants"
 @inject PlantService PlantService
+@inject LocationService LocationService
+@inject GardenService GardenService
 @inject PlantInformationService PlantInfoService
 @inject ObservationService ObservationService
+@inject UserSessionService UserSession
 @inject NavigationManager Nav
 
-<h3>Plants</h3>
+<h3>All Plants by Location</h3>
 
-<!-- MOBILE DROPDOWN (visible only on small screens) -->
-<div class="plant-dropdown d-md-none mb-3">
-    @if (plants != null && plants.Count > 0)
-    {
+@if (groupedPlants == null)
+{
+    <p>Loading plants...</p>
+}
+else
+{
+    <!-- MOBILE DROPDOWN -->
+    <div class="plant-dropdown d-md-none mb-3">
         <select class="form-select" @onchange="OnDropdownChange">
             <option value="">Select a plant...</option>
-            @foreach (var p in plants)
+            @foreach (var loc in groupedPlants)
             {
-                <option value="@p.PlantId">@p.Name</option>
+                <optgroup label="@loc.Key">
+                    @foreach (var p in loc.Value)
+                    {
+                        <option value="@p.PlantId">@p.Name</option>
+                    }
+                </optgroup>
             }
         </select>
-    }
-</div>
-
-<!-- DESKTOP LAYOUT (hidden on small screens) -->
-<div class="plant-layout d-none d-md-grid">
-
-    <!-- LEFT COLUMN: PLANT LIST -->
-    <div class="plant-list">
-        @if (plants == null)
-        {
-            <p>Loading plants...</p>
-        }
-        else if (plants.Count == 0)
-        {
-            <p>No plants found.</p>
-        }
-        else
-        {
-            @foreach (var p in plants)
-            {
-                <div class="plant-list-item @(selectedPlant?.PlantId == p.PlantId ? "selected" : "")"
-                     @onclick="() => SelectPlant(p)">
-                    @p.Name
-                </div>
-            }
-        }
     </div>
 
-    <!-- RIGHT COLUMN: PLANT DETAILS (DESKTOP ONLY) -->
-    <div class="plant-details">
-        @if (selectedPlant == null)
-        {
-            <p class="placeholder">Select a plant to view its profile.</p>
-        }
-        else
-        {
-            <h2>@selectedPlant.Name</h2>
+    <!-- DESKTOP LAYOUT -->
+    <div class="plant-layout d-none d-md-grid">
 
-            @if (plantInfo != null)
+        <!-- LEFT COLUMN -->
+        <div class="plant-list">
+            @foreach (var group in groupedPlants)
             {
-                <details class="plant-info">
-                    <summary>Plant Information</summary>
-                    <p><strong>Common Name:</strong> @plantInfo.CommonName</p>
-                    <p><strong>Scientific Name:</strong> @plantInfo.ScientificName</p>
-                </details>
-            }
+                <h5 class="mt-3">@group.Key</h5>
 
-            <h4 class="mt-4">Observations</h4>
-
-            @if (observations == null)
-            {
-                <p>Loading observations...</p>
-            }
-            else if (observations.Count == 0)
-            {
-                <p>No observations yet.</p>
-            }
-            else
-            {
-                <ul>
-                    @foreach (var o in observations)
-                    {
-                        <li>@o.Observation</li>
-                    }
-                </ul>
-            }
-
-            <button class="btn btn-primary mt-3" @onclick="AddObservation">
-                Add Observation
-            </button>
-        }
-    </div>
-
-</div>
-
-<!-- MOBILE DETAILS (visible only on small screens) -->
-<div class="plant-details d-md-none mt-3">
-    @if (selectedPlant == null)
-    {
-        <p class="placeholder">Select a plant to view its profile.</p>
-    }
-    else
-    {
-        <h2>@selectedPlant.Name</h2>
-
-        @if (plantInfo != null)
-        {
-            <details class="plant-info">
-                <summary>Plant Information</summary>
-                <p><strong>Common Name:</strong> @plantInfo.CommonName</p>
-                <p><strong>Scientific Name:</strong> @plantInfo.ScientificName</p>
-            </details>
-        }
-
-        <h4 class="mt-4">Observations</h4>
-
-        @if (observations == null)
-        {
-            <p>Loading observations...</p>
-        }
-        else if (observations.Count == 0)
-        {
-            <p>No observations yet.</p>
-        }
-        else
-        {
-            <ul>
-                @foreach (var o in observations)
+                @foreach (var p in group.Value)
                 {
-                    <li>@o.Observation</li>
+                    <div class="plant-list-item @(selectedPlant?.PlantId == p.PlantId ? "selected" : "")"
+                         @onclick="() => SelectPlant(p)">
+                        @p.Name
+                    </div>
                 }
-            </ul>
-        }
+            }
+        </div>
 
-        <button class="btn btn-primary mt-3" @onclick="AddObservation">
-            Add Observation
-        </button>
-    }
-</div>
+        <!-- RIGHT COLUMN -->
+        <div class="plant-details">
+            <PlantDetails Plant="selectedPlant" />
+        </div>
+
+    </div>
+
+    <!-- MOBILE DETAILS -->
+    <div class="plant-details d-md-none mt-3">
+        <PlantDetails Plant="selectedPlant" />
+    </div>
+}
 
 @code {
-    List<PlantModel>? plants;
+    Dictionary<string, List<PlantModel>>? groupedPlants;
+
     PlantModel? selectedPlant;
-    PlantInformationModel? plantInfo;
-    List<ObservationModel>? observations;
 
     protected override async Task OnInitializedAsync()
     {
-        plants = await PlantService.GetAllPlants();
+        var userId = UserSession.CurrentUserId;
+
+        if (userId == null)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        // Get the currently selected garden
+        var gardenId = UserSession.CurrentGardenId;
+
+        if (gardenId == null)
+        {
+            Nav.NavigateTo("/gardens");
+            return;
+        }
+
+        // Load only locations for the selected garden
+        var locations = await LocationService.GetByGarden(gardenId.Value);
+
+        groupedPlants = new Dictionary<string, List<PlantModel>>();
+
+        // Load plants only for those locations
+        foreach (var loc in locations.OrderBy(l => l.Name))
+        {
+            var plants = await PlantService.GetPlantsByLocation(loc.LocationId);
+
+            groupedPlants[loc.Name] = plants
+                .OrderBy(p => p.Name)
+                .ToList();
+        }
     }
 
     async Task SelectPlant(PlantModel plant)
     {
         selectedPlant = plant;
-
-        plantInfo = await PlantInfoService.Get(plant.PlantInformationId);
-        observations = await ObservationService.GetByPlant(plant.PlantId);
     }
 
     async Task OnDropdownChange(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int plantId))
         {
-            var plant = plants?.FirstOrDefault(p => p.PlantId == plantId);
-            if (plant != null)
-                await SelectPlant(plant);
+            foreach (var group in groupedPlants.Values)
+            {
+                var plant = group.FirstOrDefault(p => p.PlantId == plantId);
+                if (plant != null)
+                {
+                    await SelectPlant(plant);
+                    break;
+                }
+            }
         }
-    }
-
-    void AddObservation()
-    {
-        Nav.NavigateTo($"/observations/create?plantId={selectedPlant.PlantId}");
     }
 }

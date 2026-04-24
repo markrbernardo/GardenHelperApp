@@ -1,8 +1,6 @@
 ﻿@page "/location-profile/{locationId:int}"
 @inject LocationService LocationService
 @inject PlantService PlantService
-@inject PlantInformationService PlantInfoService
-@inject ObservationService ObservationService
 @inject NavigationManager Nav
 
 <h2>@location?.Name</h2>
@@ -77,107 +75,22 @@ else
 
             <!-- DESKTOP DETAILS -->
             <div class="plant-details d-none d-md-block">
-                @if (selectedPlant == null)
-                {
-                    <p class="placeholder">Select a plant to view its profile.</p>
-                }
-                else
-                {
-                    <h2>@selectedPlant.Name</h2>
-
-                    @if (plantInfo != null)
-                    {
-                        <details class="plant-info">
-                            <summary>Plant Information</summary>
-                            <p><strong>Common Name:</strong> @plantInfo.CommonName</p>
-                            <p><strong>Scientific Name:</strong> @plantInfo.ScientificName</p>
-                        </details>
-                    }
-
-                    <h4 class="mt-4">Observations</h4>
-
-                    @if (observations == null)
-                    {
-                        <p>Loading observations...</p>
-                    }
-                    else if (observations.Count == 0)
-                    {
-                        <p>No observations yet.</p>
-                    }
-                    else
-                    {
-                        <ul>
-                            @foreach (var o in observations)
-                            {
-                                <li>@o.Observation</li>
-                            }
-                        </ul>
-                    }
-
-                    <button class="btn btn-primary mt-3" @onclick="AddObservation">
-                        Add Observation
-                    </button>
-                }
+                <PlantDetails Plant="selectedPlant" />
             </div>
-
-
 
         </div>
 
     </div>
 
-
-            <!-- MOBILE DETAILS -->
-            <div class="plant-details d-md-none mt-3">
-                @if (selectedPlant == null)
-                {
-                    <p class="placeholder">Select a plant to view its profile.</p>
-                }
-                else
-                {
-                    <h2>@selectedPlant.Name</h2>
-
-                    @if (plantInfo != null)
-                    {
-                        <details class="plant-info">
-                            <summary>Plant Information</summary>
-                            <p><strong>Common Name:</strong> @plantInfo.CommonName</p>
-                            <p><strong>Scientific Name:</strong> @plantInfo.ScientificName</p>
-                        </details>
-                    }
-
-                    <h4 class="mt-4">Observations</h4>
-
-                    @if (observations == null)
-                    {
-                        <p>Loading observations...</p>
-                    }
-                    else if (observations.Count == 0)
-                    {
-                        <p>No observations yet.</p>
-                    }
-                    else
-                    {
-                        <ul>
-                            @foreach (var o in observations)
-                            {
-                                <li>@o.Observation</li>
-                            }
-                        </ul>
-                    }
-
-                    <button class="btn btn-primary mt-3" @onclick="AddObservation">
-                        Add Observation
-                    </button>
-                }
-            </div>
+    <!-- MOBILE DETAILS -->
+    <div class="plant-details d-md-none mt-3">
+        <PlantDetails Plant="selectedPlant" />
+    </div>
 }
 
 @code {
     List<PlantModel>? plants;
     PlantModel? selectedPlant;
-    PlantInformationModel? plantInfo;
-    List<ObservationModel>? observations;
 
     [Parameter] public int locationId { get; set; }
     LocationModel? location;
@@ -193,15 +106,11 @@ else
         plants = await PlantService.GetPlantsByLocation(locationId);
 
         selectedPlant = null;
-        plantInfo = null;
-        observations = null;
     }
 
     async Task SelectPlant(PlantModel plant)
     {
         selectedPlant = plant;
-        plantInfo = await PlantInfoService.Get(plant.PlantInformationId);
-        observations = await ObservationService.GetByPlant(plant.PlantId);
     }
 
     async Task OnDropdownChange(ChangeEventArgs e)
@@ -212,11 +121,6 @@ else
             if (plant != null)
                 await SelectPlant(plant);
         }
-    }
-
-    void AddObservation()
-    {
-        Nav.NavigateTo($"/observations/create?plantId={selectedPlant.PlantId}");
     }
 
     private async Task SaveLocation()
