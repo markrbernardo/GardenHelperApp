@@ -108,7 +108,7 @@ public class PlantsController : ControllerBase
     }
 
 
-    [HttpPost]
+    [HttpPost("create")]
     public async Task<ActionResult<PlantModel>> CreatePlant(PlantModel plant)
     {
         // Validate Garden exists
@@ -123,14 +123,13 @@ public class PlantsController : ControllerBase
         if (defaultLocation == null)
             return BadRequest("No default 'Undecided' location exists for this garden.");
 
-        // Force plant to use the correct Undecided location
-        plant.LocationId = defaultLocation.LocationId;
 
         _context.Plants.Add(plant);
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(GetPlant), new { id = plant.PlantId }, plant);
     }
+
 
 
 

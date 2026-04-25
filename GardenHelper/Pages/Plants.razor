@@ -42,12 +42,12 @@ else
 
                 @foreach (var p in group.Value)
                 {
-                    <div class="plant-list-item @(selectedPlant?.PlantId == p.PlantId ? "selected" : "")"
-                         @onclick="() => SelectPlant(p)">
-                        @p.Name
-                    </div>
+                    <PlantTile Plant="p"
+                               Selected="(selectedPlant?.PlantId == p.PlantId)"
+                               OnSelect="SelectPlant" />
                 }
             }
+
         </div>
 
         <!-- RIGHT COLUMN -->
@@ -68,7 +68,7 @@ else
 
     PlantModel? selectedPlant;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         var userId = UserSession.CurrentUserId;
 

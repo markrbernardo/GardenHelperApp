@@ -3,8 +3,6 @@
 @inject PlantService PlantService
 @inject NavigationManager Nav
 
-<h2>@location?.Name</h2>
-
 @if (location == null)
 {
     <p>Loading location...</p>
@@ -13,28 +11,36 @@ else
 {
     <!-- LOCATION HEADER -->
     <div class="location-header card p-3 mb-3">
-        <h3>@location.Name</h3>
 
-        <div class="row g-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h3 class="mb-0">@location.Name</h3>
+
+            <button class="btn btn-outline-primary"
+                    @onclick="@(() => Nav.NavigateTo($"/locations/edit/{location.LocationId}"))">
+                <i class="bi bi-pencil-square me-1"></i>
+                Edit Location
+            </button>
+        </div>
+
+        <div class="row mt-2">
             <div class="col-md-4">
-                <label class="form-label">Lighting</label>
-                <input class="form-control" @bind="location.Lighting" />
+                <label class="text-muted">Lighting</label>
+                <div class="fw-semibold">@location.Lighting</div>
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Outside?</label>
-                <select class="form-select" @bind="location.IsOutside">
-                    <option value="0">No</option>
-                    <option value="1">Yes</option>
-                </select>
+                <label class="text-muted">Outside?</label>
+                <div class="fw-semibold">
+                    @((location.IsOutside ?? false) ? "Outside" : "Indoor")
+                </div>
             </div>
 
-            <div class="col-md-4 d-flex align-items-end">
-                <button class="btn btn-primary w-100" @onclick="SaveLocation">
-                    Save Changes
-                </button>
+            <div class="col-md-4">
+                <label class="text-muted">Garden ID</label>
+                <div class="fw-semibold">@location.GardenId</div>
             </div>
         </div>
+
     </div>
 
     <!-- MAIN GRID -->
@@ -59,12 +65,18 @@ else
 
             <!-- DESKTOP LIST -->
             <div class="loc-scroll d-none d-md-block">
-                @foreach (var p in plants)
+                @if (plants != null && plants.Count > 0)
                 {
-                    <div class="loc-item @(selectedPlant?.PlantId == p.PlantId ? "selected" : "")"
-                         @onclick="() => SelectPlant(p)">
-                        @p.Name
-                    </div>
+                    @foreach (var p in plants)
+                    {
+                        <PlantTile Plant="p"
+                                   Selected="(selectedPlant?.PlantId == p.PlantId)"
+                                   OnSelect="SelectPlant" />
+                    }
+                }
+                else
+                {
+                    <p class="placeholder">No plants in this location.</p>
                 }
             </div>
 
@@ -72,12 +84,9 @@ else
 
         <!-- RIGHT COLUMN -->
         <div class="loc-right">
-
-            <!-- DESKTOP DETAILS -->
             <div class="plant-details d-none d-md-block">
                 <PlantDetails Plant="selectedPlant" />
             </div>
-
         </div>
 
     </div>
@@ -94,11 +103,6 @@ else
 
     [Parameter] public int locationId { get; set; }
     LocationModel? location;
-
-    protected override async Task OnInitializedAsync()
-    {
-        plants = await PlantService.GetAllPlants();
-    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -128,3 +132,4 @@ else
         await LocationService.UpdateLocation(location);
     }
 }
+-

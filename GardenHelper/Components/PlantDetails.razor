@@ -60,12 +60,13 @@ else
         {
             plantInfo = null;
             observations = null;
-            return;
+            return;   // <-- THIS prevents the crash
         }
 
         plantInfo = await PlantInfoService.Get(Plant.PlantInformationId);
         observations = await ObservationService.GetByPlant(Plant.PlantId);
     }
+
 
     void AddObservation()
     {

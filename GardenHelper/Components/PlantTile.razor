@@ -1,0 +1,25 @@
+﻿<div class="plant-tile @(Selected ? "selected" : "")"
+     @onclick="() => OnSelect.InvokeAsync(Plant)">
+    <div class="plant-name">@Plant.Name</div>
+
+    @if (PlantInfo != null)
+    {
+        <div class="plant-scientific">@PlantInfo.ScientificName</div>
+    }
+</div>
+
+@code {
+    [Parameter] public PlantModel Plant { get; set; } = default!;
+    [Parameter] public bool Selected { get; set; }
+    [Parameter] public EventCallback<PlantModel> OnSelect { get; set; }
+
+    [Inject] public PlantInformationService PlantInfoService { get; set; } = default!;
+
+    PlantInformationModel? PlantInfo;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Load scientific name
+        PlantInfo = await PlantInfoService.Get(Plant.PlantInformationId);
+    }
+}

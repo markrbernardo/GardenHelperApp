@@ -1,11 +1,11 @@
-﻿/* MAIN 2‑COLUMN LAYOUT */
+﻿/* MAIN 2‑COLUMN LAYOUT FOR LOCATION PROFILE */
 .location-grid {
     display: grid;
     grid-template-columns: 300px 1fr;
     gap: 0px;
 }
 
-/* LEFT COLUMN */
+/* LEFT COLUMN (PLANT LIST) */
 .loc-left {
     border-right: 1px solid #ccc;
     padding-right: 10px;
@@ -34,34 +34,12 @@
         font-weight: bold;
     }
 
-/* RIGHT COLUMN */
+/* RIGHT COLUMN (DETAILS PANEL CONTAINER) */
 .loc-right {
     padding-left: 10px;
 }
 
-/* PLANT DETAILS PANEL */
-.plant-details {
-    padding: 10px;
-    overflow-y: auto;
-}
-
-.placeholder {
-    color: #777;
-    font-style: italic;
-}
-
-/* DETAILS DROPDOWN */
-.plant-info summary {
-    cursor: pointer;
-    font-weight: bold;
-}
-
-/* MOBILE DROPDOWN */
-.plant-dropdown select {
-    font-size: 1rem;
-}
-
-/* RESPONSIVE BEHAVIOR */
+/* MOBILE RESPONSIVE BEHAVIOR */
 @media (max-width: 768px) {
     .location-grid {
         grid-template-columns: 1fr;

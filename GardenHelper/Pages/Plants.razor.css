@@ -1,3 +1,4 @@
+/* DESKTOP LAYOUT FOR PLANTS PAGE ONLY */
 .plant-layout {
     display: grid;
     grid-template-columns: 260px 1fr;
@@ -5,43 +6,12 @@
     height: calc(100vh - 120px);
 }
 
-.plant-list {
-    border-right: 1px solid #ccc;
-    padding-right: 10px;
-    overflow-y: auto;
+/* MOBILE DROPDOWN FOR PLANTS PAGE */
+.plant-dropdown select {
+    font-size: 1rem;
 }
 
-.plant-list-item {
-    padding: 10px;
-    cursor: pointer;
-    border-radius: 4px;
-}
-
-    .plant-list-item:hover {
-        background-color: #f0f0f0;
-    }
-
-    .plant-list-item.selected {
-        background-color: #dcefe2;
-        font-weight: bold;
-    }
-
-.plant-details {
-    padding: 10px;
-    overflow-y: auto;
-}
-
-.placeholder {
-    color: #777;
-    font-style: italic;
-}
-
-.plant-info summary {
-    cursor: pointer;
-    font-weight: bold;
-}
-
-/* Desktop grid layout */
+/* RESPONSIVE BEHAVIOR FOR PLANTS PAGE */
 @media (min-width: 768px) {
     .plant-layout {
         display: grid;
@@ -49,42 +19,4 @@
         gap: 20px;
         height: calc(100vh - 120px);
     }
-}
-
-/* Plant list styling */
-.plant-list {
-    border-right: 1px solid #ccc;
-    padding-right: 10px;
-    overflow-y: auto;
-}
-
-.plant-list-item {
-    padding: 10px;
-    cursor: pointer;
-    border-radius: 4px;
-}
-
-    .plant-list-item:hover {
-        background-color: #f0f0f0;
-    }
-
-    .plant-list-item.selected {
-        background-color: #dcefe2;
-        font-weight: bold;
-    }
-
-/* Details panel */
-.plant-details {
-    padding: 10px;
-    overflow-y: auto;
-}
-
-.placeholder {
-    color: #777;
-    font-style: italic;
-}
-
-/* Mobile dropdown */
-.plant-dropdown select {
-    font-size: 1rem;
 }

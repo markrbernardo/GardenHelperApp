@@ -1,0 +1,12 @@
+﻿/* PLANT DETAILS PANEL */
+.plant-details {
+    padding: 10px;
+    overflow-y: auto;
+}
+
+
+/* DETAILS DROPDOWN */
+.plant-info summary {
+    cursor: pointer;
+    font-weight: bold;
+}

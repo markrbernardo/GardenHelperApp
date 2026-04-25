@@ -27,7 +27,7 @@ else
                 </div>
                 <div class="location-details">
                     Lighting: @l.Lighting<br />
-                    @(l.IsOutside == 1 ? "Outside" : "Inside")
+                    @((l.IsOutside ?? false) ? "Outside" : "Indoor")
                 </div>
             </div>
         }

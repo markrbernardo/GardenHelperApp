@@ -1,4 +1,4 @@
-html, body {
+﻿html, body {
     font-family: 'Lato', sans-serif;
 }
 
@@ -164,4 +164,75 @@ code {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+
+/* MAIN 2‑COLUMN LAYOUT */
+.location-grid {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 0px;
+}
+
+/* LEFT COLUMN */
+.loc-left, .plant-list {
+    border-right: 1px solid #ccc;
+    padding-right: 10px;
+}
+
+.loc-scroll {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* PLANT LIST ITEMS */
+.loc-item, .plant-list-item {
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 5px;
+    background-color: #f7f7f7;
+}
+
+    .loc-item:hover ..plant-list-item:hover{
+        background-color: #eee;
+    }
+
+    .loc-item.selected, .plant-list-item.selected{
+        background-color: #dcefe2;
+        font-weight: bold;
+    }
+
+/* RIGHT COLUMN */
+.loc-right {
+    padding-left: 10px;
+}
+
+.placeholder {
+    color: #777;
+    font-style: italic;
+    padding: 10px 0;
+    background: none;
+    border: none;
+}
+
+/* MOBILE DROPDOWN */
+.plant-dropdown select {
+    font-size: 1rem;
+}
+
+/* RESPONSIVE BEHAVIOR */
+@media (max-width: 768px) {
+    .location-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .loc-left {
+        border-right: none;
+        padding-right: 0;
+    }
+
+    .loc-right {
+        padding-left: 0;
+    }
 }

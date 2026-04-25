@@ -9,5 +9,5 @@ public class LocationModel
     public int GardenId { get; set; }
     public string? Name { get; set; }
     public string? Lighting { get; set; }
-    public int? IsOutside { get; set; }
+    public bool? IsOutside { get; set; }
 }

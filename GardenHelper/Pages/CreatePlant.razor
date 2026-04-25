@@ -2,6 +2,7 @@
 @inject PlantService PlantService
 @inject LocationService LocationService
 @inject PlantInformationService PlantInfoService
+@inject UserSessionService UserSession
 @inject NavigationManager Nav
 
 <h3>Create Plant</h3>
@@ -49,33 +50,57 @@ else
 }
 
 @code {
-    // Default LocationId = 1 ("Undecided")
-    PlantModel plant = new()
-    {
-        LocationId = 1
-    };
+    PlantModel plant = new();
 
     List<LocationModel>? locations;
     List<PlantInformationModel>? plantInfoList;
 
     protected override async Task OnInitializedAsync()
     {
-        locations = await LocationService.GetAll();
+        var gardenId = UserSession.CurrentGardenId;
+
+        if (gardenId == null)
+        {
+            Nav.NavigateTo("/gardens");
+            return;
+        }
+
+        // Load only locations for the selected garden
+        locations = await LocationService.GetByGarden(gardenId.Value);
+
+        // Set the plant's GardenId automatically
+        plant.GardenId = gardenId.Value;
+
+        // Find the Undecided location for this garden
+        var undecided = locations.FirstOrDefault(l => l.Name == "Undecided");
+        if (undecided != null)
+            plant.LocationId = undecided.LocationId;
+
+        // Load plant information list
         plantInfoList = await PlantInfoService.GetAll();
 
-        // Optional: ensure "Undecided" appears first
-        locations = locations.OrderBy(l => l.LocationId != 1).ToList();
-
-        // Default PlantInformationId to the first item if available
+        // Default PlantInformationId to the first item
         if (plantInfoList.Count > 0)
             plant.PlantInformationId = plantInfoList.First().PlantInformationId;
     }
 
     async Task HandleSubmit()
     {
-        await PlantService.Create(plant);
+        var response = await PlantService.CreateWithResponse(plant);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // TEMPORARY: show the error so we know what's failing
+            Console.WriteLine("Error creating plant: " + response.StatusCode);
+
+            // Optional: show error in UI
+            // errorMessage = $"Error creating plant: {response.StatusCode}";
+            return;
+        }
+
         Nav.NavigateTo("/plants");
     }
+
 
     void GoBack()
     {

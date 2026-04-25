@@ -1,6 +1,5 @@
 ﻿using GardenHelperApp.Shared.Models;
 using System.Net.Http.Json;
-using static System.Net.WebRequestMethods;
 
 namespace GardenHelperApp.Client.Services;
 
@@ -34,7 +33,6 @@ public class PlantService
         return await _http.GetFromJsonAsync<List<PlantModel>>($"api/plants/location/{locationId}");
     }
 
-
     public async Task<List<PlantModel>> GetByLocation(int locationId)
     {
         return await _http.GetFromJsonAsync<List<PlantModel>>($"api/plants/location/{locationId}")
@@ -47,9 +45,16 @@ public class PlantService
                ?? new List<PlantModel>();
     }
 
+    // ✔ Correct endpoint
     public async Task Create(PlantModel model)
     {
-        await _http.PostAsJsonAsync("api/plants", model);
+        await _http.PostAsJsonAsync("api/plants/create", model);
+    }
+
+    // ✔ Correct endpoint + returns response for debugging
+    public async Task<HttpResponseMessage> CreateWithResponse(PlantModel model)
+    {
+        return await _http.PostAsJsonAsync("api/plants/create", model);
     }
 
     public async Task Update(PlantModel model)
@@ -61,5 +66,4 @@ public class PlantService
     {
         await _http.DeleteAsync($"api/plants/{id}");
     }
-
 }
