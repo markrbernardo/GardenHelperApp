@@ -45,9 +45,10 @@ else
                         </div>
 
                         <button class="btn btn-sm btn-outline-success"
-                                @onclick="@(() => Nav.NavigateTo($"/plants/create?locationId={loc.LocationId}"))">
+                                 @onclick="@(() => Nav.NavigateTo($"/plants/create?locationId={loc.LocationId}&returnUrl=/garden-profile/{gardenId}"))">
                             <i class="bi bi-plus-lg"></i> Add Plant
                         </button>
+
                     </div>
 
                     <!-- PLANTS IN THIS LOCATION -->

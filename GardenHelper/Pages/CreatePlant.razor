@@ -50,10 +50,15 @@ else
 }
 
 @code {
+    [Parameter] public int? locationId { get; set; }
+
     PlantModel plant = new();
 
     List<LocationModel>? locations;
     List<PlantInformationModel>? plantInfoList;
+
+    string? returnUrl;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -65,24 +70,39 @@ else
             return;
         }
 
-        // Load only locations for the selected garden
+        // Load locations
         locations = await LocationService.GetByGarden(gardenId.Value);
 
-        // Set the plant's GardenId automatically
+        // Set garden
         plant.GardenId = gardenId.Value;
 
-        // Find the Undecided location for this garden
-        var undecided = locations.FirstOrDefault(l => l.Name == "Undecided");
-        if (undecided != null)
-            plant.LocationId = undecided.LocationId;
-
-        // Load plant information list
+        // Load plant info
         plantInfoList = await PlantInfoService.GetAll();
-
-        // Default PlantInformationId to the first item
         if (plantInfoList.Count > 0)
             plant.PlantInformationId = plantInfoList.First().PlantInformationId;
+
+        // Read query params
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        // locationId
+        if (query.TryGetValue("locationId", out var locIdString) &&
+            int.TryParse(locIdString, out int parsedId) &&
+            locations.Any(l => l.LocationId == parsedId))
+        {
+            plant.LocationId = parsedId;
+        }
+        else if (locations.Count > 0)
+        {
+            plant.LocationId = locations.First().LocationId;
+        }
+
+        // returnUrl
+        if (query.TryGetValue("returnUrl", out var url))
+            returnUrl = url!;
     }
+
+
 
     async Task HandleSubmit()
     {
@@ -90,20 +110,22 @@ else
 
         if (!response.IsSuccessStatusCode)
         {
-            // TEMPORARY: show the error so we know what's failing
             Console.WriteLine("Error creating plant: " + response.StatusCode);
-
-            // Optional: show error in UI
-            // errorMessage = $"Error creating plant: {response.StatusCode}";
             return;
         }
 
-        Nav.NavigateTo("/plants");
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl!);
+        else
+            Nav.NavigateTo("/plants");
     }
-
 
     void GoBack()
     {
-        Nav.NavigateTo("/plants");
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl!);
+        else
+            Nav.NavigateTo("/plants");
     }
+
 }

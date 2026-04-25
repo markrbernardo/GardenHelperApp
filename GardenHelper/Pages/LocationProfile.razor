@@ -48,7 +48,15 @@ else
 
         <!-- LEFT COLUMN -->
         <div class="loc-left">
-            <h3>Plants</h3>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h3 class="mb-0">Plants</h3>
+
+                <button class="btn btn-sm btn-outline-success"
+                        @onclick="@(() => Nav.NavigateTo($"/plants/create?locationId={locationId}&returnUrl=/location-profile/{locationId}"))">
+                    <i class="bi bi-plus-lg"></i> Add Plant
+                </button>
+            </div>
+
 
             <!-- MOBILE DROPDOWN -->
             <div class="plant-dropdown d-md-none mb-3">
@@ -134,4 +142,3 @@ else
         await LocationService.UpdateLocation(location);
     }
 }
--
