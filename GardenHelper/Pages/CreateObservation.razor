@@ -51,10 +51,22 @@ else
         plants = await PlantService.GetAllPlants();
         plantInfoList = await PlantInfoService.GetAll();
 
-        // Default to first plant if available
+        // 1. Default to first plant (same pattern as CreatePlant)
         if (plants.Count > 0)
             observation.PlantId = plants.First().PlantId;
+
+        // 2. Override default if ?plantId=### is provided
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("plantId", out var pid))
+        {
+            if (int.TryParse(pid, out int parsedId) &&
+                plants.Any(p => p.PlantId == parsedId))
+            {
+                observation.PlantId = parsedId;
+            }
+        }
     }
+
 
     async Task HandleSubmit()
     {

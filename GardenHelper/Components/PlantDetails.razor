@@ -38,7 +38,15 @@ else
         <ul>
             @foreach (var o in observations)
             {
-                <li>@o.Observation</li>
+                <tr>
+                    <td>
+                        <li>@o.Observation</li>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="() => EditObservation(o.ObservationId)">Edit</button>
+                    </td>
+                </tr>
+
             }
         </ul>
     }
@@ -67,6 +75,10 @@ else
         observations = await ObservationService.GetByPlant(Plant.PlantId);
     }
 
+    void EditObservation(int id)
+    {
+        Nav.NavigateTo($"/observations/edit/{id}");
+    }
 
     void AddObservation()
     {
