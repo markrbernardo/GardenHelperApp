@@ -10,15 +10,15 @@
 else
 {
     <!-- LOCATION HEADER -->
-    <div class="location-header card p-3 mb-3">
+    <div class="location-header pb-3 mb-3 border-bottom">
 
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <h3 class="mb-0">@location.Name</h3>
+            <h1 class="mb-0">Location: @location.Name</h1>
 
+            <!-- EDIT BUTTON -->
             <button class="btn btn-outline-primary"
                     @onclick="@(() => Nav.NavigateTo($"/locations/edit/{location.LocationId}"))">
                 <i class="bi bi-pencil-square me-1"></i>
-                Edit Location
             </button>
         </div>
 
@@ -48,7 +48,7 @@ else
 
         <!-- LEFT COLUMN -->
         <div class="loc-left">
-            <h1>Plants</h1>
+            <h3>Plants</h3>
 
             <!-- MOBILE DROPDOWN -->
             <div class="plant-dropdown d-md-none mb-3">
@@ -85,7 +85,7 @@ else
 
         <!-- RIGHT COLUMN -->
         <div class="loc-right">
-            <h1>Details</h1>
+            <h3>Details</h3>
             <div class="plant-details d-none d-md-block">
                 <PlantDetails Plant="selectedPlant" />
             </div>

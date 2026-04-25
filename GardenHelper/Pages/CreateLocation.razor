@@ -1,6 +1,7 @@
 ﻿@page "/locations/create"
 @inject LocationService LocationService
 @inject GardenService GardenService
+@inject UserSessionService UserSession
 @inject NavigationManager Nav
 
 <h3>Create Location</h3>
@@ -38,8 +39,8 @@ else
         <div class="mb-3">
             <label>Is Outside?</label>
             <select class="form-select" @bind="location.IsOutside">
-                <option value="1">Yes</option>
-                <option value="0">No</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
             </select>
         </div>
 
@@ -54,19 +55,37 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        gardens = await GardenService.GetAllGardens();
-        if (gardens.Count > 0)
+        // Ensure user is logged in
+        if (UserSession.CurrentUserId == null)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        // Load only the user's gardens
+        gardens = await GardenService.GetGardensByUser(UserSession.CurrentUserId.Value);
+
+        // Default to the active garden
+        if (UserSession.CurrentGardenId != null)
+            location.GardenId = UserSession.CurrentGardenId.Value;
+        else if (gardens.Count > 0)
             location.GardenId = gardens.First().GardenId;
     }
 
     async Task HandleSubmit()
     {
-        await LocationService.Create(location);
-        Nav.NavigateTo("/locations");
+        // Create and get new location ID
+        var newId = await LocationService.Create(location);
+
+        // Refresh NavMenu
+        await UserSession.TriggerChange();
+
+        // Redirect to the new location profile
+        Nav.NavigateTo($"/location-profile/{newId}");
     }
 
     void GoBack()
     {
-        Nav.NavigateTo("/locations");
+        Nav.NavigateTo($"/garden-profile/{location.GardenId}");
     }
 }

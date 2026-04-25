@@ -1,5 +1,6 @@
-﻿using System.Net.Http.Json;
-using GardenHelperApp.Shared.Models;
+﻿using GardenHelperApp.Shared.Models;
+using System.Net.Http.Json;
+using static System.Net.WebRequestMethods;
 
 namespace GardenHelperApp.Client.Services;
 
@@ -29,10 +30,13 @@ public class LocationService
                ?? new List<LocationModel>();
     }
 
-    public async Task Create(LocationModel model)
+    public async Task<int> Create(LocationModel location)
     {
-        await _http.PostAsJsonAsync("api/locations", model);
+        var response = await _http.PostAsJsonAsync("api/locations", location);
+        return await response.Content.ReadFromJsonAsync<int>();
     }
+
+
 
     public async Task Update(LocationModel model)
     {

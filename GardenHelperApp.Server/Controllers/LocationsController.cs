@@ -43,8 +43,11 @@ public class LocationsController : ControllerBase
     {
         _context.Locations.Add(model);
         await _context.SaveChangesAsync();
-        return Ok(model);
+
+        return Ok(model.LocationId); // EF populates this automatically
     }
+
+
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, LocationModel model)

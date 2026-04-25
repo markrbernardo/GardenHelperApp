@@ -12,61 +12,73 @@ else
 {
     <p>@garden.ZipCode</p>
 
-    <div class="garden-profile-grid">
+    <!-- LOCATIONS HEADER WITH ADD BUTTON -->
+    <div class="gp-header">
+        <h3>Locations</h3>
+        <button class="btn btn-sm btn-primary"
+                @onclick="@(() => Nav.NavigateTo($"/locations/create?gardenId={gardenId}"))">
+            <i class="bi bi-plus-lg"></i> Add Location
+        </button>
+    </div>
 
-        <!-- LOCATIONS COLUMN -->
-        <div class="gp-column">
-            <h4>Locations</h4>
+    <div class="gp-locations-container">
 
-            @if (locations == null)
+        @if (locations == null)
+        {
+            <p>Loading locations...</p>
+        }
+        else if (locations.Count == 0)
+        {
+            <p>No locations yet.</p>
+        }
+        else
+        {
+            @foreach (var loc in locations)
             {
-                <p>Loading...</p>
-            }
-            else if (locations.Count == 0)
-            {
-                <p>No locations yet.</p>
-            }
-            else
-            {
-                <div class="gp-scroll">
-                    @foreach (var loc in locations)
-                    {
-                        <div class="gp-item"
-                             @onclick="@(() => Nav.NavigateTo($"/plants?locationId={loc.LocationId}"))">
-                            <strong>@loc.Name</strong>
-                            <div class="small">@loc.Lighting</div>
+                <div class="gp-location-block">
+
+                    <!-- LOCATION HEADER WITH ADD PLANT BUTTON -->
+                    <div class="gp-location-header">
+                        <div>
+                            <h4 class="gp-location-title">@loc.Name</h4>
+                            <div class="gp-location-sub">@loc.Lighting</div>
                         </div>
+
+                        <button class="btn btn-sm btn-outline-success"
+                                @onclick="@(() => Nav.NavigateTo($"/plants/create?locationId={loc.LocationId}"))">
+                            <i class="bi bi-plus-lg"></i> Add Plant
+                        </button>
+                    </div>
+
+                    <!-- PLANTS IN THIS LOCATION -->
+                    @if (plants == null)
+                    {
+                        <p>Loading plants...</p>
                     }
+                    else
+                    {
+                        var plantsInLoc = plants.Where(p => p.LocationId == loc.LocationId).ToList();
+
+                        @if (plantsInLoc.Count == 0)
+                        {
+                            <p class="placeholder">No plants in this location.</p>
+                        }
+                        else
+                        {
+                            <div class="gp-plant-grid">
+                                @foreach (var p in plantsInLoc)
+                                {
+                                    <PlantTile Plant="p"
+                                               Selected="false"
+                                               OnSelect="@(() => Nav.NavigateTo($"/plants?plantId={p.PlantId}"))" />
+                                }
+                            </div>
+                        }
+                    }
+
                 </div>
             }
-        </div>
-
-        <!-- PLANTS COLUMN -->
-        <div class="gp-column">
-            <h4>Plants</h4>
-
-            @if (plants == null)
-            {
-                <p>Loading...</p>
-            }
-            else if (plants.Count == 0)
-            {
-                <p>No plants yet.</p>
-            }
-            else
-            {
-                <div class="gp-scroll">
-                    @foreach (var p in plants)
-                    {
-                        <div class="gp-item"
-                             @onclick="@(() => Nav.NavigateTo($"/plants?plantId={p.PlantId}"))">
-                            <strong>@p.Name</strong>
-                            <div class="small">Species</div>
-                        </div>
-                    }
-                </div>
-            }
-        </div>
+        }
 
     </div>
 }

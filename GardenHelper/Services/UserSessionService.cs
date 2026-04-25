@@ -86,4 +86,11 @@ public class UserSessionService
         await NotifyStateChanged();
     }
 
+    public Task TriggerChange()
+    {
+        OnChange?.Invoke();
+        return Task.CompletedTask;
+    }
+
+
 }
