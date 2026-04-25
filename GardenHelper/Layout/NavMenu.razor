@@ -15,15 +15,9 @@
 @if (Session.CurrentUserId != null)
 {
     <div class="@NavMenuCssClass nav-scrollable nav-container">
-        <nav class="nav flex-column">
+        <nav class="nav d-flex flex-column">
 
-            <!-- HOME -->
-            <div class="nav-item px-3 mt-2">
-                <NavLink class="nav-link" href="/user-profile">
-                    <span class="bi bi-house-door-fill-nav-menu"></span>
-                    @Session.CurrentUserName
-                </NavLink>
-            </div>
+            <span class="nav-header px-3 mt-3 text-white">Gardener:</span><span class="text-white">@Session.CurrentUserName</span>
 
             <!-- GARDEN HEADER -->
             <div class="nav-section px-3 mt-3">
@@ -85,11 +79,20 @@
                             </div>
                         }
 
-                        <div class="nav-section px-3 mt-3">
-                            <NavLink class="nav-header" href="/plants">
-                                Plant List
-                            </NavLink>
+                        <div class="nav-section px-3 mt-3" @onclick="TogglePlants" style="cursor:pointer;">
+                            <span class="nav-header">Plants</span>
+                            <span class="float-end">@((PlantsOpen ? "▼" : "►"))</span>
                         </div>
+
+                        @if(PlantsOpen)
+                        {
+                            <div class="nav-item px-3">
+                                <NavLink class="nav-link" href="/plants">
+                                    <span class="bi bi-list-nested-nav-menu"></span>
+                                    Plant Inventory
+                                </NavLink>
+                            </div>
+                        }
                     }
                 }
             }
@@ -144,13 +147,29 @@
                 </div>
             }
 
-            <!-- SIGN OUT -->
-            <div class="nav-bottom px-3 mt-auto mb-3">
-                <a class="nav-link signout" @onclick="SignOut">
-                    <span class="bi bi-box-arrow-right"></span>
-                    Sign Out
-                </a>
+
+            <div class="nav-section px-3">
+                
+                <hr class="nav-divider" />
+
+                <!-- ACCOUNT SETTINGS -->
+                <div class="nav-item mt-2">
+                    <NavLink class="nav-link" href="/user-profile">
+                        <span class="bi bi-gear-fill mb-4"></span>
+                        Account Settings
+                    </NavLink>
+                </div>
+
+                <!-- SIGN OUT -->
+                <div class="nav-item mt-2">
+                    <button class="nav-link text-white-50" @onclick="SignOut">
+                        <span class="bi bi-box-arrow-right"></span>
+                        Sign Out
+                    </button>
+                </div>
+
             </div>
+
 
         </nav>
     </div>
@@ -159,13 +178,18 @@
 @code {
     List<LocationModel>? locations;
     List<GardenModel>? gardens;
+    List<PlantModel>? plants;
+    
 
     // COLLAPSE STATES
     bool LocationsOpen = true;
+    bool PlantsOpen = true;
     bool ObservationsOpen = false;
     bool JournalOpen = false;
+    
 
     void ToggleLocations() => LocationsOpen = !LocationsOpen;
+    void TogglePlants() => PlantsOpen = !PlantsOpen;
     void ToggleObservations() => ObservationsOpen = !ObservationsOpen;
     void ToggleJournal() => JournalOpen = !JournalOpen;
 

@@ -36,6 +36,7 @@ else
 
         <!-- LEFT COLUMN -->
         <div class="plant-list">
+            <h1>Plants</h1>
             @foreach (var group in groupedPlants)
             {
                 <h5 class="mt-3">@group.Key</h5>
@@ -52,6 +53,7 @@ else
 
         <!-- RIGHT COLUMN -->
         <div class="plant-details">
+            <h1>Details</h1>
             <PlantDetails Plant="selectedPlant" />
         </div>
 
