@@ -51,6 +51,9 @@ else
 @code {
     [Parameter] public int id { get; set; }
 
+    string? returnUrl;
+
+
     PlantModel? plant;
     List<LocationModel>? locations;
     List<PlantInformationModel>? plantInfoList;
@@ -66,16 +69,31 @@ else
 
         // Optional: ensure "Undecided" (LocationId = 1) appears first
         locations = locations.OrderBy(l => l.LocationId != 1).ToList();
+
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("returnUrl", out var url))
+            returnUrl = url!;
+
     }
 
     async Task HandleSubmit()
     {
-        await PlantService.Update(plant!);
-        Nav.NavigateTo("/plants");
+        await PlantService.Update(plant);
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl!);
+        else
+            Nav.NavigateTo("/plants");
     }
 
     void GoBack()
     {
-        Nav.NavigateTo("/plants");
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl!);
+        else
+            Nav.NavigateTo("/plants");
     }
+
 }

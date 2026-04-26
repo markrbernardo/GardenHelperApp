@@ -38,7 +38,7 @@ else
         <div class="plant-list">
 
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <h1 class="mb-0">Plants</h1>
+                <h3 class="mb-0">Plants</h3>
 
                 <button class="btn btn-sm btn-outline-success"
                         @onclick="@(() => Nav.NavigateTo($"/plants/create?returnUrl=/plants"))">
@@ -62,9 +62,13 @@ else
 
         <!-- RIGHT COLUMN -->
         <div class="plant-details">
-            <h1>Details</h1>
+            <h3>Details</h3>
             <PlantDetails Plant="selectedPlant"
-                          OnAddObservation="HandleAddObservation" />
+                          OnAddObservation="HandleAddObservation"
+                          OnEditObservation="HandleEditObservation"
+                          OnEditPlant="HandleEditPlant" />
+
+
 
         </div>
 
@@ -73,7 +77,11 @@ else
     <!-- MOBILE DETAILS -->
     <div class="plant-details d-md-none mt-3">
         <PlantDetails Plant="selectedPlant"
-                      OnAddObservation="HandleAddObservation" />
+                      OnAddObservation="HandleAddObservation"
+                      OnEditObservation="HandleEditObservation"
+                      OnEditPlant="HandleEditPlant" />
+
+
 
     </div>
 }
@@ -116,6 +124,24 @@ else
                 .OrderBy(p => p.Name)
                 .ToList();
         }
+
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("plantId", out var pid) &&
+            int.TryParse(pid, out int parsedId))
+        {
+            foreach (var group in groupedPlants.Values)
+            {
+                var plant = group.FirstOrDefault(p => p.PlantId == parsedId);
+                if (plant != null)
+                {
+                    selectedPlant = plant;
+                    break;
+                }
+            }
+        }
+
     }
 
     async Task SelectPlant(PlantModel plant)
@@ -141,7 +167,18 @@ else
 
     void HandleAddObservation(int plantId)
     {
-        Nav.NavigateTo($"/observations/create?plantId={plantId}&returnUrl=/plants");
+        Nav.NavigateTo($"/observations/create?plantId={plantId}&returnUrl=/plants?plantId={plantId}");
+    }
+
+
+    void HandleEditObservation(int obsId)
+    {
+        Nav.NavigateTo($"/observations/edit/{obsId}?returnUrl=/plants");
+    }
+
+    void HandleEditPlant(int plantId)
+    {
+        Nav.NavigateTo($"/plants/edit/{plantId}?returnUrl=/plants?plantId={plantId}");
     }
 
 }

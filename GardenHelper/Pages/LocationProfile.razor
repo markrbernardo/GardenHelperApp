@@ -96,7 +96,11 @@ else
             <h3>Details</h3>
             <div class="plant-details d-none d-md-block">
                 <PlantDetails Plant="selectedPlant"
-                              OnAddObservation="HandleAddObservation" />
+                              OnAddObservation="HandleAddObservation"
+                              OnEditObservation="HandleEditObservation"
+                              OnEditPlant="HandleEditPlant" />
+
+
 
             </div>
         </div>
@@ -106,7 +110,11 @@ else
     <!-- MOBILE DETAILS -->
     <div class="plant-details d-md-none mt-3">
         <PlantDetails Plant="selectedPlant"
-                      OnAddObservation="HandleAddObservation" />
+                      OnAddObservation="HandleAddObservation"
+                      OnEditObservation="HandleEditObservation"
+                      OnEditPlant="HandleEditPlant" />
+
+
 
     </div>
 }
@@ -124,6 +132,16 @@ else
         plants = await PlantService.GetPlantsByLocation(locationId);
 
         selectedPlant = null;
+
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("plantId", out var pid) &&
+            int.TryParse(pid, out int parsedId))
+        {
+            selectedPlant = plants?.FirstOrDefault(p => p.PlantId == parsedId);
+        }
+
     }
 
     async Task SelectPlant(PlantModel plant)
@@ -148,7 +166,18 @@ else
 
     void HandleAddObservation(int plantId)
     {
-        Nav.NavigateTo($"/observations/create?plantId={plantId}&returnUrl=/location-profile/{locationId}");
+        Nav.NavigateTo($"/observations/create?plantId={plantId}&returnUrl=/location-profile/{locationId}?plantId={plantId}");
     }
+
+    void HandleEditObservation(int obsId)
+    {
+        Nav.NavigateTo($"/observations/edit/{obsId}?returnUrl=/location-profile/{locationId}?plantId={selectedPlant?.PlantId}");
+    }
+
+    void HandleEditPlant(int plantId)
+    {
+        Nav.NavigateTo($"/plants/edit/{plantId}?returnUrl=/location-profile/{locationId}?plantId={plantId}");
+    }
+
 
 }

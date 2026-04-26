@@ -1,7 +1,6 @@
 ﻿@using GardenHelperApp.Shared.Models
 @inject PlantInformationService PlantInfoService
 @inject ObservationService ObservationService
-@inject NavigationManager Nav
 
 @if (Plant == null)
 {
@@ -11,6 +10,12 @@ else
 {
     <h2>@Plant.Name</h2>
 
+    <!-- EDIT PLANT BUTTON -->
+    <button class="btn btn-outline-primary btn-sm mb-3"
+            @onclick="() => OnEditPlant.InvokeAsync(Plant.PlantId)">
+        <i class="bi bi-pencil-square"></i> Edit Plant
+    </button>
+
     @if (plantInfo != null)
     {
         <details class="plant-info">
@@ -18,8 +23,6 @@ else
 
             <p><strong>Common Name:</strong> @plantInfo.CommonName</p>
             <p><strong>Scientific Name:</strong> @plantInfo.ScientificName</p>
-
-            @* When you add more fields, add them here ONCE *@
         </details>
     }
 
@@ -35,18 +38,17 @@ else
     }
     else
     {
-        <ul>
+        <ul class="list-unstyled">
             @foreach (var o in observations)
             {
-                <tr>
-                    <td>
-                        <li>@o.Observation</li>
-                    </td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" @onclick="() => EditObservation(o.ObservationId)">Edit</button>
-                    </td>
-                </tr>
+                <li class="d-flex justify-content-between align-items-center mb-2">
+                    <span>@o.Observation</span>
 
+                    <button class="btn btn-primary btn-sm"
+                            @onclick="() => OnEditObservation.InvokeAsync(o.ObservationId)">
+                        Edit
+                    </button>
+                </li>
             }
         </ul>
     }
@@ -55,13 +57,13 @@ else
             @onclick="() => OnAddObservation.InvokeAsync(Plant.PlantId)">
         <i class="bi bi-plus-lg"></i> Add Observation
     </button>
-
 }
 
 @code {
     [Parameter] public PlantModel? Plant { get; set; }
     [Parameter] public EventCallback<int> OnAddObservation { get; set; }
-
+    [Parameter] public EventCallback<int> OnEditObservation { get; set; }
+    [Parameter] public EventCallback<int> OnEditPlant { get; set; }
 
     PlantInformationModel? plantInfo;
     List<ObservationModel>? observations;
@@ -72,22 +74,10 @@ else
         {
             plantInfo = null;
             observations = null;
-            return;   // <-- THIS prevents the crash
+            return;
         }
 
         plantInfo = await PlantInfoService.Get(Plant.PlantInformationId);
         observations = await ObservationService.GetByPlant(Plant.PlantId);
-    }
-
-    void EditObservation(int id)
-    {
-        Nav.NavigateTo($"/observations/edit/{id}");
-    }
-
-    void AddObservation()
-    {
-        if (Plant != null)
-            Nav.NavigateTo($"/observations/create?plantId={Plant.PlantId}&returnUrl=/plants?plantId={Plant.PlantId}");
-        
     }
 }

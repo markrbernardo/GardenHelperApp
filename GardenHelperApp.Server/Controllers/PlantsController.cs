@@ -97,15 +97,6 @@ public class PlantsController : ControllerBase
         return NoContent();
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<PlantModel>> GetPlant(int id)
-    {
-        var plant = await _context.Plants.FindAsync(id);
-        if (plant == null)
-            return NotFound();
-
-        return plant;
-    }
 
 
     [HttpPost("create")]
@@ -127,7 +118,7 @@ public class PlantsController : ControllerBase
         _context.Plants.Add(plant);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetPlant), new { id = plant.PlantId }, plant);
+        return CreatedAtAction(nameof(Get), new { id = plant.PlantId }, plant);
     }
 
 
