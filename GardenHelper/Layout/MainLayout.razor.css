@@ -36,6 +36,22 @@ main {
         text-overflow: ellipsis;
     }
 
+
+    .top-row input.form-control {
+        max-height: 32px;
+        font-size: 0.9rem;
+    }
+
+.list-group-item {
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+    .list-group-item:hover {
+        background-color: rgba(0,0,0,0.1);
+    }
+
+
 @media (max-width: 640.98px) {
     .top-row {
         justify-content: space-between;

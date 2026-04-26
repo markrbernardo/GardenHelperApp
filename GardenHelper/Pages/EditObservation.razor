@@ -1,4 +1,5 @@
 ﻿@page "/observations/edit/{id:int}"
+@using GardenHelperApp.Shared.Models
 @inject ObservationService ObservationService
 @inject PlantService PlantService
 @inject PlantInformationService PlantInfoService
@@ -35,8 +36,8 @@ else
             <InputTextArea class="form-control" @bind-Value="observation.Observation" rows="4" />
         </div>
 
-        <button class="btn btn-success">Save</button>
-        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+        <button type="submit" class="btn btn-success">Save</button>
+        <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
     </EditForm>
 }
 
@@ -44,21 +45,24 @@ else
     [Parameter] public int id { get; set; }
     string? returnUrl;
 
-
     ObservationModel? observation;
     List<PlantModel>? plants;
     List<PlantInformationModel>? plantInfoList;
 
     protected override async Task OnInitializedAsync()
     {
-        // Load dropdown data
         plants = await PlantService.GetAllPlants();
         plantInfoList = await PlantInfoService.GetAll();
 
-        // Load the observation being edited
         observation = await ObservationService.Get(id);
 
-        // Read returnUrl
+        if (observation != null)
+        {
+            // ⭐ FIX: Treat timestamps as pure local values with no timezone
+            observation.CreatedAt = DateTime.SpecifyKind(observation.CreatedAt, DateTimeKind.Unspecified);
+            observation.UpdatedAt = DateTime.SpecifyKind(observation.UpdatedAt, DateTimeKind.Unspecified);
+        }
+
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
@@ -66,16 +70,39 @@ else
             returnUrl = url!;
     }
 
-
     async Task HandleSubmit()
     {
-        await ObservationService.Update(observation!);
+        // Reconstruct timestamps as pure local values with no timezone
+        observation!.CreatedAt = new DateTime(
+            observation.CreatedAt.Year,
+            observation.CreatedAt.Month,
+            observation.CreatedAt.Day,
+            observation.CreatedAt.Hour,
+            observation.CreatedAt.Minute,
+            observation.CreatedAt.Second,
+            observation.CreatedAt.Millisecond,
+            DateTimeKind.Unspecified
+        );
+
+        observation.UpdatedAt = new DateTime(
+            DateTime.Now.Year,
+            DateTime.Now.Month,
+            DateTime.Now.Day,
+            DateTime.Now.Hour,
+            DateTime.Now.Minute,
+            DateTime.Now.Second,
+            DateTime.Now.Millisecond,
+            DateTimeKind.Unspecified
+        );
+
+        await ObservationService.Update(observation);
 
         if (!string.IsNullOrWhiteSpace(returnUrl))
             Nav.NavigateTo(returnUrl!);
         else
             Nav.NavigateTo("/observations");
     }
+
 
     void GoBack()
     {
@@ -84,5 +111,4 @@ else
         else
             Nav.NavigateTo("/observations");
     }
-
 }

@@ -1,27 +1,47 @@
 ﻿@inherits LayoutComponentBase
+@inject PlantService PlantService
+@inject PlantInformationService PlantInfoService
+@inject NavigationManager Nav
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
     </div>
 
     <main>
-        <div class="top-row px-4">
+        <div class="top-row px-4 d-flex align-items-center">
 
             <a href="/plantinformation" class="ms-3">
                 <i class="bi bi-journal-bookmark-fill me-1"></i> Plant Information
             </a>
 
-            <a href="/plants/create" class="ms-3">
-                <i class="bi bi-plus-square-fill me-1"></i> Add Plant
-            </a>
-
-            <a href="/observations/create" class="ms-3">
-                <i class="bi bi-plus-square-fill me-1"></i> Add Observation
-            </a>
-
             <a href="/journalentries/create" class="ms-3">
                 <i class="bi bi-plus-square-fill me-1"></i> Add Journal Entry
             </a>
+
+            <!-- SEARCH BAR WITH SMART SUGGESTIONS -->
+            <div class="ms-auto position-relative" style="width: 260px;">
+                <input class="form-control"
+                       placeholder="Search plants..."
+                       value="@searchText"
+                       @oninput="OnInputChanged"
+                       @onfocus="ShowSuggestions"
+                       @onblur="HideSuggestionsDelayed" />
+
+                @if (showSuggestions && filteredPlants?.Any() == true)
+                {
+                    <div class="list-group position-absolute w-100 shadow-sm" style="z-index: 1000;">
+                        @foreach (var p in filteredPlants)
+                        {
+                            <button class="list-group-item list-group-item-action"
+                                    @onclick="() => SelectPlant(p.PlantId)">
+                                @p.Name
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+
         </div>
 
         <article class="content px-4">
@@ -30,3 +50,108 @@
 
     </main>
 </div>
+
+@code {
+    private string? searchText;
+    private bool showSuggestions = false;
+
+    private List<PlantModel>? allPlants;
+    private List<PlantInformationModel>? allInfo;
+    private List<PlantModel>? filteredPlants;
+
+    protected override async Task OnInitializedAsync()
+    {
+        allPlants = await PlantService.GetAllPlants();
+        allInfo = await PlantInfoService.GetAll();
+
+        allPlants = allPlants.OrderBy(p => p.Name).ToList();
+    }
+
+    private void ShowSuggestions() => showSuggestions = true;
+
+    private async Task UpdateSuggestions()
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            // Show top plants alphabetically when empty
+            filteredPlants = allPlants!.Take(10).ToList();
+            showSuggestions = true;
+            return;
+        }
+
+        string q = searchText.Trim().ToLower();
+
+        filteredPlants = allPlants!
+            .Select(p => new
+            {
+                Plant = p,
+                Score =
+                    (p.Name.ToLower().StartsWith(q) ? 100 : 0) +
+                    (p.Name.ToLower().Contains(q) ? 60 : 0) +
+                    (GetInfoMatchScore(p, q)) +
+                    (FuzzyScore(p.Name.ToLower(), q))
+            })
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.Plant.Name)
+            .Take(10)
+            .Select(x => x.Plant)
+            .ToList();
+
+        showSuggestions = true;
+    }
+
+
+    private int GetInfoMatchScore(PlantModel p, string q)
+    {
+        var info = allInfo?.FirstOrDefault(i => i.PlantInformationId == p.PlantInformationId);
+        if (info == null) return 0;
+
+        int score = 0;
+
+        if (info.CommonName?.ToLower().StartsWith(q) == true) score += 80;
+        if (info.CommonName?.ToLower().Contains(q) == true) score += 40;
+
+        if (info.ScientificName?.ToLower().StartsWith(q) == true) score += 60;
+        if (info.ScientificName?.ToLower().Contains(q) == true) score += 30;
+
+        return score;
+    }
+
+    private async Task HideSuggestionsDelayed()
+    {
+        await Task.Delay(200);
+        showSuggestions = false;
+    }
+
+    private void SelectPlant(int plantId)
+    {
+        showSuggestions = false;
+        searchText = "";
+        Nav.NavigateTo($"/plants?plantId={plantId}");
+    }
+
+    private int FuzzyScore(string text, string query)
+    {
+        // Very lightweight typo tolerance
+        if (text.Length < 2 || query.Length < 2)
+            return 0;
+
+        int score = 0;
+
+        if (text.Contains(query[0]))
+            score += 10;
+
+        if (query.Length > 1 && text.Contains(query.Substring(0, 2)))
+            score += 20;
+
+        return score;
+    }
+
+    private async Task OnInputChanged(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString();
+        await UpdateSuggestions();
+    }
+
+
+}

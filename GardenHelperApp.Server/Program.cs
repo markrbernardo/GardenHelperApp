@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ⭐ Force ASP.NET Core to treat all incoming timestamps as LOCAL time
+AppContext.SetSwitch("System.Globalization.EnforceLocalTime", true);
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

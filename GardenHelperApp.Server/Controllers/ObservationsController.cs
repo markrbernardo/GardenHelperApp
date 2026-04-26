@@ -39,23 +39,41 @@ public class ObservationsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(ObservationModel model)
+    public async Task<ActionResult<int>> Create(ObservationModel model)
     {
+        model.CreatedAt = DateTime.UtcNow;
+        model.UpdatedAt = DateTime.UtcNow;
+
         _context.Observations.Add(model);
         await _context.SaveChangesAsync();
-        return Ok(model);
+
+        return model.ObservationId;
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, ObservationModel model)
     {
-        if (id != model.ObservationId) return BadRequest();
+        if (id != model.ObservationId)
+            return BadRequest();
 
-        _context.Entry(model).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
+        // ⭐ FIX: Force timestamps to be treated as LOCAL time
+        model.CreatedAt = DateTime.SpecifyKind(model.CreatedAt, DateTimeKind.Local).ToLocalTime();
+        model.UpdatedAt = DateTime.SpecifyKind(model.UpdatedAt, DateTimeKind.Local).ToLocalTime();
+
+        try
+        {
+            _context.Observations.Update(model);
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
 
         return NoContent();
     }
+
+
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
@@ -68,4 +86,19 @@ public class ObservationsController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPut("{id}/active")]
+    public async Task<IActionResult> UpdateActiveStatus(int id, [FromBody] bool isActive)
+    {
+        var obs = await _context.Observations.FindAsync(id);
+        if (obs == null)
+            return NotFound();
+
+        obs.ActiveObservation = isActive;
+        obs.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
 }

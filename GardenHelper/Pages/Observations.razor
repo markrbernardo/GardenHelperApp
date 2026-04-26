@@ -1,111 +1,132 @@
 ﻿@page "/observations"
+@using GardenHelperApp.Shared.Models
 @inject ObservationService ObservationService
 @inject PlantService PlantService
 @inject PlantInformationService PlantInfoService
+@inject UserSessionService UserSessionService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<h3>Observations</h3>
-
-<button class="btn btn-primary mb-3" @onclick="CreateObservation">
-    Create New Observation
-</button>
+<h1 class="border-bottom pb-2">Observations</h1>
 
 @if (observations == null || plants == null || plantInfoList == null)
 {
     <p>Loading...</p>
 }
-else if (observations.Count == 0)
+else if (!observations.Any(o => plants.Any(p => p.PlantId == o.PlantId && p.GardenId == selectedGardenId)))
 {
-    <p>No observations found.</p>
+    <p>No observations found for this garden.</p>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Plant Name</th>
-                <th>Common Name</th>
-                <th>Scientific Name</th>
-                <th>Observation</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var o in observations)
+    <!-- MOBILE DROPDOWN -->
+    <div class="plant-dropdown d-md-none mb-3">
+        <select class="form-select" @onchange="OnMobileDateChange">
+            <option value="">Select a date...</option>
+            @foreach (var group in groupedObservations)
             {
-                <tr>
-                    <td>@o.ObservationId</td>
-                    <td>@GetPlantName(o.PlantId)</td>
-                    <td>@GetCommonName(o.PlantId)</td>
-                    <td>@GetScientificName(o.PlantId)</td>
-                    <td>@o.Observation</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" @onclick="() => EditObservation(o.ObservationId)">Edit</button>
-                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteObservation(o.ObservationId)">Delete</button>
-                    </td>
-                </tr>
+                <option value="@group.Key.ToString("yyyy-MM-dd")">
+                    @group.Key.ToString("MMM dd, yyyy") (@group.Count())
+                </option>
             }
-        </tbody>
-    </table>
+        </select>
+    </div>
+
+    <!-- MOBILE DETAILS -->
+    <div class="plant-details d-md-none mt-3">
+        <ObservationDetails SelectedDate="selectedDate"
+                            Observations="filteredObservations"
+                            Plants="plants"
+                            PlantInfos="plantInfoList"
+                            SelectedGardenId="selectedGardenId"
+                            OnEdit="EditObservation"
+                            OnRefresh="RefreshObservations" />
+    </div>
+
+    <!-- DESKTOP TWO-COLUMN LAYOUT -->
+    <div class="plant-layout d-none d-md-grid">
+
+        <!-- LEFT COLUMN -->
+        <div class="plant-list">
+            <h3 class="mb-3">Dates</h3>
+
+            @foreach (var group in groupedObservations)
+            {
+                <div class="obs-date @(selectedDate == group.Key ? "selected" : "")"
+                     @onclick="() => SelectDate(group.Key)">
+                    <strong>@group.Key.ToString("MMM dd, yyyy")</strong><br />
+                    <small>@group.Count() observation(s)</small>
+                </div>
+            }
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <ObservationDetails SelectedDate="selectedDate"
+                            Observations="filteredObservations"
+                            Plants="plants"
+                            PlantInfos="plantInfoList"
+                            SelectedGardenId="selectedGardenId"
+                            OnEdit="EditObservation"
+                            OnRefresh="RefreshObservations" />
+    </div>
 }
 
 @code {
     List<ObservationModel>? observations;
+    List<ObservationModel>? filteredObservations;
     List<PlantModel>? plants;
     List<PlantInformationModel>? plantInfoList;
+
+    List<IGrouping<DateTime, ObservationModel>> groupedObservations = new();
+    DateTime? selectedDate;
+    int? selectedGardenId;
 
     protected override async Task OnInitializedAsync()
     {
         observations = await ObservationService.GetAll();
         plants = await PlantService.GetAllPlants();
         plantInfoList = await PlantInfoService.GetAll();
+
+        selectedGardenId = UserSessionService.CurrentGardenId;
+
+        ApplyFilteringAndGrouping();
     }
 
-    string GetPlantName(int plantId)
+    void ApplyFilteringAndGrouping()
     {
-        return plants?
-            .FirstOrDefault(p => p.PlantId == plantId)?
-            .Name ?? "Unknown";
+        filteredObservations = observations
+            .Where(o => plants.Any(p => p.PlantId == o.PlantId &&
+                                        p.GardenId == selectedGardenId))
+            .ToList();
+
+        groupedObservations = filteredObservations
+            .GroupBy(o => o.CreatedAt.Date)
+            .OrderByDescending(g => g.Key)
+            .ToList();
+
+        selectedDate ??= groupedObservations.FirstOrDefault()?.Key;
     }
 
-    string GetCommonName(int plantId)
+    void SelectDate(DateTime date)
     {
-        var plant = plants?.FirstOrDefault(p => p.PlantId == plantId);
-        if (plant == null) return "Unknown";
-
-        return plantInfoList?
-            .FirstOrDefault(pi => pi.PlantInformationId == plant.PlantInformationId)?
-            .CommonName ?? "Unknown";
+        selectedDate = date;
     }
 
-    string GetScientificName(int plantId)
+    void OnMobileDateChange(ChangeEventArgs e)
     {
-        var plant = plants?.FirstOrDefault(p => p.PlantId == plantId);
-        if (plant == null) return "Unknown";
-
-        return plantInfoList?
-            .FirstOrDefault(pi => pi.PlantInformationId == plant.PlantInformationId)?
-            .ScientificName ?? "Unknown";
+        if (DateTime.TryParse(e.Value?.ToString(), out var date))
+            selectedDate = date;
     }
 
-    void CreateObservation()
+    void EditObservation(int obsId)
     {
-        Nav.NavigateTo("/observations/create");
+        Nav.NavigateTo($"/observations/edit/{obsId}");
     }
 
-    void EditObservation(int id)
+    async Task RefreshObservations()
     {
-        Nav.NavigateTo($"/observations/edit/{id}");
-    }
-
-    async Task DeleteObservation(int id)
-    {
-        bool confirm = await JS.InvokeAsync<bool>("confirm", "Delete this observation?");
-        if (!confirm) return;
-
-        await ObservationService.Delete(id);
         observations = await ObservationService.GetAll();
+        ApplyFilteringAndGrouping();
+        StateHasChanged();
     }
 }

@@ -1,0 +1,18 @@
+﻿<div class="plant-list">
+
+    @foreach (var group in Groups)
+    {
+        <div class="obs-date @(SelectedDate == group.Key ? "selected" : "")"
+             @onclick="() => OnSelect.InvokeAsync(group.Key)">
+            <strong>@group.Key.ToString("MMM dd, yyyy")</strong><br />
+            <small>@group.Count() observation(s)</small>
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter] public List<IGrouping<DateTime, ObservationModel>> Groups { get; set; }
+    [Parameter] public DateTime? SelectedDate { get; set; }
+    [Parameter] public EventCallback<DateTime> OnSelect { get; set; }
+}

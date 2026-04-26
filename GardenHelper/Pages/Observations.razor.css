@@ -1,0 +1,48 @@
+.obs-date {
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 5px;
+    background-color: #f7f7f7;
+}
+
+    .obs-date:hover {
+        background-color: #eee;
+    }
+
+    .obs-date.selected {
+        background-color: #dcefe2;
+        font-weight: bold;
+    }
+
+.obs-card {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    background: #fff;
+}
+
+/* DESKTOP LAYOUT FOR PLANTS PAGE ONLY */
+.plant-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 20px;
+    height: calc(100vh - 120px);
+}
+
+/* MOBILE DROPDOWN FOR PLANTS PAGE */
+.plant-dropdown select {
+    font-size: 1rem;
+}
+
+/* RESPONSIVE BEHAVIOR FOR PLANTS PAGE */
+@media (min-width: 768px) {
+    .plant-layout {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 20px;
+        height: calc(100vh - 120px);
+    }
+}
+

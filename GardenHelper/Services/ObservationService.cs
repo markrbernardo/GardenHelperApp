@@ -29,18 +29,33 @@ public class ObservationService
                ?? new List<ObservationModel>();
     }
 
-    public async Task Create(ObservationModel model)
+    // CREATE with timestamps
+    public async Task<int> Create(ObservationModel model)
     {
-        await _http.PostAsJsonAsync("api/observations", model);
+        model.CreatedAt = DateTime.Now;
+        model.UpdatedAt = DateTime.Now;
+
+        var response = await _http.PostAsJsonAsync("api/observations", model);
+        return await response.Content.ReadFromJsonAsync<int>();
     }
 
     public async Task Update(ObservationModel model)
     {
+        model.UpdatedAt = DateTime.Now;
         await _http.PutAsJsonAsync($"api/observations/{model.ObservationId}", model);
     }
+
 
     public async Task Delete(int id)
     {
         await _http.DeleteAsync($"api/observations/{id}");
     }
+
+    public async Task UpdateActiveStatus(int id, bool isActive)
+    {
+        await _http.PutAsJsonAsync($"api/observations/{id}/active", isActive);
+    }
+
+
+
 }

@@ -39,5 +39,13 @@ public class GardenContext : DbContext
             .WithMany()
             .HasForeignKey(p => p.GardenId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ObservationModel>()
+            .Property(o => o.CreatedAt)
+            .HasColumnType("TEXT");
+
+        modelBuilder.Entity<ObservationModel>()
+            .Property(o => o.UpdatedAt)
+            .HasColumnType("TEXT");
     }
 }
