@@ -95,7 +95,9 @@ else
         <div class="loc-right">
             <h3>Details</h3>
             <div class="plant-details d-none d-md-block">
-                <PlantDetails Plant="selectedPlant" />
+                <PlantDetails Plant="selectedPlant"
+                              OnAddObservation="HandleAddObservation" />
+
             </div>
         </div>
 
@@ -103,7 +105,9 @@ else
 
     <!-- MOBILE DETAILS -->
     <div class="plant-details d-md-none mt-3">
-        <PlantDetails Plant="selectedPlant" />
+        <PlantDetails Plant="selectedPlant"
+                      OnAddObservation="HandleAddObservation" />
+
     </div>
 }
 
@@ -141,4 +145,10 @@ else
     {
         await LocationService.UpdateLocation(location);
     }
+
+    void HandleAddObservation(int plantId)
+    {
+        Nav.NavigateTo($"/observations/create?plantId={plantId}&returnUrl=/location-profile/{locationId}");
+    }
+
 }

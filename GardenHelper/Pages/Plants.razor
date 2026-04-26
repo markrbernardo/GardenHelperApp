@@ -63,14 +63,18 @@ else
         <!-- RIGHT COLUMN -->
         <div class="plant-details">
             <h1>Details</h1>
-            <PlantDetails Plant="selectedPlant" />
+            <PlantDetails Plant="selectedPlant"
+                          OnAddObservation="HandleAddObservation" />
+
         </div>
 
     </div>
 
     <!-- MOBILE DETAILS -->
     <div class="plant-details d-md-none mt-3">
-        <PlantDetails Plant="selectedPlant" />
+        <PlantDetails Plant="selectedPlant"
+                      OnAddObservation="HandleAddObservation" />
+
     </div>
 }
 
@@ -134,4 +138,10 @@ else
             }
         }
     }
+
+    void HandleAddObservation(int plantId)
+    {
+        Nav.NavigateTo($"/observations/create?plantId={plantId}&returnUrl=/plants");
+    }
+
 }

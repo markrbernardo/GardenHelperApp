@@ -51,13 +51,17 @@ else
         </ul>
     }
 
-    <button class="btn btn-primary mt-3" @onclick="AddObservation">
-        Add Observation
+    <button class="btn btn-sm btn-outline-success"
+            @onclick="() => OnAddObservation.InvokeAsync(Plant.PlantId)">
+        <i class="bi bi-plus-lg"></i> Add Observation
     </button>
+
 }
 
 @code {
     [Parameter] public PlantModel? Plant { get; set; }
+    [Parameter] public EventCallback<int> OnAddObservation { get; set; }
+
 
     PlantInformationModel? plantInfo;
     List<ObservationModel>? observations;
@@ -83,6 +87,7 @@ else
     void AddObservation()
     {
         if (Plant != null)
-            Nav.NavigateTo($"/observations/create?plantId={Plant.PlantId}");
+            Nav.NavigateTo($"/observations/create?plantId={Plant.PlantId}&returnUrl=/plants?plantId={Plant.PlantId}");
+        
     }
 }

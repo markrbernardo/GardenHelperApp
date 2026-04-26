@@ -46,36 +46,52 @@ else
     List<PlantModel>? plants;
     List<PlantInformationModel>? plantInfoList;
 
+    string? returnUrl;
+
+
     protected override async Task OnInitializedAsync()
     {
         plants = await PlantService.GetAllPlants();
         plantInfoList = await PlantInfoService.GetAll();
 
-        // 1. Default to first plant (same pattern as CreatePlant)
+        // Default to first plant
         if (plants.Count > 0)
             observation.PlantId = plants.First().PlantId;
 
-        // 2. Override default if ?plantId=### is provided
+        // Override if ?plantId=###
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
-        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("plantId", out var pid))
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("plantId", out var pid) &&
+            int.TryParse(pid, out int parsedId) &&
+            plants.Any(p => p.PlantId == parsedId))
         {
-            if (int.TryParse(pid, out int parsedId) &&
-                plants.Any(p => p.PlantId == parsedId))
-            {
-                observation.PlantId = parsedId;
-            }
+            observation.PlantId = parsedId;
         }
+
+        // Read returnUrl
+        if (query.TryGetValue("returnUrl", out var url))
+            returnUrl = url!;
     }
+
 
 
     async Task HandleSubmit()
     {
         await ObservationService.Create(observation);
-        Nav.NavigateTo("/observations");
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl!);
+        else
+            Nav.NavigateTo("/observations");
     }
 
     void GoBack()
     {
-        Nav.NavigateTo("/observations");
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl!);
+        else
+            Nav.NavigateTo("/observations");
     }
+
 }
