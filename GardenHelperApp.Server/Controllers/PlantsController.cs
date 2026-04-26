@@ -20,8 +20,11 @@ public class PlantsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<PlantModel>>> GetAll()
     {
-        return await _context.Plants.ToListAsync();
+        return await _context.Plants
+            .OrderBy(p => p.Name)
+            .ToListAsync();
     }
+
 
     // GET: api/plants/5
     [HttpGet("{id}")]
@@ -38,10 +41,12 @@ public class PlantsController : ControllerBase
     {
         var plants = await _context.Plants
             .Where(p => p.GardenId == gardenId)
+            .OrderBy(p => p.Name)
             .ToListAsync();
 
         return Ok(plants);
     }
+
 
     // GET: api/plants/location/7
     [HttpGet("location/{locationId}")]
@@ -49,10 +54,12 @@ public class PlantsController : ControllerBase
     {
         var plants = await _context.Plants
             .Where(p => p.LocationId == locationId)
+            .OrderBy(p => p.Name)
             .ToListAsync();
 
         return Ok(plants);
     }
+
 
     // GET: api/plants/info/12
     [HttpGet("info/{plantInfoId}")]

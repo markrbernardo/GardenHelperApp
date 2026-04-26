@@ -19,8 +19,11 @@ public class LocationsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<LocationModel>>> GetAll()
     {
-        return await _context.Locations.ToListAsync();
+        return await _context.Locations
+            .OrderBy(l => l.Name)
+            .ToListAsync();
     }
+
 
     [HttpGet("{id}")]
     public async Task<ActionResult<LocationModel>> Get(int id)
@@ -33,10 +36,14 @@ public class LocationsController : ControllerBase
     [HttpGet("garden/{gardenId}")]
     public async Task<ActionResult<List<LocationModel>>> GetByGarden(int gardenId)
     {
-        return await _context.Locations
+        var locations = await _context.Locations
             .Where(l => l.GardenId == gardenId)
+            .OrderBy(l => l.Name)
             .ToListAsync();
+
+        return Ok(locations);
     }
+
 
     [HttpPost]
     public async Task<IActionResult> Create(LocationModel model)
