@@ -52,7 +52,9 @@ else
 
             @foreach (var group in groupedObservations)
             {
-                <div class="obs-date @(selectedDate == group.Key ? "selected" : "")"
+                <div class="obs-date
+                    @(selectedDate == group.Key ? "selected" : "")
+                    @(DateHasActiveObservation(group.Key) ? "active-date" : "")"
                      @onclick="() => SelectDate(group.Key)">
                     <strong>@group.Key.ToString("MMM dd, yyyy")</strong><br />
                     <small>@group.Count() observation(s)</small>
@@ -104,7 +106,6 @@ else
             .OrderByDescending(g => g.Key)
             .ToList();
 
-        selectedDate ??= groupedObservations.FirstOrDefault()?.Key;
     }
 
     void SelectDate(DateTime date)
@@ -129,4 +130,11 @@ else
         ApplyFilteringAndGrouping();
         StateHasChanged();
     }
+
+    bool DateHasActiveObservation(DateTime date)
+    {
+        return filteredObservations
+            .Any(o => o.CreatedAt.Date == date.Date && o.ActiveObservation);
+    }
+
 }

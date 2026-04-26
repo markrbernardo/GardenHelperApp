@@ -15,6 +15,12 @@
         font-weight: bold;
     }
 
+.active-date {
+    border-left: 4px solid #28a745; /* green highlight */
+    background-color: #e9f7ef; /* subtle green tint */
+}
+
+
 .obs-card {
     padding: 15px;
     border: 1px solid #ddd;
