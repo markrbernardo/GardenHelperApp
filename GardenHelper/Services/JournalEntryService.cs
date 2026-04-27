@@ -49,5 +49,6 @@ namespace GardenHelperApp.Client.Services
         {
             await _http.DeleteAsync($"api/journalentries/{id}");
         }
+
     }
 }

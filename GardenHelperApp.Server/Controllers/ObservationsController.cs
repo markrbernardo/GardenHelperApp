@@ -44,11 +44,16 @@ public class ObservationsController : ControllerBase
         model.CreatedAt = DateTime.UtcNow;
         model.UpdatedAt = DateTime.UtcNow;
 
+        // ⭐ Make sure UserId is included in the incoming model
+        if (model.UserId <= 0)
+            return BadRequest("UserId is required.");
+
         _context.Observations.Add(model);
         await _context.SaveChangesAsync();
 
         return model.ObservationId;
     }
+
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, ObservationModel model)
@@ -100,5 +105,15 @@ public class ObservationsController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
+    [HttpGet("user/{userId}")]
+    public async Task<ActionResult<List<ObservationModel>>> GetByUser(int userId)
+    {
+        return await _context.Observations
+            .Where(o => o.UserId == userId)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+    }
+
 
 }

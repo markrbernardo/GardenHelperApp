@@ -1,12 +1,12 @@
 ﻿@page "/journalentries/edit/{id:int}"
 @inject JournalEntryService JournalEntryService
-@inject UserService UserService
 @inject GardenService GardenService
+@inject UserSessionService Session
 @inject NavigationManager Nav
 
 <h3>Edit Journal Entry</h3>
 
-@if (entry == null || users == null || gardens == null)
+@if (entry == null || gardens == null)
 {
     <p>Loading...</p>
 }
@@ -15,16 +15,6 @@ else
     <EditForm Model="@entry" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator />
         <ValidationSummary />
-
-        <div class="mb-3">
-            <label>User</label>
-            <select class="form-select" @bind="entry.UserId">
-                @foreach (var u in users)
-                {
-                    <option value="@u.UserId">@u.Name</option>
-                }
-            </select>
-        </div>
 
         <div class="mb-3">
             <label>Garden</label>
@@ -50,27 +40,49 @@ else
     [Parameter] public int id { get; set; }
 
     JournalEntryModel? entry;
-    List<UserModel>? users;
     List<GardenModel>? gardens;
+    string? returnUrl;
 
     protected override async Task OnInitializedAsync()
     {
-        // Load dropdown data
-        users = await UserService.GetUsers();
-        gardens = await GardenService.GetAllGardens();
-
-        // Load the journal entry being edited
+        // Load the journal entry
         entry = await JournalEntryService.Get(id);
+
+        if (entry == null)
+            return;
+
+        // ⭐ Force the entry to belong to the logged-in user
+        entry.UserId = Session.CurrentUserId!.Value;
+
+        // Load only this user's gardens
+        gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
+
+        // Read returnUrl
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("returnUrl", out var url))
+            returnUrl = url!;
     }
 
     async Task HandleSubmit()
     {
-        await JournalEntryService.Update(entry!);
-        Nav.NavigateTo("/journalentries");
+        // Safety: ensure UserId is always correct
+        entry!.UserId = Session.CurrentUserId!.Value;
+
+        await JournalEntryService.Update(entry);
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl!);
+        else
+            Nav.NavigateTo("/journalentries");
     }
 
     void GoBack()
     {
-        Nav.NavigateTo("/journalentries");
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl!);
+        else
+            Nav.NavigateTo("/journalentries");
     }
 }

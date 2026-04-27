@@ -1,12 +1,12 @@
 ﻿@page "/journalentries/create"
 @inject JournalEntryService JournalEntryService
-@inject UserService UserService
 @inject GardenService GardenService
+@inject UserSessionService Session
 @inject NavigationManager Nav
 
 <h3>Create Journal Entry</h3>
 
-@if (users == null || gardens == null)
+@if (gardens == null)
 {
     <p>Loading...</p>
 }
@@ -15,16 +15,6 @@ else
     <EditForm Model="@entry" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator />
         <ValidationSummary />
-
-        <div class="mb-3">
-            <label>User</label>
-            <select class="form-select" @bind="entry.UserId">
-                @foreach (var u in users)
-                {
-                    <option value="@u.UserId">@u.Name</option>
-                }
-            </select>
-        </div>
 
         <div class="mb-3">
             <label>Garden</label>
@@ -49,30 +39,49 @@ else
 @code {
     JournalEntryModel entry = new();
 
-    List<UserModel>? users;
     List<GardenModel>? gardens;
+    string? returnUrl;
 
     protected override async Task OnInitializedAsync()
     {
-        users = await UserService.GetUsers();
-        gardens = await GardenService.GetAllGardens();
+        // ⭐ Assign the logged-in user
+        entry.UserId = Session.CurrentUserId!.Value;
 
-        // Default to first user and first garden if available
-        if (users.Count > 0)
-            entry.UserId = users.First().UserId;
+        // Load only this user's gardens
+        gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
 
-        if (gardens.Count > 0)
+        // Default to current garden if available
+        if (Session.CurrentGardenId != null)
+            entry.GardenId = Session.CurrentGardenId.Value;
+        else if (gardens.Count > 0)
             entry.GardenId = gardens.First().GardenId;
+
+        // Read returnUrl
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("returnUrl", out var url))
+            returnUrl = url!;
     }
 
     async Task HandleSubmit()
     {
+        // Safety: ensure UserId is always set
+        entry.UserId = Session.CurrentUserId!.Value;
+
         await JournalEntryService.Create(entry);
-        Nav.NavigateTo("/journalentries");
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl!);
+        else
+            Nav.NavigateTo("/journalentries");
     }
 
     void GoBack()
     {
-        Nav.NavigateTo("/journalentries");
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl!);
+        else
+            Nav.NavigateTo("/journalentries");
     }
 }

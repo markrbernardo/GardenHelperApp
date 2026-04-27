@@ -7,6 +7,7 @@ namespace GardenHelperApp.Shared.Models
         [Key]
         public int ObservationId { get; set; }
         public int PlantId { get; set; }
+        public int UserId { get; set; }
         public string? Observation { get; set; }
         public bool ActiveObservation { get; set; }
 

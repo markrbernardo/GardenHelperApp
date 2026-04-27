@@ -124,5 +124,10 @@ public class GardensController : ControllerBase
         return user.DefaultGardenId;
     }
 
+    [HttpGet("locations")]
+    public async Task<IEnumerable<LocationModel>> GetAllLocations()
+    {
+        return await _context.Locations.ToListAsync();
+    }
 
 }

@@ -1,6 +1,7 @@
 ﻿using GardenHelper.Pages;
 using GardenHelperApp.Shared.Models;
 using System.Net.Http.Json;
+using static System.Net.WebRequestMethods;
 
 namespace GardenHelperApp.Client.Services;
 
@@ -76,5 +77,11 @@ public class GardenService
     {
         await _http.PutAsync($"api/users/{userId}/default-garden/{gardenId}", null);
     }
+
+    public async Task<List<LocationModel>> GetAllLocations()
+    {
+        return await _http.GetFromJsonAsync<List<LocationModel>>("api/gardens/locations");
+    }
+
 
 }

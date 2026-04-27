@@ -85,7 +85,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        observations = await ObservationService.GetAll();
+        observations = await ObservationService.GetByUser(UserSessionService.CurrentUserId!.Value);
         plants = await PlantService.GetAllPlants();
         plantInfoList = await PlantInfoService.GetAll();
 
@@ -126,7 +126,7 @@ else
 
     async Task RefreshObservations()
     {
-        observations = await ObservationService.GetAll();
+        observations = await ObservationService.GetByUser(UserSessionService.CurrentUserId!.Value);
         ApplyFilteringAndGrouping();
         StateHasChanged();
     }

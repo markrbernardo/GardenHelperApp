@@ -2,19 +2,13 @@
 @inject ObservationService ObservationService
 @inject JournalEntryService JournalEntryService
 @inject GardenService GardenService
+@inject PlantService PlantService
 @inject UserSessionService Session
 @inject NavigationManager Nav
 
-
-<h3>Welcome, @Session.CurrentUserName</h3>
+<h3>Welcome back, @Session.CurrentUserName</h3>
 
 <div class="dashboard-grid">
-
-    <!-- WEATHER PLACEHOLDER -->
-    <div class="dash-tile">
-        <h4>Weather</h4>
-        <p class="placeholder">Weather feature coming soon…</p>
-    </div>
 
     <!-- GARDENS TILE -->
     @if (Session.CurrentGardenId != null)
@@ -34,7 +28,7 @@
                 </ul>
 
                 <button class="btn btn-sm btn-primary"
-                        @onclick="@(() => Nav.NavigateTo($"/locations?gardenId={defaultGarden.GardenId}"))">
+                        @onclick="@(() => Nav.NavigateTo($"/gardenprofile?gardenId={defaultGarden.GardenId}"))">
                     View Garden
                 </button>
             }
@@ -68,10 +62,22 @@
         </div>
     }
 
+    <!-- WEATHER PLACEHOLDER -->
+    <div class="dash-tile">
+        <h4>Weather</h4>
+        <p class="placeholder">Weather feature coming soon…</p>
+    </div>
 
     <!-- RECENT OBSERVATIONS -->
     <div class="dash-tile">
-        <h4>Recent Observations</h4>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="mb-0">Recent Observations</h4>
+
+            <button class="btn btn-sm btn-primary"
+                    @onclick="@(() => Nav.NavigateTo("/observations/create?returnUrl=/home"))">
+                Add
+            </button>
+        </div>
 
         @if (recentObservations == null)
         {
@@ -86,20 +92,50 @@
             <ul>
                 @foreach (var o in recentObservations)
                 {
-                    <li>@o.Observation</li>
+                    <li class="obs-item"
+                        @onclick="@(() => Nav.NavigateTo($"/observations/edit/{o.ObservationId}?returnUrl=/home"))">
+
+                        <div class="obs-left">
+                            <span class="obs-date">@o.CreatedAt.ToString("MMM dd")</span>
+                            <span class="obs-time">@o.CreatedAt.ToString("h:mm tt")</span>
+                        </div>
+
+                        <div class="obs-middle">
+
+                            <div class="obs-plant d-flex justify-content-between">
+                                @GetPlantName(o.PlantId)
+                            </div>
+
+                            <div class="obs-meta">
+                                @GetGardenName(o.PlantId) • @GetLocationName(o.PlantId)
+                            </div>
+
+                            <div class="obs-snippet">
+                                @o.Observation
+                            </div>
+
+                        </div>
+                        <div class="obs-right">
+                            <span class="status-dot @(o.ActiveObservation ? "active" : "inactive")"></span>
+                        </div>
+                        
+
+                    </li>
                 }
             </ul>
         }
-
-        <button class="btn btn-sm btn-primary mt-2"
-                @onclick="@(() => Nav.NavigateTo("/observations/create"))">
-            Add Observation
-        </button>
     </div>
 
     <!-- RECENT JOURNAL ENTRIES -->
     <div class="dash-tile">
-        <h4>Recent Journal Entries</h4>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h4 class="mb-0">Recent Journal Entries</h4>
+
+            <button class="btn btn-sm btn-secondary"
+                    @onclick="@(() => Nav.NavigateTo("/journalentries/create?returnUrl=/home"))">
+                Add
+            </button>
+        </div>
 
         @if (recentJournals == null)
         {
@@ -114,15 +150,29 @@
             <ul>
                 @foreach (var j in recentJournals)
                 {
-                    <li>@j.Entry</li>
+                    <li class="obs-item"
+                        @onclick="@(() => Nav.NavigateTo($"/journalentries/edit/{j.JournalEntryId}?returnUrl=/home"))">
+
+                        <div class="obs-left">
+                            <span class="obs-date">@j.CreatedAt.ToString("MMM dd")</span>
+                            <span class="obs-time">@j.CreatedAt.ToString("h:mm tt")</span>
+                        </div>
+
+                        <div class="obs-middle">
+
+                            <div class="obs-meta">
+                                @GetJournalGardenName(j.GardenId)
+                            </div>
+
+                            <div class="obs-snippet">@j.Entry</div>
+
+                        </div>
+
+
+                    </li>
                 }
             </ul>
         }
-
-        <button class="btn btn-sm btn-secondary mt-2"
-                @onclick="@(() => Nav.NavigateTo("/journalentries/create"))">
-            Add Journal Entry
-        </button>
     </div>
 
 </div>
@@ -131,49 +181,73 @@
     List<ObservationModel>? recentObservations;
     List<JournalEntryModel>? recentJournals;
     List<GardenModel>? gardens;
+    List<PlantModel>? plants;
+    List<LocationModel>? locations;
 
-    protected override async Task OnInitializedAsync()
-    {
-        if (Session.CurrentUserId != null)
-        {
-            gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
-
-            // Load default garden info
-            if (Session.CurrentGardenId != null)
-            {
-                defaultGarden = await GardenService.GetGarden(Session.CurrentGardenId.Value);
-
-                if (defaultGarden != null)
-                {
-                    var locations = await GardenService.GetLocationsByGarden(defaultGarden.GardenId);
-                    locationCount = locations.Count;
-
-                    var plants = await GardenService.GetPlantsByGarden(defaultGarden.GardenId);
-                    plantCount = plants.Count;
-                }
-            }
-
-            // Load dashboard-wide recent items
-            recentObservations = (await ObservationService.GetAll())?.Take(5).ToList();
-            recentJournals = (await JournalEntryService.GetAll())?.Take(5).ToList();
-        }
-    }
-
-
-
-
-    //GardenTile
     GardenModel? defaultGarden;
     int locationCount = 0;
     int plantCount = 0;
 
-    void GoToGardens()
+    protected override async Task OnInitializedAsync()
     {
-        Nav.NavigateTo($"/gardens?userId={Session.CurrentUserId}");
+        if (Session.CurrentUserId == null)
+            return;
+
+        // Load gardens
+        gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
+
+        // Load default garden info
+        if (Session.CurrentGardenId != null)
+        {
+            defaultGarden = await GardenService.GetGarden(Session.CurrentGardenId.Value);
+
+            if (defaultGarden != null)
+            {
+                var locs = await GardenService.GetLocationsByGarden(defaultGarden.GardenId);
+                locationCount = locs.Count;
+
+                var pls = await GardenService.GetPlantsByGarden(defaultGarden.GardenId);
+                plantCount = pls.Count;
+            }
+        }
+
+        // Load dashboard-wide recent items
+        recentObservations = (await ObservationService.GetByUser(Session.CurrentUserId.Value))?
+            .OrderByDescending(o => o.ActiveObservation)   // Active first
+            .ThenByDescending(o => o.CreatedAt)            // Newest within each group
+            .Take(5)
+            .ToList();
+
+
+        recentJournals = (await JournalEntryService.GetByUser(Session.CurrentUserId.Value))?
+            .OrderByDescending(j => j.CreatedAt)
+            .Take(5)
+            .ToList();
+
+        // Load all plants + all locations (your services support this)
+        plants = await PlantService.GetAllPlants();
+        locations = await GardenService.GetAllLocations();
     }
 
-    void GoToJournal()
+    string GetPlantName(int plantId) =>
+        plants?.FirstOrDefault(p => p.PlantId == plantId)?.Name ?? "Unknown";
+
+    string GetGardenName(int plantId)
     {
-        Nav.NavigateTo("/journalentries");
+        var plant = plants?.FirstOrDefault(p => p.PlantId == plantId);
+        return gardens?.FirstOrDefault(g => g.GardenId == plant?.GardenId)?.Name ?? "Unknown";
     }
+
+    string GetLocationName(int plantId)
+    {
+        var plant = plants?.FirstOrDefault(p => p.PlantId == plantId);
+        var location = locations?.FirstOrDefault(l => l.LocationId == plant?.LocationId);
+        return location?.Name ?? "Unknown";
+    }
+
+    string GetJournalGardenName(int gardenId)
+    {
+        return gardens?.FirstOrDefault(g => g.GardenId == gardenId)?.Name ?? "Unknown Garden";
+    }
+
 }

@@ -35,9 +35,13 @@ public class ObservationService
         model.CreatedAt = DateTime.Now;
         model.UpdatedAt = DateTime.Now;
 
+        // ⭐ Make sure UserId is set before sending
+        // model.UserId = Session.CurrentUserId.Value;  <-- you set this in the UI before calling Create()
+
         var response = await _http.PostAsJsonAsync("api/observations", model);
         return await response.Content.ReadFromJsonAsync<int>();
     }
+
 
     public async Task Update(ObservationModel model)
     {
@@ -56,6 +60,12 @@ public class ObservationService
         await _http.PutAsJsonAsync($"api/observations/{id}/active", isActive);
     }
 
+    public async Task<List<ObservationModel>> GetByUser(int userId)
+    {
+        return await _http.GetFromJsonAsync<List<ObservationModel>>(
+            $"api/observations/user/{userId}"
+        ) ?? new List<ObservationModel>();
+    }
 
 
 }

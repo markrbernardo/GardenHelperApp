@@ -1,0 +1,16 @@
+﻿.obs-card {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    background: #fff;
+}
+
+    .obs-card p {
+        margin-bottom: 0.5rem;
+    }
+
+.active-obs {
+    border-left: 6px solid #4caf50;
+    background-color: #f9fff9;
+}

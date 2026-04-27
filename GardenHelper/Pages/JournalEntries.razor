@@ -1,17 +1,13 @@
 ﻿@page "/journalentries"
 @inject JournalEntryService JournalEntryService
-@inject UserService UserService
 @inject GardenService GardenService
+@inject UserSessionService Session
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<h3>Journal Entries</h3>
+<h1 class="border-bottom pb-2">Journal</h1>
 
-<button class="btn btn-primary mb-3" @onclick="CreateEntry">
-    Create New Journal Entry
-</button>
-
-@if (entries == null || users == null || gardens == null)
+@if (entries == null || gardens == null)
 {
     <p>Loading...</p>
 }
@@ -21,68 +17,123 @@ else if (entries.Count == 0)
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>User</th>
-                <th>Garden</th>
-                <th>Entry</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var e in entries)
+    <!-- MOBILE DROPDOWN -->
+    <div class="plant-dropdown d-md-none mb-3">
+        <select class="form-select" @onchange="OnMobileDateChange">
+            <option value="">Select a date...</option>
+            @foreach (var group in groupedEntries)
             {
-                <tr>
-                    <td>@e.JournalEntryId</td>
-                    <td>@GetUserName(e.UserId)</td>
-                    <td>@GetGardenName(e.GardenId)</td>
-                    <td>@e.Entry</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" @onclick="() => EditEntry(e.JournalEntryId)">Edit</button>
-                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteEntry(e.JournalEntryId)">Delete</button>
-                    </td>
-                </tr>
+                <option value="@group.Key.ToString("yyyy-MM-dd")">
+                    @group.Key.ToString("MMM dd, yyyy") (@group.Count())
+                </option>
             }
-        </tbody>
-    </table>
+        </select>
+    </div>
+
+    <!-- MOBILE DETAILS -->
+    <div class="plant-details d-md-none mt-3">
+        <JournalEntryDetails SelectedDate="selectedDate"
+                             Entries="filteredEntries"
+                             Gardens="gardens"
+                             OnEdit="EditEntry" />
+    </div>
+
+
+    <!-- DESKTOP TWO-COLUMN LAYOUT -->
+    <div class="plant-layout d-none d-md-grid">
+
+        <!-- LEFT COLUMN -->
+        <div class="plant-list">
+            <h3 class="mb-3">Dates</h3>
+
+            @foreach (var group in groupedEntries)
+            {
+                <div class="obs-date
+                            @(selectedDate == group.Key ? "selected" : "")"
+                     @onclick="() => SelectDate(group.Key)">
+                    <strong>@group.Key.ToString("MMM dd, yyyy")</strong><br />
+                    <small>@group.Count() entry(s)</small>
+                </div>
+            }
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div>
+            <h3 class="pb-2">Entry</h3>
+            @foreach (var j in filteredEntries)
+            {
+                <JournalEntryDetails SelectedDate="selectedDate"
+                                     Entries="filteredEntries"
+                                     Gardens="gardens"
+                                     OnEdit="EditEntry" />
+
+            }
+        </div>
+
+    </div>
 }
 
 @code {
     List<JournalEntryModel>? entries;
-    List<UserModel>? users;
     List<GardenModel>? gardens;
+
+    List<IGrouping<DateTime, JournalEntryModel>> groupedEntries = new();
+    List<JournalEntryModel> filteredEntries = new();
+
+    DateTime? selectedDate;
 
     protected override async Task OnInitializedAsync()
     {
-        entries = await JournalEntryService.GetAll();
-        users = await UserService.GetUsers();
-        gardens = await GardenService.GetAllGardens();
+        entries = await JournalEntryService.GetByUser(Session.CurrentUserId!.Value);
+        gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
+
+        groupedEntries = entries
+            .GroupBy(e => e.CreatedAt.Date)
+            .OrderByDescending(g => g.Key)
+            .ToList();
+
+        if (groupedEntries.Any())
+            selectedDate = groupedEntries.First().Key;
+
+        ApplyFilter();
     }
 
-    string GetUserName(int userId)
+    void ApplyFilter()
     {
-        return users?
-            .FirstOrDefault(u => u.UserId == userId)?
-            .Name ?? "Unknown";
+        if (selectedDate == null)
+        {
+            filteredEntries = new();
+            return;
+        }
+
+        filteredEntries = entries
+            .Where(e => e.CreatedAt.Date == selectedDate.Value.Date)
+            .ToList();
+    }
+
+    void SelectDate(DateTime date)
+    {
+        selectedDate = date;
+        ApplyFilter();
+    }
+
+    void OnMobileDateChange(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out var date))
+        {
+            selectedDate = date;
+            ApplyFilter();
+        }
     }
 
     string GetGardenName(int gardenId)
     {
-        return gardens?
-            .FirstOrDefault(g => g.GardenId == gardenId)?
-            .Name ?? "Unknown";
-    }
-
-    void CreateEntry()
-    {
-        Nav.NavigateTo("/journalentries/create");
+        return gardens?.FirstOrDefault(g => g.GardenId == gardenId)?.Name ?? "Unknown Garden";
     }
 
     void EditEntry(int id)
     {
-        Nav.NavigateTo($"/journalentries/edit/{id}");
+        Nav.NavigateTo($"/journalentries/edit/{id}?returnUrl=/journalentries");
     }
 
     async Task DeleteEntry(int id)
@@ -91,6 +142,17 @@ else
         if (!confirm) return;
 
         await JournalEntryService.Delete(id);
-        entries = await JournalEntryService.GetAll();
+
+        entries = await JournalEntryService.GetByUser(Session.CurrentUserId!.Value);
+
+        groupedEntries = entries
+            .GroupBy(e => e.CreatedAt.Date)
+            .OrderByDescending(g => g.Key)
+            .ToList();
+
+        if (groupedEntries.Any())
+            selectedDate = groupedEntries.First().Key;
+
+        ApplyFilter();
     }
 }
