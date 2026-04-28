@@ -10,3 +10,15 @@
     cursor: pointer;
     font-weight: bold;
 }
+.clickable {
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+}
+
+    .clickable:hover {
+        background-color: #f8f9fa;
+    }
+
+.observation-card {
+    border-left: 4px solid #198754; /* green accent */
+}

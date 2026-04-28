@@ -11,7 +11,16 @@
     <!-- LEFT COLUMN -->
     <div class="left-column">
 
-        <h3>Plants</h3>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h3 class="mb-0">Plants</h3>
+
+            <button class="btn btn-sm btn-success" @onclick="CreateInfo">
+                <i class="bi bi-plus-lg"></i> Add Info Card
+            </button>
+
+        </div>
+
+
 
         @if (allInfo?.Any() == true)
         {
@@ -44,8 +53,6 @@
         }
         else if (info != null)
         {
-            <PlantInfoHeader CommonName="@info.CommonName"
-                             ScientificName="@info.ScientificName" />
 
             <PlantInfoDetails Info="@info" />
 
@@ -78,5 +85,11 @@
         info = await PlantInfoService.GetById(id);
         photos = await PhotoService.GetPhotosForPlant(id);
     }
+
+    void CreateInfo()
+    {
+        Nav.NavigateTo("/plantinformation/create");
+    }
+
 
 }

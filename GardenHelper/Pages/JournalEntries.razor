@@ -1,4 +1,5 @@
 ﻿@page "/journalentries"
+@using Microsoft.AspNetCore.WebUtilities
 @inject JournalEntryService JournalEntryService
 @inject GardenService GardenService
 @inject UserSessionService Session
@@ -92,7 +93,18 @@ else
             .OrderByDescending(g => g.Key)
             .ToList();
 
-        if (groupedEntries.Any())
+        // check querystring for entryId to pre-select
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("entryId", out var val) && int.TryParse(val, out var entryId))
+        {
+            var entry = entries.FirstOrDefault(e => e.JournalEntryId == entryId);
+            if (entry != null)
+                selectedDate = entry.CreatedAt.Date;
+        }
+
+        if (selectedDate == null && groupedEntries.Any())
             selectedDate = groupedEntries.First().Key;
 
         ApplyFilter();

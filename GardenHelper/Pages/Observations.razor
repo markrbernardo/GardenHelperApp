@@ -1,5 +1,6 @@
 ﻿@page "/observations"
 @using GardenHelperApp.Shared.Models
+@using Microsoft.AspNetCore.WebUtilities
 @inject ObservationService ObservationService
 @inject PlantService PlantService
 @inject PlantInformationService PlantInfoService
@@ -92,6 +93,27 @@ else
         selectedGardenId = UserSessionService.CurrentGardenId;
 
         ApplyFilteringAndGrouping();
+
+        // read querystring to pre-select a date (by observation id or explicit date)
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("obsId", out var oid) && int.TryParse(oid, out var obsId))
+        {
+            var obs = observations.FirstOrDefault(o => o.ObservationId == obsId);
+            if (obs != null)
+            {
+                selectedDate = obs.CreatedAt.Date;
+            }
+        }
+        else if (query.TryGetValue("date", out var ds) && DateTime.TryParse(ds, out var dt))
+        {
+            selectedDate = dt.Date;
+        }
+
+        // default to most recent date if nothing selected
+        if (selectedDate == null && groupedObservations.Any())
+            selectedDate = groupedObservations.First().Key;
     }
 
     void ApplyFilteringAndGrouping()

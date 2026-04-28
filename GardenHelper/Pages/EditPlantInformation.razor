@@ -4,49 +4,207 @@
 
 <h3>Edit Plant Information</h3>
 
-@if (plantInfo == null)
+@if (isLoading)
 {
-    <p>Loading...</p>
+    <p><em>Loading...</em></p>
 }
-else
+else if (loadError != null)
+{
+    <div class="alert alert-danger">@loadError</div>
+}
+else if (plantInfo != null)
 {
     <EditForm Model="@plantInfo" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
+        <!-- BASIC INFO -->
         <div class="mb-3">
-            <label>Common Name</label>
+            <label class="form-label">Common Name</label>
             <InputText class="form-control" @bind-Value="plantInfo.CommonName" />
         </div>
 
         <div class="mb-3">
-            <label>Scientific Name</label>
+            <label class="form-label">Scientific Name</label>
             <InputText class="form-control" @bind-Value="plantInfo.ScientificName" />
         </div>
 
-        <button class="btn btn-success">Save</button>
-        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+        <!-- PHOTO (base64) -->
+        <div class="mb-3">
+            <label class="form-label">Photo (Base64)</label>
+            <InputTextArea class="form-control" @bind-Value="plantInfo.Photo" rows="3" />
+            <small class="text-muted">Paste a Base64-encoded image string here.</small>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <InputTextArea class="form-control" @bind-Value="plantInfo.Description" rows="3" />
+        </div>
+
+        <!-- CARE SECTIONS -->
+        <h5 class="mt-4">Care Information</h5>
+
+        <div class="mb-3">
+            <label class="form-label">Seeds</label>
+            <InputTextArea class="form-control" @bind-Value="plantInfo.Seeds" rows="2" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Light</label>
+            <InputTextArea class="form-control" @bind-Value="plantInfo.Light" rows="2" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Water</label>
+            <InputTextArea class="form-control" @bind-Value="plantInfo.Water" rows="2" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Air</label>
+            <InputTextArea class="form-control" @bind-Value="plantInfo.Air" rows="2" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Soil</label>
+            <InputTextArea class="form-control" @bind-Value="plantInfo.Soil" rows="2" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Container</label>
+            <InputTextArea class="form-control" @bind-Value="plantInfo.Container" rows="2" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Fertilization</label>
+            <InputTextArea class="form-control" @bind-Value="plantInfo.Fertilization" rows="2" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Pruning</label>
+            <InputTextArea class="form-control" @bind-Value="plantInfo.Pruning" rows="2" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Propagation</label>
+            <InputTextArea class="form-control" @bind-Value="plantInfo.Propagation" rows="2" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Health</label>
+            <InputTextArea class="form-control" @bind-Value="plantInfo.Health" rows="2" />
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="d-flex gap-2 mt-4">
+            <button class="btn btn-success" disabled="@isSubmitting">Save</button>
+            <button class="btn btn-secondary" @onclick="GoBack" disabled="@isSubmitting">Cancel</button>
+
+            <button class="btn btn-danger ms-auto"
+                    @onclick="ConfirmDelete"
+                    disabled="@isSubmitting">
+                Delete
+            </button>
+        </div>
     </EditForm>
+}
+
+@if (deleteConfirm)
+{
+    <div class="alert alert-warning mt-3">
+        <strong>Are you sure?</strong> This will permanently delete this plant information.
+        <div class="mt-2 d-flex gap-2">
+            <button class="btn btn-danger" @onclick="Delete">Yes, Delete</button>
+            <button class="btn btn-secondary" @onclick="() => deleteConfirm = false">Cancel</button>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3">@errorMessage</div>
 }
 
 @code {
     [Parameter] public int id { get; set; }
 
     PlantInformationModel? plantInfo;
+    bool isLoading = true;
+    bool isSubmitting = false;
+    bool deleteConfirm = false;
+
+    string? loadError;
+    string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        plantInfo = await PlantInfoService.Get(id);
+        try
+        {
+            plantInfo = await PlantInfoService.Get(id);
+
+            if (plantInfo == null)
+                loadError = "Plant information not found.";
+        }
+        catch (Exception ex)
+        {
+            loadError = "Failed to load plant information.";
+            Console.WriteLine("ERROR loading plant info: " + ex);
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     async Task HandleSubmit()
     {
-        await PlantInfoService.Update(plantInfo!);
-        Nav.NavigateTo("/plantinformation");
+        try
+        {
+            isSubmitting = true;
+            errorMessage = null;
+
+            await PlantInfoService.Update(plantInfo!);
+            Nav.NavigateTo("/plantinformation");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to save changes.";
+            Console.WriteLine("ERROR saving plant info: " + ex);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
     }
 
     void GoBack()
     {
         Nav.NavigateTo("/plantinformation");
+    }
+
+    void ConfirmDelete()
+    {
+        deleteConfirm = true;
+    }
+
+    async Task Delete()
+    {
+        try
+        {
+            isSubmitting = true;
+            errorMessage = null;
+
+            await PlantInfoService.Delete(id);
+            Nav.NavigateTo("/plantinformation");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to delete plant information.";
+            Console.WriteLine("ERROR deleting plant info: " + ex);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
     }
 }

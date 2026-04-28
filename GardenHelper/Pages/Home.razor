@@ -93,7 +93,7 @@
                 @foreach (var o in recentObservations)
                 {
                     <li class="obs-item"
-                        @onclick="@(() => Nav.NavigateTo($"/observations/edit/{o.ObservationId}?returnUrl=/home"))">
+                        @onclick="@(() => Nav.NavigateTo($"/observations?obsId={o.ObservationId}"))">
 
                         <div class="obs-left">
                             <span class="obs-date">@o.CreatedAt.ToString("MMM dd")</span>
@@ -118,8 +118,6 @@
                         <div class="obs-right">
                             <span class="status-dot @(o.ActiveObservation ? "active" : "inactive")"></span>
                         </div>
-                        
-
                     </li>
                 }
             </ul>
@@ -151,7 +149,7 @@
                 @foreach (var j in recentJournals)
                 {
                     <li class="obs-item"
-                        @onclick="@(() => Nav.NavigateTo($"/journalentries/edit/{j.JournalEntryId}?returnUrl=/home"))">
+                        @onclick="@(() => Nav.NavigateTo($"/journalentries?entryId={j.JournalEntryId}"))">
 
                         <div class="obs-left">
                             <span class="obs-date">@j.CreatedAt.ToString("MMM dd")</span>
@@ -167,8 +165,6 @@
                             <div class="obs-snippet">@j.Entry</div>
 
                         </div>
-
-
                     </li>
                 }
             </ul>
