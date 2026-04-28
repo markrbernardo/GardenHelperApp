@@ -121,12 +121,6 @@
                     </NavLink>
                 </div>
 
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="/observations/create">
-                        <span class="bi bi-plus-square-fill-nav-menu"></span>
-                        Add Observation
-                    </NavLink>
-                </div>
             }
 
             <!-- JOURNAL HEADER -->
@@ -144,12 +138,6 @@
                     </NavLink>
                 </div>
 
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="/journalentries/create">
-                        <span class="bi bi-plus-square-fill-nav-menu"></span>
-                        Add Journal Entry
-                    </NavLink>
-                </div>
             }
 
                 <hr class="nav-divider" />
@@ -180,8 +168,8 @@
 
     bool LocationsOpen = true;
     bool PlantsOpen = true;
-    bool ObservationsOpen = false;
-    bool JournalOpen = false;
+    bool ObservationsOpen = true;
+    bool JournalOpen = true;
 
     void ToggleLocations() => LocationsOpen = !LocationsOpen;
     void TogglePlants() => PlantsOpen = !PlantsOpen;

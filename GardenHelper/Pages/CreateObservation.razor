@@ -2,6 +2,7 @@
 @inject ObservationService ObservationService
 @inject PlantService PlantService
 @inject PlantInformationService PlantInfoService
+@inject UserSessionService Session
 @inject NavigationManager Nav
 
 <h3>Create Observation</h3>
@@ -48,17 +49,17 @@ else
 
     string? returnUrl;
 
-
     protected override async Task OnInitializedAsync()
     {
         plants = await PlantService.GetAllPlants();
         plantInfoList = await PlantInfoService.GetAll();
 
-        // Default to first plant
+        // ⭐ Assign UserId
+        observation.UserId = Session.CurrentUserId!.Value;
+
         if (plants.Count > 0)
             observation.PlantId = plants.First().PlantId;
 
-        // Override if ?plantId=###
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
@@ -69,15 +70,15 @@ else
             observation.PlantId = parsedId;
         }
 
-        // Read returnUrl
         if (query.TryGetValue("returnUrl", out var url))
             returnUrl = url!;
     }
 
-
-
     async Task HandleSubmit()
     {
+        // ⭐ Ensure UserId is set
+        observation.UserId = Session.CurrentUserId!.Value;
+
         await ObservationService.Create(observation);
 
         if (!string.IsNullOrWhiteSpace(returnUrl))
@@ -86,6 +87,7 @@ else
             Nav.NavigateTo("/observations");
     }
 
+    // ⭐ RESTORE THIS METHOD
     void GoBack()
     {
         if (!string.IsNullOrWhiteSpace(returnUrl))
@@ -93,5 +95,4 @@ else
         else
             Nav.NavigateTo("/observations");
     }
-
 }
