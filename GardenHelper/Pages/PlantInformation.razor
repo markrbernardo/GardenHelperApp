@@ -1,74 +1,82 @@
 ﻿@page "/plantinformation"
+
 @inject PlantInformationService PlantInfoService
+@inject PlantPhotoService PhotoService
 @inject NavigationManager Nav
-@inject IJSRuntime JS
 
-<h3>Plant Information</h3>
+<h1 class="border-bottom pb-2">Plant Information</h1>
 
-<button class="btn btn-primary mb-3" @onclick="CreatePlantInfo">
-    Create New Plant Information
-</button>
+<div class="two-column-layout">
 
-@if (plantInfoList == null)
-{
-    <p>Loading...</p>
-}
-else if (plantInfoList.Count == 0)
-{
-    <p>No plant information found.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Common Name</th>
-                <th>Scientific Name</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var p in plantInfoList)
-            {
-                <tr>
-                    <td>@p.PlantInformationId</td>
-                    <td>@p.CommonName</td>
-                    <td>@p.ScientificName</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" @onclick="() => EditPlantInfo(p.PlantInformationId)">Edit</button>
-                        <button class="btn btn-danger btn-sm" @onclick="() => DeletePlantInfo(p.PlantInformationId)">Delete</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+    <!-- LEFT COLUMN -->
+    <div class="left-column">
+
+        <h3>Plants</h3>
+
+        @if (allInfo?.Any() == true)
+        {
+            <ul class="list-group">
+                @foreach (var pi in allInfo)
+                {
+                    <li class="list-group-item list-group-item-action"
+                        @onclick="() => SelectPlant(pi.PlantInformationId)">
+                        @pi.CommonName
+                        <br />
+                        <small class="text-muted"><em>@pi.ScientificName</em></small>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>No plant information available.</p>
+        }
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-column">
+        <h3>Information</h3>
+
+        @if (selectedId == null)
+        {
+            <p class="text-muted">Select a plant to view its information.</p>
+        }
+        else if (info != null)
+        {
+            <PlantInfoHeader CommonName="@info.CommonName"
+                             ScientificName="@info.ScientificName" />
+
+            <PlantInfoDetails Info="@info" />
+
+            <hr />
+            <h4 class="mt-4">Photo Gallery</h4>
+            <PlantPhotoGallery Photos="@photos" />
+        }
+
+    </div>
+
+</div>
+
 
 @code {
-    List<PlantInformationModel>? plantInfoList;
+    [Parameter] public int id { get; set; }
+
+    int? selectedId = null;
+    PlantInformationModel? info;
+    List<PlantPhotoModel> photos = new();
+    List<PlantInformationModel> allInfo = new();
 
     protected override async Task OnInitializedAsync()
     {
-        plantInfoList = await PlantInfoService.GetAll();
+        allInfo = await PlantInfoService.GetAll();
     }
 
-    void CreatePlantInfo()
+    private async Task SelectPlant(int id)
     {
-        Nav.NavigateTo("/plantinformation/create");
+        selectedId = id;
+        info = await PlantInfoService.GetById(id);
+        photos = await PhotoService.GetPhotosForPlant(id);
     }
 
-    void EditPlantInfo(int id)
-    {
-        Nav.NavigateTo($"/plantinformation/edit/{id}");
-    }
-
-    async Task DeletePlantInfo(int id)
-    {
-        bool confirm = await JS.InvokeAsync<bool>("confirm", "Delete this plant information?");
-        if (!confirm) return;
-
-        await PlantInfoService.Delete(id);
-        plantInfoList = await PlantInfoService.GetAll();
-    }
 }

@@ -15,6 +15,8 @@ builder.Services.AddScoped<PlantInformationService>();
 builder.Services.AddScoped<PlantService>();
 builder.Services.AddScoped<ObservationService>();
 builder.Services.AddScoped<JournalEntryService>();
+builder.Services.AddScoped<PlantPhotoService>();
+
 
 // Register session service
 builder.Services.AddScoped<UserSessionService>();

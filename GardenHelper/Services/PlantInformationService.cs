@@ -37,4 +37,12 @@ public class PlantInformationService
     {
         await _http.DeleteAsync($"api/plantinformation/{id}");
     }
+
+    public async Task<PlantInformationModel?> GetById(int id)
+    {
+        return await _http.GetFromJsonAsync<PlantInformationModel>(
+            $"api/plantinformation/{id}"
+        );
+    }
+
 }

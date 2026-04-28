@@ -1,0 +1,10 @@
+﻿<div class="plantinfo-header">
+    <h2>@CommonName</h2>
+    <h4 class="scientific-name"><em>@ScientificName</em></h4>
+</div>
+
+
+@code {
+    [Parameter] public string CommonName { get; set; } = string.Empty;
+    [Parameter] public string ScientificName { get; set; } = string.Empty;
+}

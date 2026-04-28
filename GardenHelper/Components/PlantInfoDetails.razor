@@ -1,0 +1,79 @@
+﻿<div class="plantinfo-details">
+
+    @if (!string.IsNullOrEmpty(Info.Photo))
+    {
+        <img src="data:image/jpeg;base64,@Info.Photo" class="generic-photo" />
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info.Description))
+    {
+        <h5>Description</h5>
+        <p>@Info.Description</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info.Seeds))
+    {
+        <h5>Seeds</h5>
+        <p>@Info.Seeds</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info.Light))
+    {
+        <h5>Light</h5>
+        <p>@Info.Light</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info.Water))
+    {
+        <h5>Water</h5>
+        <p>@Info.Water</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info.Air))
+    {
+        <h5>Air</h5>
+        <p>@Info.Air</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info.Soil))
+    {
+        <h5>Soil</h5>
+        <p>@Info.Soil</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info.Container))
+    {
+        <h5>Container</h5>
+        <p>@Info.Container</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info.Fertilization))
+    {
+        <h5>Fertilization</h5>
+        <p>@Info.Fertilization</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info.Pruning))
+    {
+        <h5>Pruning</h5>
+        <p>@Info.Pruning</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info.Propagation))
+    {
+        <h5>Propagation</h5>
+        <p>@Info.Propagation</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info.Health))
+    {
+        <h5>Health</h5>
+        <p>@Info.Health</p>
+    }
+
+</div>
+
+
+@code {
+    [Parameter] public PlantInformationModel Info { get; set; } = new();
+}

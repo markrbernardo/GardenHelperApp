@@ -15,6 +15,9 @@ public class GardenContext : DbContext
     public DbSet<ObservationModel> Observations { get; set; }
     public DbSet<JournalEntryModel> JournalEntries { get; set; }
 
+    // ADD: PlantPhotos DbSet so EF knows about the table
+    public DbSet<PlantPhotoModel> PlantPhotos { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -46,6 +49,11 @@ public class GardenContext : DbContext
 
         modelBuilder.Entity<ObservationModel>()
             .Property(o => o.UpdatedAt)
+            .HasColumnType("TEXT");
+
+        // Ensure PlantPhotos.CreatedAt is stored as TEXT as well
+        modelBuilder.Entity<PlantPhotoModel>()
+            .Property(p => p.CreatedAt)
             .HasColumnType("TEXT");
     }
 }

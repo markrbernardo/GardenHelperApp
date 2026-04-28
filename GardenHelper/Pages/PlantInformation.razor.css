@@ -1,0 +1,14 @@
+.two-column-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 20px;
+}
+
+.left-column {
+    border-right: 1px solid #ddd;
+    padding-right: 20px;
+}
+
+.right-column {
+    padding-left: 20px;
+}
