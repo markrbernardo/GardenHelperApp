@@ -17,8 +17,9 @@ else
         <DataAnnotationsValidator />
         <ValidationSummary />
 
+        <!-- GARDEN -->
         <div class="mb-3">
-            <label>Garden</label>
+            <label class="form-label">Garden</label>
             <select class="form-select" @bind="location.GardenId">
                 @foreach (var g in gardens)
                 {
@@ -27,30 +28,69 @@ else
             </select>
         </div>
 
+        <!-- NAME -->
         <div class="mb-3">
-            <label>Name</label>
+            <label class="form-label">Name</label>
             <InputText class="form-control" @bind-Value="location.Name" />
         </div>
 
+        <!-- IS OUTSIDE -->
         <div class="mb-3">
-            <label>Lighting</label>
+            <label class="form-label">Is Outside?</label>
+            <InputSelect class="form-select" @bind-Value="location.IsOutside">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </InputSelect>
+        </div>
+
+        <!-- LIGHTING -->
+        <div class="mb-3">
+            <label class="form-label">Lighting</label>
             <InputText class="form-control" @bind-Value="location.Lighting" />
         </div>
 
+        <!-- WINDOW FACING -->
         <div class="mb-3">
-            <label>Is Outside?</label>
-            <select class="form-select" @bind="location.IsOutside">
-                <option value="1">Yes</option>
-                <option value="0">No</option>
-            </select>
+            <label class="form-label">Window Facing</label>
+            <InputText class="form-control" @bind-Value="location.WindowFacing" />
+        </div>
+
+        <!-- DISTANCE TO LIGHT -->
+        <div class="mb-3">
+            <label class="form-label">Distance to Light (inches)</label>
+            <InputNumber class="form-control" @bind-Value="location.DistancetoLight" />
+        </div>
+
+        <!-- HUMIDITY -->
+        <div class="mb-3">
+            <label class="form-label">Humidity</label>
+            <InputText class="form-control" @bind-Value="location.Humidity" />
+        </div>
+
+        <!-- TEMPERATURE CONSISTENCY -->
+        <div class="mb-3">
+            <label class="form-label">Temperature Consistency</label>
+            <InputText class="form-control" @bind-Value="location.TemperatureConsistency" />
+        </div>
+
+        <!-- NOTES -->
+        <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <InputTextArea class="form-control" rows="3" @bind-Value="location.Notes" />
+        </div>
+
+        <!-- PHOTO -->
+        <div class="mb-3">
+            <label class="form-label">Photo (Base64)</label>
+            <InputTextArea class="form-control" rows="3" @bind-Value="location.Photo" />
         </div>
 
         <button class="btn btn-success">Save</button>
         <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+
         <button class="btn btn-danger ms-2" @onclick="DeleteLocation">
             Delete
         </button>
-
     </EditForm>
 }
 
@@ -62,24 +102,20 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Load dropdown data
         gardens = await GardenService.GetAllGardens();
-
-        // Load the location being edited
         location = await LocationService.Get(id);
     }
 
     async Task HandleSubmit()
     {
         await LocationService.Update(location!);
-        Nav.NavigateTo("/locations");
+        Nav.NavigateTo($"/location-profile/{id}");
     }
 
     void GoBack()
     {
         Nav.NavigateTo($"/location-profile/{id}");
     }
-
 
     async Task DeleteLocation()
     {
@@ -89,9 +125,8 @@ else
         if (confirmed)
         {
             await LocationService.Delete(id);
-            await UserSessionService.TriggerChange();             // Tell the NavMenu to reload
+            await UserSessionService.TriggerChange();
             Nav.NavigateTo($"/garden-profile/{location.GardenId}");
         }
     }
-
 }

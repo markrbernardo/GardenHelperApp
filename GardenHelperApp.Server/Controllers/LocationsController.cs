@@ -24,7 +24,6 @@ public class LocationsController : ControllerBase
             .ToListAsync();
     }
 
-
     [HttpGet("{id}")]
     public async Task<ActionResult<LocationModel>> Get(int id)
     {
@@ -44,18 +43,16 @@ public class LocationsController : ControllerBase
         return Ok(locations);
     }
 
-
     [HttpPost]
     public async Task<IActionResult> Create(LocationModel model)
     {
         _context.Locations.Add(model);
         await _context.SaveChangesAsync();
 
-        return Ok(model.LocationId); // EF populates this automatically
+        return Ok(model.LocationId);
     }
 
-
-
+    // Single Update action (no duplicate route)
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, LocationModel model)
     {
@@ -78,19 +75,4 @@ public class LocationsController : ControllerBase
 
         return NoContent();
     }
-
-
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateLocation(int id, LocationModel model)
-    {
-        if (id != model.LocationId)
-            return BadRequest();
-
-        _context.Locations.Update(model);
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
 }
