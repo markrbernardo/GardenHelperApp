@@ -15,8 +15,11 @@
 
 /* Each location block */
 .gp-location-block {
-    padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(255,255,255,0.15);
+    margin-bottom: 1.25rem;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    background: var(--bs-white, #fff);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 /* Location header with Add Plant button */
@@ -24,16 +27,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 0.5rem;
 }
 
 .gp-location-title {
     margin: 0;
-    font-size: 1.4rem;
 }
 
 .gp-location-sub {
-    color: #aaa;
-    margin-bottom: 0.5rem;
+    color: #6c757d;
+    font-size: 0.875rem;
 }
 
 /* Plant grid */
@@ -55,4 +58,17 @@
     .gp-plant-grid {
         grid-template-columns: repeat(3, 1fr);
     }
+}
+
+/* Scoped styles for GardenProfile.razor */
+
+.gp-header-card {
+  border-radius: 0.375rem;
+  /* subtle shadow to match dash tiles */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.gp-header-card .card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
 }

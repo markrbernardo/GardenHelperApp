@@ -1,4 +1,5 @@
 ﻿@page "/plantinformation"
+@page "/plantinformation/{plantId:int}"
 
 @inject PlantInformationService PlantInfoService
 @inject PlantPhotoService PhotoService
@@ -8,8 +9,8 @@
 
 <div class="two-column-layout">
 
-    <!-- LEFT COLUMN -->
-    <div class="left-column">
+    <!-- LEFT COLUMN (DESKTOP) -->
+    <div class="left-column d-none d-md-block">
 
         <div class="d-flex justify-content-between align-items-center mb-2">
             <h3 class="mb-0">Plants</h3>
@@ -17,17 +18,15 @@
             <button class="btn btn-sm btn-success" @onclick="CreateInfo">
                 <i class="bi bi-plus-lg"></i> Add Info Card
             </button>
-
         </div>
-
-
 
         @if (allInfo?.Any() == true)
         {
             <ul class="list-group">
                 @foreach (var pi in allInfo)
                 {
-                    <li class="list-group-item list-group-item-action"
+                    <li class="list-group-item list-group-item-action
+                                       @(selectedId == pi.PlantInformationId ? "active" : "")"
                         @onclick="() => SelectPlant(pi.PlantInformationId)">
                         @pi.CommonName
                         <br />
@@ -40,7 +39,27 @@
         {
             <p>No plant information available.</p>
         }
+    </div>
 
+    <!-- MOBILE DROPDOWN -->
+    <div class="d-md-none mb-3">
+        <label class="form-label fw-bold">Select Plant</label>
+        <select class="form-select"
+                @onchange="OnMobileSelect">
+            <option value="">-- Choose a plant --</option>
+
+            @foreach (var pi in allInfo)
+            {
+                <option value="@pi.PlantInformationId"
+                        selected="@(selectedId == pi.PlantInformationId)">
+                    @pi.CommonName (@pi.ScientificName)
+                </option>
+            }
+        </select>
+
+        <button class="btn btn-sm btn-success mt-2" @onclick="CreateInfo">
+            <i class="bi bi-plus-lg"></i> Add Info Card
+        </button>
     </div>
 
     <!-- RIGHT COLUMN -->
@@ -53,21 +72,18 @@
         }
         else if (info != null)
         {
-
             <PlantInfoDetails Info="@info" />
 
             <hr />
             <h4 class="mt-4">Photo Gallery</h4>
             <PlantPhotoGallery Photos="@photos" />
         }
-
     </div>
 
 </div>
 
-
 @code {
-    [Parameter] public int id { get; set; }
+    [Parameter] public int? plantId { get; set; }
 
     int? selectedId = null;
     PlantInformationModel? info;
@@ -77,6 +93,22 @@
     protected override async Task OnInitializedAsync()
     {
         allInfo = await PlantInfoService.GetAll();
+
+        // Auto-select when returning from edit
+        if (plantId != null)
+        {
+            await SelectPlant(plantId.Value);
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Refresh when navigating back with a plantId
+        if (plantId != null)
+        {
+            allInfo = await PlantInfoService.GetAll();
+            await SelectPlant(plantId.Value);
+        }
     }
 
     private async Task SelectPlant(int id)
@@ -84,12 +116,21 @@
         selectedId = id;
         info = await PlantInfoService.GetById(id);
         photos = await PhotoService.GetPhotosForPlant(id);
+
+        // Update URL without reloading page
+        Nav.NavigateTo($"/plantinformation/{id}", replace: true);
+    }
+
+    private async Task OnMobileSelect(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            await SelectPlant(id);
+        }
     }
 
     void CreateInfo()
     {
         Nav.NavigateTo("/plantinformation/create");
     }
-
-
 }

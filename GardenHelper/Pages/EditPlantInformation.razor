@@ -179,7 +179,11 @@ else if (plantInfo != null)
 
     void GoBack()
     {
-        Nav.NavigateTo("/plantinformation");
+        // Avoid null-dereference: if plantInfo is missing go to list instead
+        if (plantInfo != null)
+            Nav.NavigateTo($"/plantinformation/{plantInfo.PlantInformationId}");
+        else
+            Nav.NavigateTo("/plantinformation");
     }
 
     void ConfirmDelete()

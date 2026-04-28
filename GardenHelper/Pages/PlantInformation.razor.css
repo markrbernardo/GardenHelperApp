@@ -12,3 +12,20 @@
 .right-column {
     padding-left: 20px;
 }
+
+.two-column-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 1.5rem;
+}
+
+.left-column {
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .two-column-layout {
+        grid-template-columns: 1fr;
+    }
+}

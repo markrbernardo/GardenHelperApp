@@ -25,17 +25,32 @@ public class PlantInformationService
 
     public async Task Create(PlantInformationModel model)
     {
-        await _http.PostAsJsonAsync("api/plantinformation", model);
+        var resp = await _http.PostAsJsonAsync("api/plantinformation", model);
+        if (!resp.IsSuccessStatusCode)
+        {
+            var err = await resp.Content.ReadAsStringAsync();
+            throw new Exception($"Create failed: {err}");
+        }
     }
 
     public async Task Update(PlantInformationModel model)
     {
-        await _http.PutAsJsonAsync($"api/plantinformation/{model.PlantInformationId}", model);
+        var resp = await _http.PutAsJsonAsync($"api/plantinformation/{model.PlantInformationId}", model);
+        if (!resp.IsSuccessStatusCode)
+        {
+            var err = await resp.Content.ReadAsStringAsync();
+            throw new Exception($"Update failed: {err}");
+        }
     }
 
     public async Task Delete(int id)
     {
-        await _http.DeleteAsync($"api/plantinformation/{id}");
+        var resp = await _http.DeleteAsync($"api/plantinformation/{id}");
+        if (!resp.IsSuccessStatusCode)
+        {
+            var err = await resp.Content.ReadAsStringAsync();
+            throw new Exception($"Delete failed: {err}");
+        }
     }
 
     public async Task<PlantInformationModel?> GetById(int id)
@@ -44,5 +59,4 @@ public class PlantInformationService
             $"api/plantinformation/{id}"
         );
     }
-
 }
