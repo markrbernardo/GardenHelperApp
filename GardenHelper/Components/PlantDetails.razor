@@ -9,13 +9,16 @@
 }
 else
 {
-    <h2>@Plant.Name</h2>
+    <div class="card p-3">
+        <div class="d-flex justify-content-between">
+            <h2>@Plant.Name</h2>
 
-    <!-- EDIT PLANT BUTTON -->
-    <button class="btn btn-outline-primary btn-sm mb-3"
-            @onclick="() => OnEditPlant.InvokeAsync(Plant.PlantId)">
-        <i class="bi bi-pencil-square"></i> Edit Plant
-    </button>
+            <!-- EDIT PLANT BUTTON -->
+            <button class="btn btn-outline-primary btn-sm mb-3"
+                    @onclick="() => OnEditPlant.InvokeAsync(Plant.PlantId)">
+                <i class="bi bi-pencil-square"></i> Edit Profile
+            </button>
+        </div>
 
     @if (plantInfo != null)
     {
@@ -26,6 +29,15 @@ else
             <p><strong>Scientific Name:</strong> @plantInfo.ScientificName</p>
         </details>
     }
+    @if (!string.IsNullOrWhiteSpace(Plant.Description))
+    {
+        <p><strong>Description:</strong> @Plant.Description</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Plant.Notes))
+    {
+        <p><strong>Notes:</strong> @Plant.Notes</p>
+    }
 
     <hr />
 
@@ -34,7 +46,7 @@ else
 
         <button class="btn btn-sm btn-outline-success"
                 @onclick="() => OnAddObservation.InvokeAsync(Plant.PlantId)">
-            <i class="bi bi-plus-lg"></i> Add
+            <i class="bi bi-plus-lg"></i> Add Observation
         </button>
     </h3>
 
@@ -81,6 +93,7 @@ else
             </div>
         }
     }
+    </div>
 }
 
 

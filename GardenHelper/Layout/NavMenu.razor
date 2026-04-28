@@ -24,34 +24,57 @@
             <span class="nav-header px-3 mt-3 text-white">Gardener:</span>
             <span class="text-white px-3">@Session.CurrentUserName</span>
 
-            <!-- GARDEN HEADER -->
-            <div class="nav-section px-3 mt-3">
-                <span class="nav-header">Garden</span>
+            <!-- PLANT INFORMATION HEADER -->
+            <div class="nav-section px-3 mt-3" @onclick="TogglePlantInfo" style="cursor:pointer;">
+                <span class="nav-header">Plant Information</span>
+                <span class="float-end">@((PlantInfoOpen ? "▼" : "►"))</span>
             </div>
 
-            <!-- GARDEN LINKS (same style as Locations) -->
-            @if (gardens == null)
+            @if (PlantInfoOpen)
             {
-                <div class="nav-item px-3">Loading...</div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/plantinformation">
+                        <span class="bi bi-list-nested-nav-menu"></span>
+                        Plant Information
+                    </NavLink>
+                </div>
             }
-            else if (gardens.Count == 0)
+
+
+
+            <!-- GARDEN HEADER -->
+            <div class="nav-section px-3 mt-3" @onclick="ToggleGarden" style="cursor:pointer;">
+                <span class="nav-header">Garden</span>
+                <span class="float-end">@((GardenOpen ? "▼" : "►"))</span>
+            </div>
+
+            @if (GardenOpen)
             {
-                <div class="nav-item px-3">No gardens</div>
-            }
-            else
-            {
-                @foreach (var g in gardens.OrderBy(g => g.Name))
+                @if (gardens == null)
                 {
-                    <div class="nav-item px-3">
-                        <NavLink class="@($"nav-link {(SelectedGardenId == g.GardenId ? "active" : "")}")"
-                                 href="@($"/garden-profile/{g.GardenId}")"
-                                 @onclick="() => SelectGarden(g.GardenId)">
-                            <span class="bi bi-list-nested-nav-menu"></span>
-                            @g.Name
-                        </NavLink>
-                    </div>
+                    <div class="nav-item px-3">Loading...</div>
+                }
+                else if (gardens.Count == 0)
+                {
+                    <div class="nav-item px-3">No gardens</div>
+                }
+                else
+                {
+                    <!-- GARDEN LINKS -->
+                    @foreach (var g in gardens.OrderBy(g => g.Name))
+                    {
+                        <div class="nav-item px-3">
+                            <NavLink class="@($"nav-link {(SelectedGardenId == g.GardenId ? "active" : "")}")"
+                                     href="@($"/garden-profile/{g.GardenId}")"
+                                     @onclick="() => SelectGarden(g.GardenId)">
+                                <span class="bi bi-list-nested-nav-menu"></span>
+                                @g.Name
+                            </NavLink>
+                        </div>
+                    }
                 }
             }
+
 
             <!-- LOCATIONS HEADER -->
             @if (SelectedGardenId > 0)
@@ -166,11 +189,15 @@
     List<LocationModel>? locations;
     List<GardenModel>? gardens;
 
+    bool PlantInfoOpen = true;
+    bool GardenOpen = true;
     bool LocationsOpen = true;
     bool PlantsOpen = true;
     bool ObservationsOpen = true;
     bool JournalOpen = true;
 
+    void ToggleGarden() => GardenOpen = !GardenOpen;
+    void TogglePlantInfo() => PlantInfoOpen = !PlantInfoOpen;
     void ToggleLocations() => LocationsOpen = !LocationsOpen;
     void TogglePlants() => PlantsOpen = !PlantsOpen;
     void ToggleObservations() => ObservationsOpen = !ObservationsOpen;

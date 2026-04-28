@@ -38,7 +38,7 @@ else
         <div class="plant-list">
 
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <h3 class="mb-0">Plants</h3>
+                <h3 class="mb-0">Plant Name</h3>
 
                 <button class="btn btn-sm btn-outline-success"
                         @onclick="@(() => Nav.NavigateTo($"/plants/create?returnUrl=/plants"))">
@@ -62,7 +62,7 @@ else
 
         <!-- RIGHT COLUMN -->
         <div class="plant-details">
-            <h3>Details</h3>
+            <h3>Profile</h3>
             <PlantDetails Plant="selectedPlant"
                           OnAddObservation="HandleAddObservation"
                           OnEditObservation="HandleEditObservation"

@@ -44,6 +44,18 @@ else
             </select>
         </div>
 
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <InputTextArea class="form-control" rows="3" @bind-Value="plant.Description" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <InputTextArea class="form-control" rows="3" @bind-Value="plant.Notes" />
+        </div>
+
+
+
         <button class="btn btn-success">Create</button>
         <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
     </EditForm>
