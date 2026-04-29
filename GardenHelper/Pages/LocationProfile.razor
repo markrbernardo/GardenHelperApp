@@ -15,14 +15,12 @@ else
         <div class="d-flex justify-content-between align-items-center mb-2">
             <h1 class="mb-0">Location: @location.Name</h1>
 
-            <!-- EDIT BUTTON -->
             <button class="btn btn-outline-primary"
                     @onclick="@(() => Nav.NavigateTo($"/locations/edit/{location.LocationId}"))">
                 <i class="bi bi-pencil-square me-1"></i>
             </button>
         </div>
 
-        <!-- NEW FIELDS ADDED HERE -->
         <div class="row mt-3">
 
             <div class="col-md-4 mb-3">
@@ -100,7 +98,7 @@ else
                         <option value="">Select a plant...</option>
                         @foreach (var p in plants)
                         {
-                            <option value="@p.PlantId">@p.Name</option>
+                            <option value="@p.PlantId">@p.CommonName</option>
                         }
                     </select>
                 }
@@ -146,8 +144,8 @@ else
 }
 
 @code {
-    List<PlantModel>? plants;
-    PlantModel? selectedPlant;
+    List<PlantWithInfoDto>? plants;
+    PlantWithInfoDto? selectedPlant;
 
     [Parameter] public int locationId { get; set; }
     LocationModel? location;
@@ -169,7 +167,7 @@ else
         }
     }
 
-    async Task SelectPlant(PlantModel plant)
+    async Task SelectPlant(PlantWithInfoDto plant)
     {
         selectedPlant = plant;
     }

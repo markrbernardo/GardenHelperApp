@@ -3,12 +3,11 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject ObservationService ObservationService
 @inject PlantService PlantService
-@inject PlantInformationService PlantInfoService
 @inject NavigationManager Nav
 
 <h3>Edit Observation</h3>
 
-@if (observation == null || plants == null || plantInfoList == null)
+@if (observation == null || plants == null)
 {
     <p>Loading...</p>
 }
@@ -23,10 +22,8 @@ else
             <select class="form-select" @bind="observation.PlantId">
                 @foreach (var p in plants)
                 {
-                    var info = plantInfoList.FirstOrDefault(pi => pi.PlantInformationId == p.PlantInformationId);
-
                     <option value="@p.PlantId">
-                        @p.Name — @info?.CommonName (@info?.ScientificName)
+                        @p.CommonName (@p.ScientificName)
                     </option>
                 }
             </select>
@@ -75,9 +72,7 @@ else
     string? returnUrl;
 
     ObservationModel? observation;
-    List<PlantModel>? plants;
-    List<PlantInformationModel>? plantInfoList;
-
+    List<PlantWithInfoDto>? plants;
 
     bool showDeleteConfirm = false;
 
@@ -94,27 +89,20 @@ else
             Nav.NavigateTo("/observations");
     }
 
-
-
-
     protected override async Task OnInitializedAsync()
     {
         plants = await PlantService.GetAllPlants();
-        plantInfoList = await PlantInfoService.GetAll();
-
         observation = await ObservationService.Get(id);
 
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
-        // QueryHelpers returns StringValues; convert to string explicitly
         if (query.TryGetValue("returnUrl", out var urlValues))
             returnUrl = urlValues.ToString();
     }
 
     async Task HandleSubmit()
     {
-
         observation!.UpdatedAt = DateTime.UtcNow;
 
         await ObservationService.Update(observation);
@@ -124,7 +112,6 @@ else
         else
             Nav.NavigateTo("/observations");
     }
-
 
     void GoBack()
     {

@@ -1,4 +1,5 @@
 ﻿@page "/home"
+@using GardenHelperApp.Shared.Models
 @inject ObservationService ObservationService
 @inject JournalEntryService JournalEntryService
 @inject GardenService GardenService
@@ -177,7 +178,7 @@
     List<ObservationModel>? recentObservations;
     List<JournalEntryModel>? recentJournals;
     List<GardenModel>? gardens;
-    List<PlantModel>? plants;
+    List<PlantWithInfoDto>? plants;
     List<LocationModel>? locations;
 
     GardenModel? defaultGarden;
@@ -189,10 +190,8 @@
         if (Session.CurrentUserId == null)
             return;
 
-        // Load gardens
         gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
 
-        // Load default garden info
         if (Session.CurrentGardenId != null)
         {
             defaultGarden = await GardenService.GetGarden(Session.CurrentGardenId.Value);
@@ -202,48 +201,40 @@
                 var locs = await GardenService.GetLocationsByGarden(defaultGarden.GardenId);
                 locationCount = locs.Count;
 
-                var pls = await GardenService.GetPlantsByGarden(defaultGarden.GardenId);
+                var pls = await PlantService.GetPlantsByGarden(defaultGarden.GardenId);
                 plantCount = pls.Count;
             }
         }
 
-        // Load dashboard-wide recent items
         recentObservations = (await ObservationService.GetByUser(Session.CurrentUserId.Value))?
-            .OrderByDescending(o => o.ActiveObservation)   // Active first
-            .ThenByDescending(o => o.CreatedAt)            // Newest within each group
+            .OrderByDescending(o => o.ActiveObservation)
+            .ThenByDescending(o => o.CreatedAt)
             .Take(5)
             .ToList();
-
 
         recentJournals = (await JournalEntryService.GetByUser(Session.CurrentUserId.Value))?
             .OrderByDescending(j => j.CreatedAt)
             .Take(5)
             .ToList();
 
-        // Load all plants + all locations (your services support this)
         plants = await PlantService.GetAllPlants();
         locations = await GardenService.GetAllLocations();
     }
 
     async Task GoToObservation(ObservationModel o)
     {
-        // Find the plant so we know which garden it belongs to
         var plant = plants?.FirstOrDefault(p => p.PlantId == o.PlantId);
 
         if (plant != null)
         {
-            // ⭐ Properly switch the active garden
             await Session.SetGarden(plant.GardenId);
         }
 
         Nav.NavigateTo($"/observations?obsId={o.ObservationId}");
     }
 
-
-
-
     string GetPlantName(int plantId) =>
-        plants?.FirstOrDefault(p => p.PlantId == plantId)?.Name ?? "Unknown";
+        plants?.FirstOrDefault(p => p.PlantId == plantId)?.CommonName ?? "Unknown";
 
     string GetGardenName(int plantId)
     {
@@ -262,5 +253,4 @@
     {
         return gardens?.FirstOrDefault(g => g.GardenId == gardenId)?.Name ?? "Unknown Garden";
     }
-
 }

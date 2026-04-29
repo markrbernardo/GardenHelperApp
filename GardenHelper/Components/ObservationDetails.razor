@@ -11,7 +11,6 @@
     }
     else
     {
-        
         @foreach (var o in ObservationsForDate)
         {
             <div class="obs-card pb-3 @(o.ActiveObservation ? "active-obs" : "")">
@@ -45,8 +44,8 @@
                 }
 
                 <p class="text-muted">
-                    @GetCommonName(o.PlantId)<br />
-                    <em>@GetScientificName(o.PlantId)</em>
+                    @GetPlantCommonName(o.PlantId)<br />
+                    <em>@GetPlantScientificName(o.PlantId)</em>
                 </p>
 
                 <p><strong>Note:</strong></p>
@@ -63,44 +62,31 @@
 
 </div>
 
-
 @code {
     [Parameter] public DateTime? SelectedDate { get; set; }
     [Parameter] public List<ObservationModel> Observations { get; set; }
     [Parameter] public EventCallback<int> OnEdit { get; set; }
-    [Parameter] public List<PlantModel> Plants { get; set; }
-    [Parameter] public List<PlantInformationModel> PlantInfos { get; set; }
+    [Parameter] public List<PlantWithInfoDto> Plants { get; set; }
     [Parameter] public EventCallback OnRefresh { get; set; }
     [Parameter] public int? SelectedGardenId { get; set; }
 
     List<ObservationModel> ObservationsForDate =>
         Observations
-            // compare using the local date
             .Where(o => o.CreatedAt.Date == SelectedDate)
             .Where(o => SelectedGardenId == null
                 || Plants.First(p => p.PlantId == o.PlantId).GardenId == SelectedGardenId)
             .OrderByDescending(o => o.ActiveObservation)
-            .ThenByDescending(o => o.CreatedAt) // ordering by instant still valid
+            .ThenByDescending(o => o.CreatedAt)
             .ToList();
 
     string GetPlantName(int id) =>
-        Plants?.FirstOrDefault(p => p.PlantId == id)?.Name ?? "Unknown";
+        Plants?.FirstOrDefault(p => p.PlantId == id)?.CommonName ?? "Unknown";
 
-    string GetCommonName(int id)
-    {
-        var plant = Plants?.FirstOrDefault(p => p.PlantId == id);
-        return PlantInfos?
-            .FirstOrDefault(pi => pi.PlantInformationId == plant?.PlantInformationId)?
-            .CommonName ?? "Unknown";
-    }
+    string GetPlantCommonName(int id) =>
+        Plants?.FirstOrDefault(p => p.PlantId == id)?.CommonName ?? "Unknown";
 
-    string GetScientificName(int id)
-    {
-        var plant = Plants?.FirstOrDefault(p => p.PlantId == id);
-        return PlantInfos?
-            .FirstOrDefault(pi => pi.PlantInformationId == plant?.PlantInformationId)?
-            .ScientificName ?? "Unknown";
-    }
+    string GetPlantScientificName(int id) =>
+        Plants?.FirstOrDefault(p => p.PlantId == id)?.ScientificName ?? "Unknown";
 
     async Task ToggleActive(ObservationModel obs)
     {
@@ -110,6 +96,5 @@
     }
 
     string FormatDate(DateTime dt) =>
-    dt.ToString("dddd, MMM dd • hh:mm tt");
-
+        dt.ToString("dddd, MMM dd • hh:mm tt");
 }

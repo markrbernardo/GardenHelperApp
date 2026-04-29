@@ -3,14 +3,13 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject ObservationService ObservationService
 @inject PlantService PlantService
-@inject PlantInformationService PlantInfoService
 @inject UserSessionService UserSessionService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
 <h1 class="border-bottom pb-2">Observations</h1>
 
-@if (observations == null || plants == null || plantInfoList == null)
+@if (observations == null || plants == null)
 {
     <p>Loading...</p>
 }
@@ -38,7 +37,6 @@ else
         <ObservationDetails SelectedDate="selectedDate"
                             Observations="filteredObservations"
                             Plants="plants"
-                            PlantInfos="plantInfoList"
                             SelectedGardenId="selectedGardenId"
                             OnEdit="EditObservation"
                             OnRefresh="RefreshObservations" />
@@ -54,8 +52,8 @@ else
             @foreach (var group in groupedObservations)
             {
                 <div class="obs-date
-                    @(selectedDate == group.Key ? "selected" : "")
-                    @(DateHasActiveObservation(group.Key) ? "active-date" : "")"
+                            @(selectedDate == group.Key ? "selected" : "")
+                            @(DateHasActiveObservation(group.Key) ? "active-date" : "")"
                      @onclick="() => SelectDate(group.Key)">
                     <strong>@group.Key.ToString("MMM dd, yyyy")</strong><br />
                     <small>@group.Count() observation(s)</small>
@@ -67,7 +65,6 @@ else
         <ObservationDetails SelectedDate="selectedDate"
                             Observations="filteredObservations"
                             Plants="plants"
-                            PlantInfos="plantInfoList"
                             SelectedGardenId="selectedGardenId"
                             OnEdit="EditObservation"
                             OnRefresh="RefreshObservations" />
@@ -77,8 +74,7 @@ else
 @code {
     List<ObservationModel>? observations;
     List<ObservationModel>? filteredObservations;
-    List<PlantModel>? plants;
-    List<PlantInformationModel>? plantInfoList;
+    List<PlantWithInfoDto>? plants;
 
     List<IGrouping<DateTime, ObservationModel>> groupedObservations = new();
     DateTime? selectedDate;
@@ -88,13 +84,11 @@ else
     {
         observations = await ObservationService.GetByUser(UserSessionService.CurrentUserId!.Value);
         plants = await PlantService.GetAllPlants();
-        plantInfoList = await PlantInfoService.GetAll();
 
         selectedGardenId = UserSessionService.CurrentGardenId;
 
         ApplyFilteringAndGrouping();
 
-        // read querystring to pre-select a date (by observation id or explicit date)
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
@@ -111,7 +105,6 @@ else
             selectedDate = dt.Date;
         }
 
-        // default to most recent date if nothing selected
         if (selectedDate == null && groupedObservations.Any())
             selectedDate = groupedObservations.First().Key;
     }
@@ -123,7 +116,6 @@ else
                                         p.GardenId == selectedGardenId))
             .ToList();
 
-        // Group by local date
         groupedObservations = filteredObservations
             .GroupBy(o => o.CreatedAt.Date)
             .OrderByDescending(g => g.Key)
@@ -158,5 +150,4 @@ else
         return filteredObservations
             .Any(o => o.CreatedAt.Date == date.Date && o.ActiveObservation);
     }
-
 }

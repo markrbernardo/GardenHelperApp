@@ -12,46 +12,51 @@ public class PlantService
         _http = http;
     }
 
-    public async Task<List<PlantModel>> GetAllPlants()
+    // ---------------------------------------------------------
+    // GET ALL PLANTS (already joined + sorted by server)
+    // ---------------------------------------------------------
+    public async Task<List<PlantWithInfoDto>> GetAllPlants()
     {
-        return await _http.GetFromJsonAsync<List<PlantModel>>("api/plants")
-               ?? new List<PlantModel>();
+        return await _http.GetFromJsonAsync<List<PlantWithInfoDto>>("api/plants")
+               ?? new List<PlantWithInfoDto>();
     }
 
+    // ---------------------------------------------------------
+    // GET PLANTS BY GARDEN (already joined + sorted by server)
+    // ---------------------------------------------------------
+    public async Task<List<PlantWithInfoDto>> GetPlantsByGarden(int gardenId)
+    {
+        return await _http.GetFromJsonAsync<List<PlantWithInfoDto>>(
+            $"api/plants/garden/{gardenId}"
+        ) ?? new List<PlantWithInfoDto>();
+    }
+
+    // ---------------------------------------------------------
+    // GET PLANTS BY LOCATION (already joined + sorted by server)
+    // ---------------------------------------------------------
+    public async Task<List<PlantWithInfoDto>> GetPlantsByLocation(int locationId)
+    {
+        return await _http.GetFromJsonAsync<List<PlantWithInfoDto>>(
+            $"api/plants/location/{locationId}"
+        ) ?? new List<PlantWithInfoDto>();
+    }
+
+    // ---------------------------------------------------------
+    // GET SINGLE PLANT (still returns PlantModel)
+    // ---------------------------------------------------------
     public async Task<PlantModel?> GetPlant(int id)
     {
         return await _http.GetFromJsonAsync<PlantModel>($"api/plants/{id}");
     }
 
-    public async Task<List<PlantModel>> GetPlantsByGarden(int gardenId)
-    {
-        return await _http.GetFromJsonAsync<List<PlantModel>>($"api/plants/garden/{gardenId}");
-    }
-
-    public async Task<List<PlantModel>> GetPlantsByLocation(int locationId)
-    {
-        return await _http.GetFromJsonAsync<List<PlantModel>>($"api/plants/location/{locationId}");
-    }
-
-    public async Task<List<PlantModel>> GetByLocation(int locationId)
-    {
-        return await _http.GetFromJsonAsync<List<PlantModel>>($"api/plants/location/{locationId}")
-               ?? new List<PlantModel>();
-    }
-
-    public async Task<List<PlantModel>> GetByPlantInfo(int plantInfoId)
-    {
-        return await _http.GetFromJsonAsync<List<PlantModel>>($"api/plants/info/{plantInfoId}")
-               ?? new List<PlantModel>();
-    }
-
-    // ✔ Correct endpoint
+    // ---------------------------------------------------------
+    // CRUD
+    // ---------------------------------------------------------
     public async Task Create(PlantModel model)
     {
         await _http.PostAsJsonAsync("api/plants/create", model);
     }
 
-    // ✔ Correct endpoint + returns response for debugging
     public async Task<HttpResponseMessage> CreateWithResponse(PlantModel model)
     {
         return await _http.PostAsJsonAsync("api/plants/create", model);

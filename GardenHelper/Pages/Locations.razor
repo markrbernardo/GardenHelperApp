@@ -6,7 +6,6 @@
 
 <h3>Pick a Location...</h3>
 
-
 @if (locations == null || gardens == null)
 {
     <p>Loading...</p>
@@ -22,9 +21,7 @@ else
         {
             <div class="location-tile" @onclick="() => GoToLocationPlants(l.LocationId)">
                 <div class="location-title">@l.Name</div>
-                <div class="location-sub">
-                    @GetGardenName(l.GardenId)
-                </div>
+                <div class="location-sub">@GetGardenName(l.GardenId)</div>
                 <div class="location-details">
                     Lighting: @l.Lighting<br />
                     @((l.IsOutside ?? false) ? "Outside" : "Indoor")
@@ -32,28 +29,17 @@ else
             </div>
         }
 
-        <!-- Add Location tile -->
         <div class="location-tile add-tile" @onclick="CreateLocation">
             <div class="location-title">+ Add Location</div>
-            <div class="location-sub">
-                Create a new location in this garden
-            </div>
+            <div class="location-sub">Create a new location in this garden</div>
         </div>
     </div>
 }
-
 
 @code {
     [Parameter]
     [SupplyParameterFromQuery]
     public int? GardenId { get; set; }
-
-
-    void GoToLocationPlants(int locationId)
-    {
-        Nav.NavigateTo($"/plants?locationId={locationId}");
-    }
-
 
     List<LocationModel>? locations;
     List<GardenModel>? gardens;
@@ -74,6 +60,10 @@ else
         }
     }
 
+    void GoToLocationPlants(int locationId)
+    {
+        Nav.NavigateTo($"/plants?locationId={locationId}");
+    }
 
     string GetGardenName(int gardenId)
     {
@@ -86,12 +76,6 @@ else
             Nav.NavigateTo($"/locations/create?gardenId={GardenId.Value}");
         else
             Nav.NavigateTo("/locations/create");
-    }
-
-
-    void EditLocation(int id)
-    {
-        Nav.NavigateTo($"/locations/edit/{id}");
     }
 
     async Task DeleteLocation(int id)

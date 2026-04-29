@@ -1,6 +1,5 @@
 ﻿@inherits LayoutComponentBase
 @inject PlantService PlantService
-@inject PlantInformationService PlantInfoService
 @inject NavigationManager Nav
 
 <div class="page">
@@ -35,7 +34,7 @@
                         {
                             <button class="list-group-item list-group-item-action"
                                     @onclick="() => SelectPlant(p.PlantId)">
-                                @p.Name
+                                @p.CommonName (@p.ScientificName)
                             </button>
                         }
                     </div>
@@ -55,16 +54,17 @@
     private string? searchText;
     private bool showSuggestions = false;
 
-    private List<PlantModel>? allPlants;
-    private List<PlantInformationModel>? allInfo;
-    private List<PlantModel>? filteredPlants;
+    private List<PlantWithInfoDto>? allPlants;
+    private List<PlantWithInfoDto>? filteredPlants;
 
     protected override async Task OnInitializedAsync()
     {
         allPlants = await PlantService.GetAllPlants();
-        allInfo = await PlantInfoService.GetAll();
 
-        allPlants = allPlants.OrderBy(p => p.Name).ToList();
+        // Sort alphabetically by CommonName or fallback to Name
+        allPlants = allPlants
+            .OrderBy(p => p.CommonName ?? p.Name)
+            .ToList();
     }
 
     private void ShowSuggestions() => showSuggestions = true;
@@ -73,7 +73,6 @@
     {
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            // Show top plants alphabetically when empty
             filteredPlants = allPlants!.Take(10).ToList();
             showSuggestions = true;
             return;
@@ -86,35 +85,20 @@
             {
                 Plant = p,
                 Score =
-                    (p.Name.ToLower().StartsWith(q) ? 100 : 0) +
-                    (p.Name.ToLower().Contains(q) ? 60 : 0) +
-                    (GetInfoMatchScore(p, q)) +
-                    (FuzzyScore(p.Name.ToLower(), q))
+                    (p.CommonName?.ToLower().StartsWith(q) == true ? 100 : 0) +
+                    (p.CommonName?.ToLower().Contains(q) == true ? 60 : 0) +
+                    (p.ScientificName?.ToLower().StartsWith(q) == true ? 80 : 0) +
+                    (p.ScientificName?.ToLower().Contains(q) == true ? 40 : 0) +
+                    (p.Name?.ToLower().Contains(q) == true ? 20 : 0) +
+                    FuzzyScore(p.CommonName?.ToLower() ?? "", q)
             })
             .OrderByDescending(x => x.Score)
-            .ThenBy(x => x.Plant.Name)
+            .ThenBy(x => x.Plant.CommonName ?? x.Plant.Name)
             .Take(10)
             .Select(x => x.Plant)
             .ToList();
 
         showSuggestions = true;
-    }
-
-
-    private int GetInfoMatchScore(PlantModel p, string q)
-    {
-        var info = allInfo?.FirstOrDefault(i => i.PlantInformationId == p.PlantInformationId);
-        if (info == null) return 0;
-
-        int score = 0;
-
-        if (info.CommonName?.ToLower().StartsWith(q) == true) score += 80;
-        if (info.CommonName?.ToLower().Contains(q) == true) score += 40;
-
-        if (info.ScientificName?.ToLower().StartsWith(q) == true) score += 60;
-        if (info.ScientificName?.ToLower().Contains(q) == true) score += 30;
-
-        return score;
     }
 
     private async Task HideSuggestionsDelayed()
@@ -132,8 +116,7 @@
 
     private int FuzzyScore(string text, string query)
     {
-        // Very lightweight typo tolerance
-        if (text.Length < 2 || query.Length < 2)
+        if (string.IsNullOrWhiteSpace(text) || string.IsNullOrWhiteSpace(query))
             return 0;
 
         int score = 0;
@@ -152,6 +135,4 @@
         searchText = e.Value?.ToString();
         await UpdateSuggestions();
     }
-
-
 }

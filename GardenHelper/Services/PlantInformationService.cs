@@ -14,9 +14,14 @@ public class PlantInformationService
 
     public async Task<List<PlantInformationModel>> GetAll()
     {
-        return await _http.GetFromJsonAsync<List<PlantInformationModel>>("api/plantinformation")
-               ?? new List<PlantInformationModel>();
+        var list = await _http.GetFromJsonAsync<List<PlantInformationModel>>("api/plantinformation")
+                   ?? new List<PlantInformationModel>();
+
+        return list
+            .OrderBy(pi => pi.ScientificName ?? pi.CommonName)
+            .ToList();
     }
+
 
     public async Task<PlantInformationModel?> Get(int id)
     {

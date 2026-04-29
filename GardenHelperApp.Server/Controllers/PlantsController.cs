@@ -16,17 +16,37 @@ public class PlantsController : ControllerBase
         _context = context;
     }
 
-    // GET: api/plants
+    // ---------------------------
+    // GET ALL PLANTS (DTO)
+    // ---------------------------
     [HttpGet]
-    public async Task<ActionResult<List<PlantModel>>> GetAll()
+    public async Task<ActionResult<List<PlantWithInfoDto>>> GetAll()
     {
-        return await _context.Plants
-            .OrderBy(p => p.Name)
+        var result = await _context.Plants
+            .Join(_context.PlantInformation,
+                  p => p.PlantInformationId,
+                  i => i.PlantInformationId,
+                  (p, i) => new PlantWithInfoDto
+                  {
+                      PlantId = p.PlantId,
+                      Name = p.Name,
+                      PlantInformationId = p.PlantInformationId,
+                      ScientificName = i.ScientificName,
+                      CommonName = i.CommonName,
+                      LocationId = p.LocationId,
+                      GardenId = p.GardenId,
+                      Description = p.Description,
+                      Notes = p.Notes
+                  })
+            .OrderBy(x => x.ScientificName ?? x.CommonName)
             .ToListAsync();
+
+        return Ok(result);
     }
 
-
-    // GET: api/plants/5
+    // ---------------------------
+    // GET SINGLE PLANT (MODEL)
+    // ---------------------------
     [HttpGet("{id}")]
     public async Task<ActionResult<PlantModel>> Get(int id)
     {
@@ -35,33 +55,67 @@ public class PlantsController : ControllerBase
         return plant;
     }
 
-    // GET: api/plants/garden/3
+    // ---------------------------
+    // GET PLANTS BY GARDEN (DTO)
+    // ---------------------------
     [HttpGet("garden/{gardenId}")]
-    public async Task<ActionResult<List<PlantModel>>> GetPlantsByGarden(int gardenId)
+    public async Task<ActionResult<List<PlantWithInfoDto>>> GetByGarden(int gardenId)
     {
-        var plants = await _context.Plants
+        var result = await _context.Plants
             .Where(p => p.GardenId == gardenId)
-            .OrderBy(p => p.Name)
+            .Join(_context.PlantInformation,
+                  p => p.PlantInformationId,
+                  i => i.PlantInformationId,
+                  (p, i) => new PlantWithInfoDto
+                  {
+                      PlantId = p.PlantId,
+                      Name = p.Name,
+                      PlantInformationId = p.PlantInformationId,
+                      ScientificName = i.ScientificName,
+                      CommonName = i.CommonName,
+                      LocationId = p.LocationId,
+                      GardenId = p.GardenId,
+                      Description = p.Description,
+                      Notes = p.Notes
+                  })
+            .OrderBy(x => x.ScientificName ?? x.CommonName)
             .ToListAsync();
 
-        return Ok(plants);
+        return Ok(result);
     }
 
-
-    // GET: api/plants/location/7
+    // ---------------------------
+    // GET PLANTS BY LOCATION (DTO)
+    // ---------------------------
     [HttpGet("location/{locationId}")]
-    public async Task<ActionResult<List<PlantModel>>> GetPlantsByLocation(int locationId)
+    public async Task<ActionResult<List<PlantWithInfoDto>>> GetByLocation(int locationId)
     {
-        var plants = await _context.Plants
+        var result = await _context.Plants
             .Where(p => p.LocationId == locationId)
-            .OrderBy(p => p.Name)
+            .Join(_context.PlantInformation,
+                  p => p.PlantInformationId,
+                  i => i.PlantInformationId,
+                  (p, i) => new PlantWithInfoDto
+                  {
+                      PlantId = p.PlantId,
+                      Name = p.Name,
+                      PlantInformationId = p.PlantInformationId,
+                      ScientificName = i.ScientificName,
+                      CommonName = i.CommonName,
+                      LocationId = p.LocationId,
+                      GardenId = p.GardenId,
+                      Description = p.Description,
+                      Notes = p.Notes
+                  })
+            .OrderBy(x => x.ScientificName ?? x.CommonName)
             .ToListAsync();
 
-        return Ok(plants);
+        return Ok(result);
     }
 
-
-    // GET: api/plants/info/12
+    // ---------------------------
+    // GET PLANTS BY PLANT INFO ID (MODEL)
+    // ---------------------------
     [HttpGet("info/{plantInfoId}")]
     public async Task<ActionResult<List<PlantModel>>> GetByPlantInfo(int plantInfoId)
     {
@@ -70,7 +124,9 @@ public class PlantsController : ControllerBase
             .ToListAsync();
     }
 
-    // POST: api/plants
+    // ---------------------------
+    // CREATE
+    // ---------------------------
     [HttpPost]
     public async Task<IActionResult> Create(PlantModel model)
     {
@@ -79,7 +135,9 @@ public class PlantsController : ControllerBase
         return Ok(model);
     }
 
-    // PUT: api/plants/5
+    // ---------------------------
+    // UPDATE
+    // ---------------------------
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, PlantModel model)
     {
@@ -91,7 +149,9 @@ public class PlantsController : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/plants/5
+    // ---------------------------
+    // DELETE
+    // ---------------------------
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -103,32 +163,4 @@ public class PlantsController : ControllerBase
 
         return NoContent();
     }
-
-
-
-    [HttpPost("create")]
-    public async Task<ActionResult<PlantModel>> CreatePlant(PlantModel plant)
-    {
-        // Validate Garden exists
-        var gardenExists = await _context.Gardens.AnyAsync(g => g.GardenId == plant.GardenId);
-        if (!gardenExists)
-            return BadRequest($"Garden with ID {plant.GardenId} does not exist.");
-
-        // Find the Undecided location for this garden
-        var defaultLocation = await _context.Locations
-            .FirstOrDefaultAsync(l => l.GardenId == plant.GardenId && l.Name == "Undecided");
-
-        if (defaultLocation == null)
-            return BadRequest("No default 'Undecided' location exists for this garden.");
-
-
-        _context.Plants.Add(plant);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(Get), new { id = plant.PlantId }, plant);
-    }
-
-
-
-
 }

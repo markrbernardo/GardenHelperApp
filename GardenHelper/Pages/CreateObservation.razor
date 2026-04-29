@@ -1,13 +1,12 @@
 ﻿@page "/observations/create"
 @inject ObservationService ObservationService
 @inject PlantService PlantService
-@inject PlantInformationService PlantInfoService
 @inject UserSessionService Session
 @inject NavigationManager Nav
 
 <h3>Create Observation</h3>
 
-@if (plants == null || plantInfoList == null)
+@if (plants == null)
 {
     <p>Loading...</p>
 }
@@ -22,10 +21,8 @@ else
             <select class="form-select" @bind="observation.PlantId">
                 @foreach (var p in plants)
                 {
-                    var info = plantInfoList.FirstOrDefault(pi => pi.PlantInformationId == p.PlantInformationId);
-
                     <option value="@p.PlantId">
-                        @p.Name — @info?.CommonName (@info?.ScientificName)
+                        @p.CommonName (@p.ScientificName)
                     </option>
                 }
             </select>
@@ -44,17 +41,14 @@ else
 @code {
     ObservationModel observation = new();
 
-    List<PlantModel>? plants;
-    List<PlantInformationModel>? plantInfoList;
+    List<PlantWithInfoDto>? plants;
 
     string? returnUrl;
 
     protected override async Task OnInitializedAsync()
     {
         plants = await PlantService.GetAllPlants();
-        plantInfoList = await PlantInfoService.GetAll();
 
-        // ⭐ Assign UserId
         observation.UserId = Session.CurrentUserId!.Value;
 
         if (plants.Count > 0)
@@ -76,7 +70,6 @@ else
 
     async Task HandleSubmit()
     {
-        // ⭐ Ensure UserId is set
         observation.UserId = Session.CurrentUserId!.Value;
 
         await ObservationService.Create(observation);
@@ -87,7 +80,6 @@ else
             Nav.NavigateTo("/observations");
     }
 
-    // ⭐ RESTORE THIS METHOD
     void GoBack()
     {
         if (!string.IsNullOrWhiteSpace(returnUrl))

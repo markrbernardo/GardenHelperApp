@@ -24,7 +24,9 @@ else
                 <optgroup label="@loc.Key">
                     @foreach (var p in loc.Value)
                     {
-                        <option value="@p.PlantId">@p.Name</option>
+                        <option value="@p.PlantId">
+                            @p.CommonName (@p.ScientificName)
+                        </option>
                     }
                 </optgroup>
             }
@@ -67,9 +69,6 @@ else
                           OnAddObservation="HandleAddObservation"
                           OnEditObservation="HandleEditObservation"
                           OnEditPlant="HandleEditPlant" />
-
-
-
         </div>
 
     </div>
@@ -80,16 +79,12 @@ else
                       OnAddObservation="HandleAddObservation"
                       OnEditObservation="HandleEditObservation"
                       OnEditPlant="HandleEditPlant" />
-
-
-
     </div>
 }
 
 @code {
-    Dictionary<string, List<PlantModel>>? groupedPlants;
-
-    PlantModel? selectedPlant;
+    Dictionary<string, List<PlantWithInfoDto>>? groupedPlants;
+    PlantWithInfoDto? selectedPlant;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -101,7 +96,6 @@ else
             return;
         }
 
-        // Get the currently selected garden
         var gardenId = UserSession.CurrentGardenId;
 
         if (gardenId == null)
@@ -110,19 +104,14 @@ else
             return;
         }
 
-        // Load only locations for the selected garden
         var locations = await LocationService.GetByGarden(gardenId.Value);
 
-        groupedPlants = new Dictionary<string, List<PlantModel>>();
+        groupedPlants = new Dictionary<string, List<PlantWithInfoDto>>();
 
-        // Load plants only for those locations
         foreach (var loc in locations.OrderBy(l => l.Name))
         {
             var plants = await PlantService.GetPlantsByLocation(loc.LocationId);
-
-            groupedPlants[loc.Name] = plants
-                .OrderBy(p => p.Name)
-                .ToList();
+            groupedPlants[loc.Name] = plants;
         }
 
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
@@ -141,10 +130,9 @@ else
                 }
             }
         }
-
     }
 
-    async Task SelectPlant(PlantModel plant)
+    async Task SelectPlant(PlantWithInfoDto plant)
     {
         selectedPlant = plant;
     }
@@ -170,7 +158,6 @@ else
         Nav.NavigateTo($"/observations/create?plantId={plantId}&returnUrl=/plants?plantId={plantId}");
     }
 
-
     void HandleEditObservation(int obsId)
     {
         Nav.NavigateTo($"/observations/edit/{obsId}?returnUrl=/plants");
@@ -180,5 +167,4 @@ else
     {
         Nav.NavigateTo($"/plants/edit/{plantId}?returnUrl=/plants?plantId={plantId}");
     }
-
 }
