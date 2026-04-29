@@ -93,7 +93,7 @@
                 @foreach (var o in recentObservations)
                 {
                     <li class="obs-item"
-                        @onclick="@(() => Nav.NavigateTo($"/observations?obsId={o.ObservationId}"))">
+                        @onclick="@(() => GoToObservation(o))">
 
                         <div class="obs-left">
                             <span class="obs-date">@o.CreatedAt.ToString("MMM dd")</span>
@@ -224,6 +224,23 @@
         plants = await PlantService.GetAllPlants();
         locations = await GardenService.GetAllLocations();
     }
+
+    async Task GoToObservation(ObservationModel o)
+    {
+        // Find the plant so we know which garden it belongs to
+        var plant = plants?.FirstOrDefault(p => p.PlantId == o.PlantId);
+
+        if (plant != null)
+        {
+            // ⭐ Properly switch the active garden
+            await Session.SetGarden(plant.GardenId);
+        }
+
+        Nav.NavigateTo($"/observations?obsId={o.ObservationId}");
+    }
+
+
+
 
     string GetPlantName(int plantId) =>
         plants?.FirstOrDefault(p => p.PlantId == plantId)?.Name ?? "Unknown";
