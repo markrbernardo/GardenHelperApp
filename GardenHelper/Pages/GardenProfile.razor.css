@@ -10,7 +10,7 @@
 .gp-locations-container {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: .25rem;
 }
 
 /* Each location block */
@@ -71,4 +71,42 @@
 .gp-header-card .card-title {
   font-size: 1.125rem;
   font-weight: 600;
+}
+
+.add-location-tile {
+    border: 1px dashed #6c757d !important;
+    background-color: #fafafa;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+    .add-location-tile:hover {
+        background-color: #f0f0f0;
+        border-color: #0d6efd;
+    }
+
+.gp-locations-scroll {
+    max-height: calc(100vh - 320px); /* adjust as needed */
+    overflow-y: auto;
+    padding-right: 4px; /* prevents scrollbar overlap */
+}
+
+
+    /* WebKit browsers (Chrome, Edge, Safari) */
+    .gp-locations-scroll::-webkit-scrollbar {
+        width: 6px; /* Narrower scrollbar */
+    }
+
+    .gp-locations-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .gp-locations-scroll::-webkit-scrollbar-thumb {
+        background-color: #c7c7c7;
+        border-radius: 3px;
+    }
+
+/* Firefox */
+.gp-locations-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #c7c7c7 transparent;
 }

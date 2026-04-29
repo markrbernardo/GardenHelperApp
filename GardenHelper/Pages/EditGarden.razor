@@ -1,4 +1,6 @@
 ﻿@page "/gardens/edit/{id:int}"
+@page "/gardens/edit/{id:int}/{*returnUrl}"
+
 @inject GardenService GardenService
 @inject UserService UserService
 @inject NavigationManager Nav
@@ -15,8 +17,9 @@ else
         <DataAnnotationsValidator />
         <ValidationSummary />
 
+        <!-- USER -->
         <div class="mb-3">
-            <label>User</label>
+            <label class="form-label">User</label>
             <select class="form-select" @bind="garden.UserId">
                 @foreach (var u in users)
                 {
@@ -25,44 +28,78 @@ else
             </select>
         </div>
 
+        <!-- NAME -->
         <div class="mb-3">
-            <label>Name</label>
+            <label class="form-label">Garden Name</label>
             <InputText class="form-control" @bind-Value="garden.Name" />
         </div>
 
+        <!-- ZIP -->
         <div class="mb-3">
-            <label>Zip Code</label>
+            <label class="form-label">Zip Code</label>
             <InputNumber class="form-control" @bind-Value="garden.ZipCode" />
         </div>
 
-        <button class="btn btn-success">Save</button>
-        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+        <!-- NEW FIELDS -->
+        <div class="mb-3">
+            <label class="form-label">Hardiness Zone</label>
+            <InputText class="form-control" @bind-Value="garden.HardinessZone" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Heat Zone</label>
+            <InputText class="form-control" @bind-Value="garden.HeatZone" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Wind Orientation</label>
+            <InputText class="form-control" @bind-Value="garden.WindOrientation" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Soil Type</label>
+            <InputText class="form-control" @bind-Value="garden.SoilType" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Marine Influence</label>
+            <InputText class="form-control" @bind-Value="garden.MarineInfluence" />
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-success" type="submit">Save</button>
+            <button class="btn btn-secondary" type="button" @onclick="GoBack">Cancel</button>
+        </div>
     </EditForm>
 }
 
 @code {
     [Parameter] public int id { get; set; }
+    [Parameter] public string? returnUrl { get; set; }
 
     GardenModel? garden;
     List<UserModel>? users;
 
     protected override async Task OnInitializedAsync()
     {
-        // Load the garden being edited
         garden = await GardenService.GetGarden(id);
-
-        // Load users for the dropdown
         users = await UserService.GetUsers();
     }
 
     async Task HandleSubmit()
     {
         await GardenService.UpdateGarden(garden!);
-        Nav.NavigateTo("/gardens");
+
+        // Always go to the updated garden's profile
+        Nav.NavigateTo($"/garden-profile/{garden!.GardenId}");
     }
 
     void GoBack()
     {
-        Nav.NavigateTo("/gardens");
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl);
+        else
+            Nav.NavigateTo($"/garden-profile/{garden!.GardenId}");
     }
 }

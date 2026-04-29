@@ -54,3 +54,75 @@
         padding-left: 0;
     }
 }
+
+
+/* Make the entire Location Profile page fill the viewport */
+.location-page {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 80px); /* subtract top nav height */
+    overflow: hidden; /* prevents MainLayout scrolling */
+}
+
+/* Main grid layout */
+.location-grid {
+    flex: 1; /* fills remaining space under header */
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 20px;
+    overflow: hidden;
+}
+
+/* LEFT COLUMN */
+.loc-left {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Scrollable plant list (hidden scrollbar) */
+.loc-scroll {
+    overflow-y: auto;
+    padding-right: 6px;
+    scrollbar-width: none; /* Firefox */
+}
+
+    .loc-scroll::-webkit-scrollbar {
+        display: none; /* Chrome, Edge, Safari */
+    }
+
+/* RIGHT COLUMN */
+.loc-right {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+/* Scrollable details (thin scrollbar) */
+.loc-details-scroll {
+    overflow-y: auto;
+    padding-right: 6px;
+    scrollbar-width: thin;
+}
+
+    .loc-details-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .loc-details-scroll::-webkit-scrollbar-thumb {
+        background-color: rgba(0,0,0,0.25);
+        border-radius: 4px;
+    }
+
+/* Mobile dropdown */
+.plant-dropdown select {
+    font-size: 1rem;
+}
+
+/* Responsive behavior */
+@media (max-width: 767px) {
+    .location-grid {
+        display: block;
+        height: auto;
+    }
+}

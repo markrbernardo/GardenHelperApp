@@ -29,3 +29,41 @@
         grid-template-columns: 1fr;
     }
 }
+
+
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.info-tile {
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: #f8f9fa;
+    border: 1px solid #e1e1e1;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+    .info-tile:hover {
+        background: #eef2f5;
+        border-color: #cfd6dd;
+    }
+
+    .info-tile.selected {
+        background: #4F6F52; /* exact NavMenu background */
+        color: #FFFFFF; /* high contrast on dark sage */
+        border-color: #3E5842; /* slightly darker border for depth */
+    }
+
+
+.info-name {
+    font-weight: 600;
+}
+
+.info-scientific {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    font-style: italic;
+}

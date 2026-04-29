@@ -83,5 +83,14 @@ public class GardenService
         return await _http.GetFromJsonAsync<List<LocationModel>>("api/gardens/locations");
     }
 
+    public async Task<GardenModel?> CreateGardenWithReturn(GardenModel model)
+    {
+        var response = await _http.PostAsJsonAsync("api/gardens", model);
+
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<GardenModel>();
+    }
 
 }

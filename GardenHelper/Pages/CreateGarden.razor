@@ -1,4 +1,6 @@
 ﻿@page "/gardens/create/{userId:int}"
+@page "/gardens/create/{userId:int}/{*returnUrl}"
+
 @inject GardenService GardenService
 @inject UserService UserService
 @inject NavigationManager Nav
@@ -15,8 +17,9 @@ else
         <DataAnnotationsValidator />
         <ValidationSummary />
 
+        <!-- USER -->
         <div class="mb-3">
-            <label>User</label>
+            <label class="form-label">User</label>
             <select class="form-select" @bind="garden.UserId">
                 @foreach (var u in users)
                 {
@@ -25,16 +28,45 @@ else
             </select>
         </div>
 
+        <!-- NAME -->
         <div class="mb-3">
-            <label>Name</label>
+            <label class="form-label">Garden Name</label>
             <InputText class="form-control" @bind-Value="garden.Name" />
         </div>
 
+        <!-- ZIP -->
         <div class="mb-3">
-            <label>Zip Code</label>
+            <label class="form-label">Zip Code</label>
             <InputNumber class="form-control" @bind-Value="garden.ZipCode" />
         </div>
 
+        <!-- NEW FIELDS -->
+        <div class="mb-3">
+            <label class="form-label">Hardiness Zone</label>
+            <InputText class="form-control" @bind-Value="garden.HardinessZone" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Heat Zone</label>
+            <InputText class="form-control" @bind-Value="garden.HeatZone" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Wind Orientation</label>
+            <InputText class="form-control" @bind-Value="garden.WindOrientation" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Soil Type</label>
+            <InputText class="form-control" @bind-Value="garden.SoilType" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Marine Influence</label>
+            <InputText class="form-control" @bind-Value="garden.MarineInfluence" />
+        </div>
+
+        <!-- BUTTONS -->
         <button class="btn btn-success">Create</button>
         <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
     </EditForm>
@@ -42,29 +74,31 @@ else
 
 @code {
     [Parameter] public int userId { get; set; }
+    [Parameter] public string? returnUrl { get; set; }
+
 
     GardenModel garden = new();
     List<UserModel>? users;
 
     protected override async Task OnInitializedAsync()
     {
-        // Load users for dropdown
         users = await UserService.GetUsers();
-
-        // Pre-select the user passed in the URL
         garden.UserId = userId;
     }
 
     async Task HandleSubmit()
     {
-        await GardenService.CreateGarden(garden);
-        Nav.NavigateTo($"/gardens?userId={garden.UserId}");
-
+        var created = await GardenService.CreateGardenWithReturn(garden);
+        Nav.NavigateTo($"/garden-profile/{created.GardenId}");
     }
+
 
     void GoBack()
     {
-        Nav.NavigateTo($"/gardens?userId={garden.UserId}");
-
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl);
+        else
+            Nav.NavigateTo($"/gardens?userId={garden.UserId}");
     }
+
 }

@@ -22,18 +22,18 @@
 
         @if (allInfo?.Any() == true)
         {
-            <ul class="list-group">
+            <div class="info-list">
                 @foreach (var pi in allInfo)
                 {
-                    <li class="list-group-item list-group-item-action
-                                       @(selectedId == pi.PlantInformationId ? "active" : "")"
-                        @onclick="() => SelectPlant(pi.PlantInformationId)">
-                        @pi.CommonName
-                        <br />
-                        <small class="text-muted"><em>@pi.ScientificName</em></small>
-                    </li>
+                    <div class="info-tile @(selectedId == pi.PlantInformationId ? "selected" : "")"
+                         @onclick="() => SelectPlant(pi.PlantInformationId)">
+
+                        <div class="info-name">@pi.CommonName</div>
+                        <div class="info-scientific">@pi.ScientificName</div>
+                    </div>
                 }
-            </ul>
+            </div>
+
         }
         else
         {

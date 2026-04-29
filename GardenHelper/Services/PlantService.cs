@@ -54,13 +54,14 @@ public class PlantService
     // ---------------------------------------------------------
     public async Task Create(PlantModel model)
     {
-        await _http.PostAsJsonAsync("api/plants/create", model);
+        await _http.PostAsJsonAsync("api/plants", model);
     }
 
     public async Task<HttpResponseMessage> CreateWithResponse(PlantModel model)
     {
-        return await _http.PostAsJsonAsync("api/plants/create", model);
+        return await _http.PostAsJsonAsync("api/plants", model);
     }
+
 
     public async Task Update(PlantModel model)
     {
