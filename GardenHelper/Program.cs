@@ -2,6 +2,7 @@ using GardenHelper;
 using GardenHelperApp.Client.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using System.ComponentModel;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -17,9 +18,9 @@ builder.Services.AddScoped<ObservationService>();
 builder.Services.AddScoped<JournalEntryService>();
 builder.Services.AddScoped<PlantPhotoService>();
 
-
 // Register session service
 builder.Services.AddScoped<UserSessionService>();
+
 
 // Build the host
 var host = builder.Build();

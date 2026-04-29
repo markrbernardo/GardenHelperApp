@@ -75,11 +75,12 @@
 
     List<ObservationModel> ObservationsForDate =>
         Observations
+            // compare using the local date
             .Where(o => o.CreatedAt.Date == SelectedDate)
             .Where(o => SelectedGardenId == null
                 || Plants.First(p => p.PlantId == o.PlantId).GardenId == SelectedGardenId)
             .OrderByDescending(o => o.ActiveObservation)
-            .ThenByDescending(o => o.CreatedAt)
+            .ThenByDescending(o => o.CreatedAt) // ordering by instant still valid
             .ToList();
 
     string GetPlantName(int id) =>
@@ -109,5 +110,6 @@
     }
 
     string FormatDate(DateTime dt) =>
-        dt.ToString("dddd, MMM dd • hh:mm tt");
+    dt.ToString("dddd, MMM dd • hh:mm tt");
+
 }

@@ -19,7 +19,10 @@ public class ObservationsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<ObservationModel>>> GetAll()
     {
-        return await _context.Observations.ToListAsync();
+        // Order results by CreatedAt only (ignore UpdatedAt)
+        return await _context.Observations
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
     }
 
     [HttpGet("{id}")]
@@ -41,10 +44,11 @@ public class ObservationsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<int>> Create(ObservationModel model)
     {
-        model.CreatedAt = DateTime.UtcNow;
-        model.UpdatedAt = DateTime.UtcNow;
+        model.CreatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+        model.UpdatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
 
-        // ⭐ Make sure UserId is included in the incoming model
+
+
         if (model.UserId <= 0)
             return BadRequest("UserId is required.");
 
@@ -54,16 +58,14 @@ public class ObservationsController : ControllerBase
         return model.ObservationId;
     }
 
-
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, ObservationModel model)
     {
         if (id != model.ObservationId)
             return BadRequest();
 
-        // ⭐ FIX: Force timestamps to be treated as LOCAL time
-        model.CreatedAt = DateTime.SpecifyKind(model.CreatedAt, DateTimeKind.Local).ToLocalTime();
-        model.UpdatedAt = DateTime.SpecifyKind(model.UpdatedAt, DateTimeKind.Local).ToLocalTime();
+        // Keep original CreatedAt (client may send it) but normalize UpdatedAt to UTC now
+        model.UpdatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
 
         try
         {
@@ -100,7 +102,7 @@ public class ObservationsController : ControllerBase
             return NotFound();
 
         obs.ActiveObservation = isActive;
-        obs.UpdatedAt = DateTime.UtcNow;
+        obs.UpdatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
 
         await _context.SaveChangesAsync();
         return NoContent();
@@ -109,6 +111,7 @@ public class ObservationsController : ControllerBase
     [HttpGet("user/{userId}")]
     public async Task<ActionResult<List<ObservationModel>>> GetByUser(int userId)
     {
+        // Ensure server returns observations ordered by CreatedAt only
         return await _context.Observations
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.CreatedAt)

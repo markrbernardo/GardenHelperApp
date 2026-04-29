@@ -29,26 +29,23 @@ public class ObservationService
                ?? new List<ObservationModel>();
     }
 
-    // CREATE with timestamps
+    // CREATE with UTC timestamps
     public async Task<int> Create(ObservationModel model)
     {
-        model.CreatedAt = DateTime.Now;
-        model.UpdatedAt = DateTime.Now;
-
-        // ⭐ Make sure UserId is set before sending
-        // model.UserId = Session.CurrentUserId.Value;  <-- you set this in the UI before calling Create()
+        // Ensure timestamps are UTC before sending
+        model.CreatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+        model.UpdatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
 
         var response = await _http.PostAsJsonAsync("api/observations", model);
         return await response.Content.ReadFromJsonAsync<int>();
     }
 
-
     public async Task Update(ObservationModel model)
     {
-        model.UpdatedAt = DateTime.Now;
+        // UpdatedAt set to UTC now
+        model.UpdatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
         await _http.PutAsJsonAsync($"api/observations/{model.ObservationId}", model);
     }
-
 
     public async Task Delete(int id)
     {
@@ -66,6 +63,4 @@ public class ObservationService
             $"api/observations/user/{userId}"
         ) ?? new List<ObservationModel>();
     }
-
-
 }

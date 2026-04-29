@@ -1,5 +1,7 @@
 ﻿using GardenHelperApp.Server.Data;
 using Microsoft.EntityFrameworkCore;
+using GardenHelperApp.Server.Converters;
+using Microsoft.AspNetCore.Http.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +10,13 @@ AppContext.SetSwitch("System.Globalization.EnforceLocalTime", true);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+builder.Services.Configure<JsonOptions>(options =>
+{
+    options.SerializerOptions.Converters.Add(new DateTimeConverter());
+});
+
+
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<GardenContext>(options =>

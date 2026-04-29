@@ -50,10 +50,5 @@ public class GardenContext : DbContext
         modelBuilder.Entity<ObservationModel>()
             .Property(o => o.UpdatedAt)
             .HasColumnType("TEXT");
-
-        // Ensure PlantPhotos.CreatedAt is stored as TEXT as well
-        modelBuilder.Entity<PlantPhotoModel>()
-            .Property(p => p.CreatedAt)
-            .HasColumnType("TEXT");
     }
 }

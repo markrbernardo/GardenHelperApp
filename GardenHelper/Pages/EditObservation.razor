@@ -1,5 +1,6 @@
 ﻿@page "/observations/edit/{id:int}"
 @using GardenHelperApp.Shared.Models
+@using Microsoft.AspNetCore.WebUtilities
 @inject ObservationService ObservationService
 @inject PlantService PlantService
 @inject PlantInformationService PlantInfoService
@@ -56,44 +57,18 @@ else
 
         observation = await ObservationService.Get(id);
 
-        if (observation != null)
-        {
-            // ⭐ FIX: Treat timestamps as pure local values with no timezone
-            observation.CreatedAt = DateTime.SpecifyKind(observation.CreatedAt, DateTimeKind.Unspecified);
-            observation.UpdatedAt = DateTime.SpecifyKind(observation.UpdatedAt, DateTimeKind.Unspecified);
-        }
-
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
-        if (query.TryGetValue("returnUrl", out var url))
-            returnUrl = url!;
+        // QueryHelpers returns StringValues; convert to string explicitly
+        if (query.TryGetValue("returnUrl", out var urlValues))
+            returnUrl = urlValues.ToString();
     }
 
     async Task HandleSubmit()
     {
-        // Reconstruct timestamps as pure local values with no timezone
-        observation!.CreatedAt = new DateTime(
-            observation.CreatedAt.Year,
-            observation.CreatedAt.Month,
-            observation.CreatedAt.Day,
-            observation.CreatedAt.Hour,
-            observation.CreatedAt.Minute,
-            observation.CreatedAt.Second,
-            observation.CreatedAt.Millisecond,
-            DateTimeKind.Unspecified
-        );
 
-        observation.UpdatedAt = new DateTime(
-            DateTime.Now.Year,
-            DateTime.Now.Month,
-            DateTime.Now.Day,
-            DateTime.Now.Hour,
-            DateTime.Now.Minute,
-            DateTime.Now.Second,
-            DateTime.Now.Millisecond,
-            DateTimeKind.Unspecified
-        );
+        observation!.UpdatedAt = DateTime.UtcNow;
 
         await ObservationService.Update(observation);
 

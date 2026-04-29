@@ -103,7 +103,8 @@ else
             var obs = observations.FirstOrDefault(o => o.ObservationId == obsId);
             if (obs != null)
             {
-                selectedDate = obs.CreatedAt.Date;
+                // select by local date
+                selectedDate = obs.CreatedAt.ToLocalTime().Date;
             }
         }
         else if (query.TryGetValue("date", out var ds) && DateTime.TryParse(ds, out var dt))
@@ -123,11 +124,11 @@ else
                                         p.GardenId == selectedGardenId))
             .ToList();
 
+        // Group by local date
         groupedObservations = filteredObservations
-            .GroupBy(o => o.CreatedAt.Date)
+            .GroupBy(o => o.CreatedAt.ToLocalTime().Date)
             .OrderByDescending(g => g.Key)
             .ToList();
-
     }
 
     void SelectDate(DateTime date)
