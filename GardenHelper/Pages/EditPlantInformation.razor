@@ -1,6 +1,8 @@
 ﻿@page "/plantinformation/edit/{id:int}"
 @inject PlantInformationService PlantInfoService
 @inject NavigationManager Nav
+@inject IJSRuntime JS
+
 
 <h3>Edit Plant Information</h3>
 
@@ -29,12 +31,24 @@ else if (plantInfo != null)
             <InputText class="form-control" @bind-Value="plantInfo.ScientificName" />
         </div>
 
-        <!-- PHOTO (base64) -->
+        <!-- PHOTO UPLOAD -->
         <div class="mb-3">
-            <label class="form-label">Photo (Base64)</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Photo" rows="3" />
-            <small class="text-muted">Paste a Base64-encoded image string here.</small>
+            <label class="form-label">Upload Photo</label>
+            <InputFile OnChange="HandleFileSelected" accept="image/*" />
+            <small class="text-muted">Choose an image to upload.</small>
         </div>
+
+        @if (!string.IsNullOrEmpty(plantInfo.Photo))
+        {
+            <div class="mt-2">
+                <img src="@($"data:{plantInfo.PhotoMimeType ?? "image/png"};base64,{plantInfo.Photo}")"
+                     style="max-width:200px; border-radius:8px;" />
+
+                <button class="btn btn-danger btn-sm mt-2" @onclick="RemovePhoto">
+                    Remove Photo
+                </button>
+            </div>
+        }
 
         <!-- DESCRIPTION -->
         <div class="mb-3">
@@ -124,6 +138,11 @@ else if (plantInfo != null)
 {
     <div class="alert alert-danger mt-3">@errorMessage</div>
 }
+else
+{
+    <p>Error: No plant information available.</p>
+}
+
 
 @code {
     [Parameter] public int id { get; set; }
@@ -135,6 +154,39 @@ else if (plantInfo != null)
 
     string? loadError;
     string? errorMessage;
+
+    async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null)
+            return;
+
+        // Read file into memory
+        using var stream = file.OpenReadStream(maxAllowedSize: 10_000_000);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var bytes = ms.ToArray();
+
+        // Convert to Base64
+        var base64 = Convert.ToBase64String(bytes);
+        var dataUrl = $"data:{file.ContentType};base64,{base64}";
+
+        // Send Base64 to JS for resizing
+        var resizedDataUrl = await JS.InvokeAsync<string>(
+            "resizeImageFromBase64",
+            dataUrl,
+            800,
+            800
+        );
+
+        // Split MIME + Base64
+        var parts = resizedDataUrl.Split(',');
+        plantInfo.PhotoMimeType = parts[0].Split(':')[1].Split(';')[0];
+        plantInfo.Photo = parts[1];
+    }
+
+
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -179,7 +231,6 @@ else if (plantInfo != null)
 
     void GoBack()
     {
-        // Avoid null-dereference: if plantInfo is missing go to list instead
         if (plantInfo != null)
             Nav.NavigateTo($"/plantinformation/{plantInfo.PlantInformationId}");
         else
@@ -210,5 +261,11 @@ else if (plantInfo != null)
         {
             isSubmitting = false;
         }
+    }
+
+    void RemovePhoto()
+    {
+        plantInfo.Photo = null;
+        plantInfo.PhotoMimeType = null;
     }
 }

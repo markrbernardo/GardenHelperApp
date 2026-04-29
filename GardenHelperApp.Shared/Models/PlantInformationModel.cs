@@ -24,4 +24,6 @@ public class PlantInformationModel
     public string? Pruning { get; set; }
     public string? Propagation { get; set; }
     public string? Health { get; set; }
+    public string? PhotoMimeType { get; set; }
+
 }

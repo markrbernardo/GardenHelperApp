@@ -1,6 +1,8 @@
 ﻿@page "/plantinformation/create"
 @inject PlantInformationService PlantInfoService
 @inject NavigationManager Nav
+@inject IJSRuntime JS
+
 
 <h3>Create Plant Information</h3>
 
@@ -27,10 +29,19 @@ else
 
         <!-- OPTIONAL PHOTO (base64 string) -->
         <div class="mb-3">
-            <label class="form-label">Photo (Base64)</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Photo" rows="3" />
-            <small class="text-muted">Paste a Base64-encoded image string here.</small>
+            <label class="form-label">Upload Photo</label>
+            <InputFile OnChange="HandleFileSelected" accept="image/*" />
+            <small class="text-muted">Choose an image to upload.</small>
         </div>
+
+        @if (!string.IsNullOrEmpty(plantInfo.Photo))
+        {
+            <div class="mt-2">
+                <img src="@($"data:image/png;base64,{plantInfo.Photo}")"
+                     style="max-width:200px; border-radius:8px;" />
+            </div>
+        }
+
 
         <!-- DESCRIPTION -->
         <div class="mb-3">
@@ -108,6 +119,41 @@ else
     PlantInformationModel plantInfo = new();
     bool isSubmitting = false;
     string? errorMessage;
+
+
+    async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null)
+            return;
+
+        // Read file into memory
+        using var stream = file.OpenReadStream(maxAllowedSize: 10_000_000);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var bytes = ms.ToArray();
+
+        // Convert to Base64
+        var base64 = Convert.ToBase64String(bytes);
+        var dataUrl = $"data:{file.ContentType};base64,{base64}";
+
+        // Send Base64 to JS for resizing
+        var resizedDataUrl = await JS.InvokeAsync<string>(
+            "resizeImageFromBase64",
+            dataUrl,
+            800,
+            800
+        );
+
+        // Split MIME + Base64
+        var parts = resizedDataUrl.Split(',');
+        plantInfo.PhotoMimeType = parts[0].Split(':')[1].Split(';')[0];
+        plantInfo.Photo = parts[1];
+    }
+
+
+
+
 
     async Task HandleSubmit()
     {
