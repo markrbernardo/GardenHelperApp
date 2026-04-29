@@ -1,9 +1,12 @@
 ﻿<div class="plant-tile @(Selected ? "selected" : "")"
      @onclick="() => OnSelect.InvokeAsync(Plant)">
-    <div class="plant-name">@Plant.CommonName</div>
+    <div class="plant-name"><strong>@Plant.Name</strong></div>
 
     @if (!string.IsNullOrWhiteSpace(Plant.ScientificName))
     {
+        <div class="plant-scientific">
+            <em>@Plant.CommonName</em>
+        </div>
         <div class="plant-scientific">
             <em>@Plant.ScientificName</em>
         </div>

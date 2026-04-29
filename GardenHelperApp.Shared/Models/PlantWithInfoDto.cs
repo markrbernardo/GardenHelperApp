@@ -12,4 +12,19 @@
 
     public string? Description { get; set; }
     public string? Notes { get; set; }
+    public string? GrowingSeason { get; set; }
+    public string? Seeds { get; set; }
+    public string? Light { get; set; }
+    public string? Water { get; set; }
+    public string? Air { get; set; }
+    public string? Soil { get; set; }
+    public string? Container { get; set; }
+    public string? Fertilization { get; set; }
+    public string? Pruning { get; set; }
+    public string? Propagation { get; set; }
+    public string? Health { get; set; }
+    public string? Photo { get; set; }
+    public string? PhotoMimeType { get; set; }
+
+
 }

@@ -12,6 +12,7 @@ public class PlantInformationModel
 
     // New fields you added to SQLite
     public string? Description { get; set; }
+    public string? GrowingSeason { get; set; }
     public string? Photo { get; set; }  // Base64 TEXT
 
     public string? Seeds { get; set; }

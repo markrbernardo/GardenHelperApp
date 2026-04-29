@@ -15,13 +15,20 @@
 
     @if (!string.IsNullOrEmpty(Info.Photo))
     {
-        <img src="data:image/jpeg;base64,@Info.Photo" class="generic-photo" />
+        <img src="@($"data:{Info.PhotoMimeType ?? "image/jpeg"};base64,{Info.Photo}")"
+             class="generic-photo" />
     }
 
     @if (!string.IsNullOrWhiteSpace(Info.Description))
     {
         <h5>Description</h5>
         <p>@Info.Description</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Info.GrowingSeason))
+    {
+        <h5>Growing Season</h5>
+        <p>@Info.GrowingSeason</p>
     }
 
     @if (!string.IsNullOrWhiteSpace(Info.Seeds))

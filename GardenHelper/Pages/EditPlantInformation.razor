@@ -3,7 +3,6 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-
 <h3>Edit Plant Information</h3>
 
 @if (isLoading)
@@ -54,6 +53,12 @@ else if (plantInfo != null)
         <div class="mb-3">
             <label class="form-label">Description</label>
             <InputTextArea class="form-control" @bind-Value="plantInfo.Description" rows="3" />
+        </div>
+
+        <!-- ⭐ NEW FIELD: GROWING SEASON -->
+        <div class="mb-3">
+            <label class="form-label">Growing Season</label>
+            <InputText class="form-control" @bind-Value="plantInfo.GrowingSeason" />
         </div>
 
         <!-- CARE SECTIONS -->
@@ -138,11 +143,6 @@ else if (plantInfo != null)
 {
     <div class="alert alert-danger mt-3">@errorMessage</div>
 }
-else
-{
-    <p>Error: No plant information available.</p>
-}
-
 
 @code {
     [Parameter] public int id { get; set; }
@@ -161,17 +161,14 @@ else
         if (file == null)
             return;
 
-        // Read file into memory
         using var stream = file.OpenReadStream(maxAllowedSize: 10_000_000);
         using var ms = new MemoryStream();
         await stream.CopyToAsync(ms);
         var bytes = ms.ToArray();
 
-        // Convert to Base64
         var base64 = Convert.ToBase64String(bytes);
         var dataUrl = $"data:{file.ContentType};base64,{base64}";
 
-        // Send Base64 to JS for resizing
         var resizedDataUrl = await JS.InvokeAsync<string>(
             "resizeImageFromBase64",
             dataUrl,
@@ -179,14 +176,10 @@ else
             800
         );
 
-        // Split MIME + Base64
         var parts = resizedDataUrl.Split(',');
         plantInfo.PhotoMimeType = parts[0].Split(':')[1].Split(';')[0];
         plantInfo.Photo = parts[1];
     }
-
-
-
 
     protected override async Task OnInitializedAsync()
     {

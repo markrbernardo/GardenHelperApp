@@ -35,8 +35,25 @@ public class PlantsController : ControllerBase
                       CommonName = i.CommonName,
                       LocationId = p.LocationId,
                       GardenId = p.GardenId,
+
+                      // Plant fields
                       Description = p.Description,
-                      Notes = p.Notes
+                      Notes = p.Notes,
+
+                      // PlantInformation fields
+                      GrowingSeason = i.GrowingSeason,
+                      Photo = i.Photo,
+                      PhotoMimeType = i.PhotoMimeType,
+                      Seeds = i.Seeds,
+                      Light = i.Light,
+                      Water = i.Water,
+                      Air = i.Air,
+                      Soil = i.Soil,
+                      Container = i.Container,
+                      Fertilization = i.Fertilization,
+                      Pruning = i.Pruning,
+                      Propagation = i.Propagation,
+                      Health = i.Health
                   })
             .OrderBy(x => x.ScientificName ?? x.CommonName)
             .ToListAsync();
@@ -75,8 +92,23 @@ public class PlantsController : ControllerBase
                       CommonName = i.CommonName,
                       LocationId = p.LocationId,
                       GardenId = p.GardenId,
+
                       Description = p.Description,
-                      Notes = p.Notes
+                      Notes = p.Notes,
+
+                      GrowingSeason = i.GrowingSeason,
+                      Photo = i.Photo,
+                      PhotoMimeType = i.PhotoMimeType,
+                      Seeds = i.Seeds,
+                      Light = i.Light,
+                      Water = i.Water,
+                      Air = i.Air,
+                      Soil = i.Soil,
+                      Container = i.Container,
+                      Fertilization = i.Fertilization,
+                      Pruning = i.Pruning,
+                      Propagation = i.Propagation,
+                      Health = i.Health
                   })
             .OrderBy(x => x.ScientificName ?? x.CommonName)
             .ToListAsync();
@@ -104,8 +136,23 @@ public class PlantsController : ControllerBase
                       CommonName = i.CommonName,
                       LocationId = p.LocationId,
                       GardenId = p.GardenId,
+
                       Description = p.Description,
-                      Notes = p.Notes
+                      Notes = p.Notes,
+
+                      GrowingSeason = i.GrowingSeason,
+                      Photo = i.Photo,
+                      PhotoMimeType = i.PhotoMimeType,
+                      Seeds = i.Seeds,
+                      Light = i.Light,
+                      Water = i.Water,
+                      Air = i.Air,
+                      Soil = i.Soil,
+                      Container = i.Container,
+                      Fertilization = i.Fertilization,
+                      Pruning = i.Pruning,
+                      Propagation = i.Propagation,
+                      Health = i.Health
                   })
             .OrderBy(x => x.ScientificName ?? x.CommonName)
             .ToListAsync();

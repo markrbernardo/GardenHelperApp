@@ -3,7 +3,6 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-
 <h3>Create Plant Information</h3>
 
 @if (isSubmitting)
@@ -37,16 +36,21 @@ else
         @if (!string.IsNullOrEmpty(plantInfo.Photo))
         {
             <div class="mt-2">
-                <img src="@($"data:image/png;base64,{plantInfo.Photo}")"
+                <img src="@($"data:{plantInfo.PhotoMimeType};base64,{plantInfo.Photo}")"
                      style="max-width:200px; border-radius:8px;" />
             </div>
         }
-
 
         <!-- DESCRIPTION -->
         <div class="mb-3">
             <label class="form-label">Description</label>
             <InputTextArea class="form-control" @bind-Value="plantInfo.Description" rows="3" />
+        </div>
+
+        <!-- ⭐ NEW FIELD: GROWING SEASON -->
+        <div class="mb-3">
+            <label class="form-label">Growing Season</label>
+            <InputText class="form-control" @bind-Value="plantInfo.GrowingSeason" />
         </div>
 
         <!-- CARE SECTIONS -->
@@ -120,24 +124,20 @@ else
     bool isSubmitting = false;
     string? errorMessage;
 
-
     async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
         var file = e.File;
         if (file == null)
             return;
 
-        // Read file into memory
         using var stream = file.OpenReadStream(maxAllowedSize: 10_000_000);
         using var ms = new MemoryStream();
         await stream.CopyToAsync(ms);
         var bytes = ms.ToArray();
 
-        // Convert to Base64
         var base64 = Convert.ToBase64String(bytes);
         var dataUrl = $"data:{file.ContentType};base64,{base64}";
 
-        // Send Base64 to JS for resizing
         var resizedDataUrl = await JS.InvokeAsync<string>(
             "resizeImageFromBase64",
             dataUrl,
@@ -145,15 +145,10 @@ else
             800
         );
 
-        // Split MIME + Base64
         var parts = resizedDataUrl.Split(',');
         plantInfo.PhotoMimeType = parts[0].Split(':')[1].Split(';')[0];
         plantInfo.Photo = parts[1];
     }
-
-
-
-
 
     async Task HandleSubmit()
     {
