@@ -26,5 +26,7 @@
     public string? Photo { get; set; }
     public string? PhotoMimeType { get; set; }
 
+    public string? PlantPhoto { get; set; }
+    public string? PlantPhotoMimeType { get; set; }
 
 }

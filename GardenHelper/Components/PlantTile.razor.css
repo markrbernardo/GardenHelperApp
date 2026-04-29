@@ -1,9 +1,13 @@
 ﻿.plant-tile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 10px;
     border-radius: 4px;
     cursor: pointer;
     margin-bottom: 6px;
     background: #f7f7f7;
+    transition: background 0.15s ease;
 }
 
     .plant-tile:hover {
@@ -11,12 +15,49 @@
     }
 
     .plant-tile.selected {
-        background: #dcefe2;
-        font-weight: bold;
+        background: #4F6F52;
+        color: #FFFFFF;
+        border-color: #3E5842;
     }
+
+        .plant-tile.selected .plant-name,
+        .plant-tile.selected .plant-scientific {
+            color: #FFFFFF;
+        }
+
+/* Thumbnail container */
+.plant-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #dcefe2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .plant-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.plant-thumb-placeholder {
+    font-size: 1.4rem;
+    opacity: 0.7;
+}
+
+/* Text block */
+.plant-text {
+    display: flex;
+    flex-direction: column;
+}
 
 .plant-name {
     font-size: 1rem;
+    color: #2F3E2C;
 }
 
 .plant-scientific {

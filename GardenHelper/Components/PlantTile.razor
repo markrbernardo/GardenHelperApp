@@ -1,17 +1,33 @@
 ﻿<div class="plant-tile @(Selected ? "selected" : "")"
      @onclick="() => OnSelect.InvokeAsync(Plant)">
-    <div class="plant-name"><strong>@Plant.Name</strong></div>
 
-    @if (!string.IsNullOrWhiteSpace(Plant.ScientificName))
-    {
-        <div class="plant-scientific">
-            <em>@Plant.CommonName</em>
-        </div>
-        <div class="plant-scientific">
-            <em>@Plant.ScientificName</em>
-        </div>
-    }
+    <div class="plant-thumb">
+        @if (!string.IsNullOrWhiteSpace(Plant.PlantPhoto))   @* FUTURE FIELD *@
+        {
+            <img src="data:image/jpeg;base64,@Plant.PlantPhoto" />
+        }
+        else
+        {
+            <div class="plant-thumb-placeholder">🌿</div>
+        }
+    </div>
+
+    <div class="plant-text">
+        <div class="plant-name"><strong>@Plant.Name</strong></div>
+
+        @if (!string.IsNullOrWhiteSpace(Plant.CommonName))
+        {
+            <div class="plant-scientific"><em>@Plant.CommonName</em></div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Plant.ScientificName))
+        {
+            <div class="plant-scientific"><em>@Plant.ScientificName</em></div>
+        }
+    </div>
 </div>
+
+
 
 @code {
     [Parameter] public PlantWithInfoDto Plant { get; set; } = default!;
