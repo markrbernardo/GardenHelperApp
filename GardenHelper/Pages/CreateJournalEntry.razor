@@ -68,6 +68,8 @@ else
     {
         // Safety: ensure UserId is always set
         entry.UserId = Session.CurrentUserId!.Value;
+        entry.CreatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+
 
         await JournalEntryService.Create(entry);
 
