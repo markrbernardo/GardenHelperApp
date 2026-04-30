@@ -262,15 +262,21 @@
         {
             defaultGarden = await GardenService.GetGarden(Session.CurrentGardenId.Value);
 
-            if (defaultGarden != null)
+            if (defaultGarden == null)
             {
-                var locs = await GardenService.GetLocationsByGarden(defaultGarden.GardenId);
-                locationCount = locs.Count;
+                // The garden was deleted — clear session and reload gardens list
+                await Session.ClearCurrentGarden();
+                return;
 
-                var pls = await PlantService.GetPlantsByGarden(defaultGarden.GardenId);
-                plantCount = pls.Count;
             }
+
+            var locs = await GardenService.GetLocationsByGarden(defaultGarden.GardenId);
+            locationCount = locs.Count;
+
+            var pls = await PlantService.GetPlantsByGarden(defaultGarden.GardenId);
+            plantCount = pls.Count;
         }
+
 
         recentObservations = (await ObservationService.GetByUser(Session.CurrentUserId.Value))?
             .OrderByDescending(o => o.ActiveObservation)

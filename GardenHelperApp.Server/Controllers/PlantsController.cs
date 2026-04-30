@@ -22,44 +22,44 @@ public class PlantsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<PlantWithInfoDto>>> GetAll()
     {
-        var result = await _context.Plants
-            .Join(_context.PlantInformation,
-                  p => p.PlantInformationId,
-                  i => i.PlantInformationId,
-                  (p, i) => new PlantWithInfoDto
-                  {
-                      PlantId = p.PlantId,
-                      Name = p.Name,
-                      PlantInformationId = p.PlantInformationId,
-                      ScientificName = i.ScientificName,
-                      CommonName = i.CommonName,
-                      LocationId = p.LocationId,
-                      GardenId = p.GardenId,
+        var result =
+            await (from p in _context.Plants
+                   join i in _context.PlantInformation on p.PlantInformationId equals i.PlantInformationId
+                   join l in _context.Locations on p.LocationId equals l.LocationId
+                   select new PlantWithInfoDto
+                   {
+                       PlantId = p.PlantId,
+                       Name = p.Name,
+                       PlantInformationId = p.PlantInformationId,
+                       ScientificName = i.ScientificName,
+                       CommonName = i.CommonName,
+                       LocationId = p.LocationId,
+                       LocationName = l.Name,   // ✔ FIXED
+                       GardenId = p.GardenId,
 
-                      // Plant fields
-                      Description = p.Description,
-                      Notes = p.Notes,
+                       Description = p.Description,
+                       Notes = p.Notes,
 
-                      // PlantInformation fields
-                      GrowingSeason = i.GrowingSeason,
-                      Photo = i.Photo,
-                      PhotoMimeType = i.PhotoMimeType,
-                      Seeds = i.Seeds,
-                      Light = i.Light,
-                      Water = i.Water,
-                      Air = i.Air,
-                      Soil = i.Soil,
-                      Container = i.Container,
-                      Fertilization = i.Fertilization,
-                      Pruning = i.Pruning,
-                      Propagation = i.Propagation,
-                      Health = i.Health
-                  })
+                       GrowingSeason = i.GrowingSeason,
+                       Photo = i.Photo,
+                       PhotoMimeType = i.PhotoMimeType,
+                       Seeds = i.Seeds,
+                       Light = i.Light,
+                       Water = i.Water,
+                       Air = i.Air,
+                       Soil = i.Soil,
+                       Container = i.Container,
+                       Fertilization = i.Fertilization,
+                       Pruning = i.Pruning,
+                       Propagation = i.Propagation,
+                       Health = i.Health
+                   })
             .OrderBy(x => x.ScientificName ?? x.CommonName)
             .ToListAsync();
 
         return Ok(result);
     }
+
 
     // ---------------------------
     // GET SINGLE PLANT (MODEL)
@@ -78,43 +78,45 @@ public class PlantsController : ControllerBase
     [HttpGet("garden/{gardenId}")]
     public async Task<ActionResult<List<PlantWithInfoDto>>> GetByGarden(int gardenId)
     {
-        var result = await _context.Plants
-            .Where(p => p.GardenId == gardenId)
-            .Join(_context.PlantInformation,
-                  p => p.PlantInformationId,
-                  i => i.PlantInformationId,
-                  (p, i) => new PlantWithInfoDto
-                  {
-                      PlantId = p.PlantId,
-                      Name = p.Name,
-                      PlantInformationId = p.PlantInformationId,
-                      ScientificName = i.ScientificName,
-                      CommonName = i.CommonName,
-                      LocationId = p.LocationId,
-                      GardenId = p.GardenId,
+        var result =
+            await (from p in _context.Plants
+                   join i in _context.PlantInformation on p.PlantInformationId equals i.PlantInformationId
+                   join l in _context.Locations on p.LocationId equals l.LocationId
+                   where p.GardenId == gardenId
+                   select new PlantWithInfoDto
+                   {
+                       PlantId = p.PlantId,
+                       Name = p.Name,
+                       PlantInformationId = p.PlantInformationId,
+                       ScientificName = i.ScientificName,
+                       CommonName = i.CommonName,
+                       LocationId = p.LocationId,
+                       LocationName = l.Name,   // ✔ FIXED
+                       GardenId = p.GardenId,
 
-                      Description = p.Description,
-                      Notes = p.Notes,
+                       Description = p.Description,
+                       Notes = p.Notes,
 
-                      GrowingSeason = i.GrowingSeason,
-                      Photo = i.Photo,
-                      PhotoMimeType = i.PhotoMimeType,
-                      Seeds = i.Seeds,
-                      Light = i.Light,
-                      Water = i.Water,
-                      Air = i.Air,
-                      Soil = i.Soil,
-                      Container = i.Container,
-                      Fertilization = i.Fertilization,
-                      Pruning = i.Pruning,
-                      Propagation = i.Propagation,
-                      Health = i.Health
-                  })
+                       GrowingSeason = i.GrowingSeason,
+                       Photo = i.Photo,
+                       PhotoMimeType = i.PhotoMimeType,
+                       Seeds = i.Seeds,
+                       Light = i.Light,
+                       Water = i.Water,
+                       Air = i.Air,
+                       Soil = i.Soil,
+                       Container = i.Container,
+                       Fertilization = i.Fertilization,
+                       Pruning = i.Pruning,
+                       Propagation = i.Propagation,
+                       Health = i.Health
+                   })
             .OrderBy(x => x.ScientificName ?? x.CommonName)
             .ToListAsync();
 
         return Ok(result);
     }
+
 
     // ---------------------------
     // GET PLANTS BY LOCATION (DTO)
@@ -122,43 +124,45 @@ public class PlantsController : ControllerBase
     [HttpGet("location/{locationId}")]
     public async Task<ActionResult<List<PlantWithInfoDto>>> GetByLocation(int locationId)
     {
-        var result = await _context.Plants
-            .Where(p => p.LocationId == locationId)
-            .Join(_context.PlantInformation,
-                  p => p.PlantInformationId,
-                  i => i.PlantInformationId,
-                  (p, i) => new PlantWithInfoDto
-                  {
-                      PlantId = p.PlantId,
-                      Name = p.Name,
-                      PlantInformationId = p.PlantInformationId,
-                      ScientificName = i.ScientificName,
-                      CommonName = i.CommonName,
-                      LocationId = p.LocationId,
-                      GardenId = p.GardenId,
+        var result =
+            await (from p in _context.Plants
+                   join i in _context.PlantInformation on p.PlantInformationId equals i.PlantInformationId
+                   join l in _context.Locations on p.LocationId equals l.LocationId
+                   where p.LocationId == locationId
+                   select new PlantWithInfoDto
+                   {
+                       PlantId = p.PlantId,
+                       Name = p.Name,
+                       PlantInformationId = p.PlantInformationId,
+                       ScientificName = i.ScientificName,
+                       CommonName = i.CommonName,
+                       LocationId = p.LocationId,
+                       LocationName = l.Name,   // ✔ FIXED
+                       GardenId = p.GardenId,
 
-                      Description = p.Description,
-                      Notes = p.Notes,
+                       Description = p.Description,
+                       Notes = p.Notes,
 
-                      GrowingSeason = i.GrowingSeason,
-                      Photo = i.Photo,
-                      PhotoMimeType = i.PhotoMimeType,
-                      Seeds = i.Seeds,
-                      Light = i.Light,
-                      Water = i.Water,
-                      Air = i.Air,
-                      Soil = i.Soil,
-                      Container = i.Container,
-                      Fertilization = i.Fertilization,
-                      Pruning = i.Pruning,
-                      Propagation = i.Propagation,
-                      Health = i.Health
-                  })
+                       GrowingSeason = i.GrowingSeason,
+                       Photo = i.Photo,
+                       PhotoMimeType = i.PhotoMimeType,
+                       Seeds = i.Seeds,
+                       Light = i.Light,
+                       Water = i.Water,
+                       Air = i.Air,
+                       Soil = i.Soil,
+                       Container = i.Container,
+                       Fertilization = i.Fertilization,
+                       Pruning = i.Pruning,
+                       Propagation = i.Propagation,
+                       Health = i.Health
+                   })
             .OrderBy(x => x.ScientificName ?? x.CommonName)
             .ToListAsync();
 
         return Ok(result);
     }
+
 
     // ---------------------------
     // GET PLANTS BY PLANT INFO ID (MODEL)

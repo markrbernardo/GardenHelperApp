@@ -108,26 +108,26 @@
                                 </NavLink>
                             </div>
                         }
-
-
-                        <!-- PLANTS HEADER -->
-                        <div class="nav-section px-3 mt-3" @onclick="TogglePlants" style="cursor:pointer;">
-                            <span class="nav-header">Plants</span>
-                            <span class="float-end">@((PlantsOpen ? "▼" : "►"))</span>
-                        </div>
-
-                        @if (PlantsOpen)
-                        {
-                            <div class="nav-item px-3">
-                                <NavLink class="nav-link" href="/plants">
-                                    <span class="bi bi-list-nested-nav-menu"></span>
-                                    Plant Inventory
-                                </NavLink>
-                            </div>
-                        }
                     }
                 }
             }
+
+            <!-- PLANTS HEADER -->
+            <div class="nav-section px-3 mt-3" @onclick="TogglePlants" style="cursor:pointer;">
+                <span class="nav-header">Plants</span>
+                <span class="float-end">@((PlantsOpen ? "▼" : "►"))</span>
+            </div>
+
+            @if (PlantsOpen)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/plants">
+                        <span class="bi bi-list-nested-nav-menu"></span>
+                        Plant Inventory
+                    </NavLink>
+                </div>
+            }
+
 
             <!-- OBSERVATIONS HEADER -->
             <div class="nav-section px-3 mt-3" @onclick="ToggleObservations" style="cursor:pointer;">

@@ -92,5 +92,21 @@ public class UserSessionService
         return Task.CompletedTask;
     }
 
+    public async Task ClearGardenIfDeleted(int deletedGardenId)
+    {
+        if (CurrentGardenId == deletedGardenId)
+        {
+            CurrentGardenId = null;
+            await _js.InvokeVoidAsync("localStorage.removeItem", "gardenId");
+            await NotifyStateChanged();
+        }
+    }
+
+    public async Task ClearCurrentGarden()
+    {
+        CurrentGardenId = null;
+        await _js.InvokeVoidAsync("localStorage.removeItem", "gardenId");
+        await NotifyStateChanged();
+    }
 
 }

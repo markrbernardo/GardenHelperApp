@@ -28,9 +28,23 @@
                     <div class="info-tile @(selectedId == pi.PlantInformationId ? "selected" : "")"
                          @onclick="() => SelectPlant(pi.PlantInformationId)">
 
-                        <div class="info-name">@pi.CommonName</div>
-                        <div class="info-scientific">@pi.ScientificName</div>
+                        <div class="info-thumb">
+                            @if (!string.IsNullOrWhiteSpace(pi.Photo))
+                            {
+                                <img src="data:@pi.PhotoMimeType;base64,@pi.Photo" />
+                            }
+                            else
+                            {
+                                <div class="info-thumb-placeholder">🌿</div>
+                            }
+                        </div>
+
+                        <div class="info-text">
+                            <div class="info-name">@pi.CommonName</div>
+                            <div class="info-scientific">@pi.ScientificName</div>
+                        </div>
                     </div>
+
                 }
             </div>
 
@@ -61,6 +75,8 @@
             <i class="bi bi-plus-lg"></i> Add Info Card
         </button>
     </div>
+
+
 
     <!-- RIGHT COLUMN -->
     <div class="right-column">

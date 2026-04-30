@@ -24,8 +24,16 @@ public class GardenService
     // Get a single garden
     public async Task<GardenModel?> GetGarden(int id)
     {
-        return await _http.GetFromJsonAsync<GardenModel>($"api/gardens/{id}");
+        try
+        {
+            return await _http.GetFromJsonAsync<GardenModel>($"api/gardens/{id}");
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
+
 
     public async Task<List<GardenModel?>> GetAllGardens()
     {

@@ -13,15 +13,16 @@
     {
         @foreach (var o in ObservationsForDate)
         {
-            <div class="obs-card pb-3 @(o.ActiveObservation ? "active-obs" : "")">
+            var plant = Plants.First(p => p.PlantId == o.PlantId);
 
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <p class="mb-0 text-muted">
-                        @FormatDate(o.CreatedAt)
-                    </p>
+            <div class="card p-3 @(o.ActiveObservation ? "active-obs" : "")">
+
+                <!-- TOP ROW: CREATED + ACTIVE TOGGLE -->
+                <div class="obs-top-row">
+                    <p class="created-at">@FormatDate(o.CreatedAt)</p>
 
                     <div class="form-check d-flex align-items-center gap-2 mb-0">
-                        <label class="form-check-label pe-4">Active</label>
+                        <label class="form-check-label me-4">Active</label>
                         <input type="checkbox"
                                class="form-check-input"
                                checked="@o.ActiveObservation"
@@ -29,35 +30,48 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <h2 class="mb-0">@GetPlantName(o.PlantId)</h2>
+                <!-- SECOND ROW: PLANT TILE + EDIT BUTTON -->
+                <div class="obs-plant-row card">
 
+                    <div class="plant-tile obs-plant-tile">
+                        <div class="plant-thumb">
+                            <div class="plant-thumb-placeholder">🌿</div>
+                        </div>
+
+                        <div class="plant-text">
+                            <div class="plant-name"><strong>@plant.Name</strong></div>
+                            <div class="plant-scientific"><em>@plant.CommonName</em></div>
+                            <div class="plant-scientific"><em>@plant.ScientificName</em></div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <!-- OBSERVATION TEXT -->
+                <div class="obs-body">
+                    <h5 class="obs-label">Observation</h5>
+                    <p class="small">@o.Observation</p>
+                </div>
+
+
+
+                <!-- UPDATED AT (BOTTOM RIGHT) -->
+                @if (o.UpdatedAt > o.CreatedAt)
+                {
+                    <p class="updated-at"><strong>Updated:</strong> @FormatDate(o.UpdatedAt)</p>
+                }
+
+                <div class="d-flex justify-content-end">
                     <button class="btn btn-primary btn-sm"
                             @onclick="() => OnEdit.InvokeAsync(o.ObservationId)">
                         Edit
                     </button>
                 </div>
-
-                @if (o.ActiveObservation)
-                {
-                    <span class="badge bg-success mb-2">Active</span>
-                }
-
-                <p class="text-muted">
-                    @GetPlantCommonName(o.PlantId)<br />
-                    <em>@GetPlantScientificName(o.PlantId)</em>
-                </p>
-
-                <p><strong>Note:</strong></p>
-                <p>@o.Observation</p>
-
-                @if (o.UpdatedAt > o.CreatedAt)
-                {
-                    <p class="text-end"><strong>Updated:</strong> @FormatDate(o.UpdatedAt)</p>
-                }
-
             </div>
         }
+
+
     }
 
 </div>

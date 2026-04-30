@@ -1,16 +1,75 @@
 ﻿.obs-card {
+    background: #ffffff;
+    border-radius: 8px;
     padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    background: #fff;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
-    .obs-card p {
-        margin-bottom: 0.5rem;
-    }
+/* TOP ROW */
+.obs-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
 
-.active-obs {
-    border-left: 6px solid #4caf50;
-    background-color: #f9fff9;
+.created-at {
+    margin: 0;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+/* SECOND ROW */
+.obs-plant-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+/* Plant tile reused */
+.obs-plant-tile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f7f7f7;
+    padding: 8px;
+    border-radius: 6px;
+    flex: 1;
+}
+
+/* Observation body */
+.obs-body {
+    margin-top: 10px;
+}
+
+.obs-label {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+/* Updated at bottom right */
+.updated-at {
+    text-align: right;
+    margin-top: 10px;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+/* Thumbnail */
+.plant-thumb {
+    width: 80px;
+    height: 80px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #dcefe2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plant-thumb-placeholder {
+    font-size: 1.4rem;
+    opacity: 0.7;
 }

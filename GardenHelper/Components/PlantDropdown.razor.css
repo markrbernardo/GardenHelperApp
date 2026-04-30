@@ -1,0 +1,80 @@
+﻿.plant-dropdown-container {
+    position: relative;
+}
+
+.plant-dropdown-selected {
+    cursor: pointer;
+}
+
+.plant-dropdown-list {
+    position: absolute;
+    z-index: 20;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Reuse your plant tile styles */
+.plant-tile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 6px;
+    background: #f7f7f7;
+    transition: background 0.15s ease;
+}
+
+    .plant-tile:hover {
+        background: #eee;
+    }
+
+    .plant-tile.selected {
+        background: #4F6F52;
+        color: #FFFFFF;
+        border-color: #3E5842;
+    }
+
+        .plant-tile.selected .plant-name,
+        .plant-tile.selected .plant-scientific {
+            color: #FFFFFF;
+        }
+
+.plant-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #dcefe2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plant-thumb-placeholder {
+    font-size: 1.4rem;
+    opacity: 0.7;
+}
+
+.plant-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.plant-name {
+    font-size: 1rem;
+    color: #2F3E2C;
+}
+
+.plant-scientific {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: #666;
+}

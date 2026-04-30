@@ -4,6 +4,8 @@
 @inject GardenService GardenService
 @inject UserService UserService
 @inject NavigationManager Nav
+@inject IJSRuntime JS
+
 
 <h3>Edit Garden</h3>
 
@@ -70,7 +72,12 @@ else
         <div class="d-flex gap-2 mt-3">
             <button class="btn btn-success" type="submit">Save</button>
             <button class="btn btn-secondary" type="button" @onclick="GoBack">Cancel</button>
+
+            <button class="btn btn-danger ms-auto" type="button" @onclick="ConfirmDelete">
+                <i class="bi bi-trash"></i> Delete
+            </button>
         </div>
+
     </EditForm>
 }
 
@@ -102,4 +109,26 @@ else
         else
             Nav.NavigateTo($"/garden-profile/{garden!.GardenId}");
     }
+
+    private async Task ConfirmDelete()
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"Are you sure you want to delete the garden \"{garden!.Name}\"?");
+
+        if (!confirmed)
+            return;
+
+        await GardenService.DeleteGarden(garden!.GardenId);
+
+        // If returnUrl exists, go back there
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+        {
+            Nav.NavigateTo(returnUrl);
+            return;
+        }
+
+        // Otherwise go to the gardens list for that user
+        Nav.NavigateTo($"/gardens?userId={garden!.UserId}");
+    }
+
 }

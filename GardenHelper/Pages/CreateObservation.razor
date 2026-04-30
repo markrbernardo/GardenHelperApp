@@ -18,14 +18,7 @@ else
 
         <div class="mb-3">
             <label>Plant</label>
-            <select class="form-select" @bind="observation.PlantId">
-                @foreach (var p in plants)
-                {
-                    <option value="@p.PlantId">
-                        @p.CommonName (@p.ScientificName)
-                    </option>
-                }
-            </select>
+            <PlantDropdown Plants="plants" @bind-Value="observation.PlantId" />
         </div>
 
         <div class="mb-3">

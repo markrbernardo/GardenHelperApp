@@ -21,45 +21,50 @@ main {
     align-items: center;
 }
 
-    .top-row ::deep a, .top-row ::deep .btn-link {
+    .top-row ::deep a,
+    .top-row ::deep .btn-link {
         white-space: nowrap;
         margin-left: 0;
         text-decoration: none;
     }
 
-    .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
-        text-decoration: underline;
-    }
+        .top-row ::deep a:hover,
+        .top-row ::deep .btn-link:hover {
+            text-decoration: underline;
+        }
 
-    .top-row ::deep a:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
+        .top-row ::deep a:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
     .top-row input.form-control {
         max-height: 32px;
         font-size: 0.9rem;
     }
 
-.list-group-item {
-    cursor: pointer;
-    font-size: 0.9rem;
+/* Remove Bootstrap's default hover background */
+.list-group-item:hover,
+.list-group-item:focus {
+    background-color: #eef5f0;
+    color: inherit !important;
 }
 
-    .list-group-item:hover {
-        background-color: rgba(0,0,0,0.1);
-    }
-
+/* Optional: add your own subtle hover style */
+.search-suggestion-hover:hover {
+    background-color: #eef5f0 !important; /* soft sage tint */
+    cursor: pointer;
+}
 
 @media (max-width: 640.98px) {
     .top-row {
         justify-content: space-between;
     }
 
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        margin-left: 0;
-    }
+        .top-row ::deep a,
+        .top-row ::deep .btn-link {
+            margin-left: 0;
+        }
 }
 
 @media (min-width: 641px) {
@@ -80,14 +85,83 @@ main {
         z-index: 1;
     }
 
-    .top-row.auth ::deep a:first-child {
-        flex: 1;
-        text-align: right;
-        width: 0;
-    }
+        .top-row.auth ::deep a:first-child {
+            flex: 1;
+            text-align: right;
+            width: 0;
+        }
 
-    .top-row, article {
+    .top-row,
+    article {
         padding-left: 2rem !important;
         padding-right: 1.5rem !important;
     }
+}
+
+/* Container for each suggestion tile */
+.suggestion-tile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Thumbnail */
+.suggestion-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #dcefe2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+    .suggestion-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.suggestion-thumb-placeholder {
+    font-size: 1.2rem;
+    opacity: 0.7;
+}
+
+/* Text */
+.suggestion-text {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.suggestion-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #2F3E2C;
+}
+
+.suggestion-common {
+    font-size: 0.85rem;
+    color: #2F3E2C;
+    opacity: 0.9;
+}
+
+.suggestion-scientific {
+    font-size: 0.8rem;
+    color: #666;
+    opacity: 0.9;
+}
+
+/* Remove Bootstrap's default hover */
+.list-group-item:hover,
+.list-group-item:focus {
+    background-color: transparent !important;
+    color: inherit !important;
+}
+
+/* Custom hover */
+.search-suggestion-hover:hover {
+    background-color: #eef5f0 !important;
 }

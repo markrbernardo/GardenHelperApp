@@ -19,14 +19,7 @@ else
 
         <div class="mb-3">
             <label>Plant</label>
-            <select class="form-select" @bind="observation.PlantId">
-                @foreach (var p in plants)
-                {
-                    <option value="@p.PlantId">
-                        @p.CommonName (@p.ScientificName)
-                    </option>
-                }
-            </select>
+            <PlantDropdown Plants="plants" @bind-Value="observation.PlantId" />
         </div>
 
         <div class="mb-3">
@@ -93,6 +86,16 @@ else
     {
         plants = await PlantService.GetAllPlants();
         observation = await ObservationService.Get(id);
+
+        // Ensure the selected plant exists in the list
+        if (observation != null && plants != null)
+        {
+            if (!plants.Any(p => p.PlantId == observation.PlantId))
+            {
+                // fallback to first plant if something is mismatched
+                observation.PlantId = plants.First().PlantId;
+            }
+        }
 
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);

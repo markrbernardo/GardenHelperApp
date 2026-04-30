@@ -8,6 +8,7 @@
     public string? CommonName { get; set; }
 
     public int LocationId { get; set; }
+    public string LocationName { get; set; }
     public int GardenId { get; set; }
 
     public string? Description { get; set; }

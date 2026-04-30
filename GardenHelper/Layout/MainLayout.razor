@@ -1,5 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @inject PlantService PlantService
+@inject PlantInformationService PlantInformationService
+@inject UserSessionService Session
 @inject NavigationManager Nav
 
 <div class="page">
@@ -8,14 +10,79 @@
     </div>
 
     <main>
-        <div class="top-row px-4 d-flex align-items-center">
+        <div class="top-row px-3 d-flex align-items-center">
 
+            <!-- ADD DROPDOWN -->
+            <div class="dropdown">
+                <button class="btn btn-success dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-plus-circle me-1"></i> Add
+                </button>
+
+                <ul class="dropdown-menu">
+
+                    <!-- PLANT-RELATED SECTION -->
+                    <li><h6 class="dropdown-header">Plant Related</h6></li>
+
+                    <li>
+                        <a class="dropdown-item" href="/plants/create">
+                            <i class="bi bi-flower1 me-2"></i> Add Plant
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item" href="/plantinformation/create">
+                            <i class="bi bi-journal-plus me-2"></i> Add Plant Information
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item" href="/observations/create">
+                            <i class="bi bi-eye me-2"></i> Add Observation
+                        </a>
+                    </li>
+
+                    <li><hr class="dropdown-divider" /></li>
+
+                    <!-- GARDEN-RELATED SECTION -->
+                    <li><h6 class="dropdown-header">Garden Related</h6></li>
+
+                    <li>
+                        <a class="dropdown-item" href="/locations/create">
+                            <i class="bi bi-geo-alt me-2"></i> Add Location
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item"
+                           href="@GetCreateGardenUrl()">
+                            <i class="bi bi-tree me-2"></i> Add Garden
+                        </a>
+
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item" href="/journalentries/create">
+                            <i class="bi bi-pencil-square me-2"></i> Add Journal Entry
+                        </a>
+                    </li>
+
+                    <li><hr class="dropdown-divider" /></li>
+
+                    <!-- FUTURE FEATURE -->
+                    <li><h6 class="dropdown-header">Coming Soon</h6></li>
+
+                    <li>
+                        <a class="dropdown-item disabled">
+                            <i class="bi bi-list-task me-2"></i> Add Task (coming soon)
+                        </a>
+                    </li>
+
+                </ul>
+            </div>
+
+            <!-- EXISTING PLANT INFORMATION LINK -->
             <a href="/plantinformation" class="ms-3">
                 <i class="bi bi-journal-bookmark-fill me-1"></i> Plant Information
-            </a>
-
-            <a href="/journalentries/create" class="ms-3">
-                <i class="bi bi-plus-square-fill me-1"></i> Add Journal Entry
             </a>
 
             <!-- SEARCH BAR WITH SMART SUGGESTIONS -->
@@ -27,21 +94,73 @@
                        @onfocus="ShowSuggestions"
                        @onblur="HideSuggestionsDelayed" />
 
-                @if (showSuggestions && filteredPlants?.Any() == true)
+                @if (showSuggestions && filteredSuggestions?.Any() == true)
                 {
                     <div class="list-group position-absolute w-100 shadow-sm" style="z-index: 1000;">
-                        @foreach (var p in filteredPlants)
+                        @foreach (var s in filteredSuggestions)
                         {
-                            <button class="list-group-item list-group-item-action"
-                                    @onclick="() => SelectPlant(p.PlantId)">
-                                @p.CommonName (@p.ScientificName)
+                            <button class="list-group-item list-group-item-action search-suggestion-hover p-2"
+                                    @onclick="() => SelectSuggestion(s)">
+
+
+                                <div class="suggestion-tile d-flex align-items-center gap-2">
+
+                                    <div class="suggestion-thumb">
+                                        @if (s.IsPlant)
+                                        {
+                                            @if (!string.IsNullOrWhiteSpace(s.PlantPhoto))
+                                            {
+                                                <img src="data:@s.PlantPhotoMimeType;base64,@s.PlantPhoto" />
+                                            }
+                                            else
+                                            {
+                                                <div class="suggestion-thumb-placeholder">🌿</div>
+                                            }
+                                        }
+                                        else if (s.IsPlantInfo)
+                                        {
+                                            @if (!string.IsNullOrWhiteSpace(s.Photo))
+                                            {
+                                                <img src="data:@s.PhotoMimeType;base64,@s.Photo" />
+                                            }
+                                            else
+                                            {
+                                                <div class="suggestion-thumb-placeholder">🌿</div>
+                                            }
+                                        }
+
+                                        else
+                                        {
+                                            <div class="suggestion-thumb-placeholder">🌿</div>
+                                        }
+                                    </div>
+
+                                    <div class="suggestion-text">
+
+                                        @if (s.IsPlant)
+                                        {
+                                            <div class="suggestion-name"><strong>@s.Name</strong></div>
+                                        }
+
+                                        <div class="suggestion-common">@s.CommonName</div>
+                                        <div class="suggestion-scientific"><em>@s.ScientificName</em></div>
+
+                                    </div>
+
+
+
+
+                                </div>
+
                             </button>
+
                         }
                     </div>
                 }
             </div>
 
         </div>
+
 
         <article class="content px-4">
             @Body
@@ -55,51 +174,135 @@
     private bool showSuggestions = false;
 
     private List<PlantWithInfoDto>? allPlants;
-    private List<PlantWithInfoDto>? filteredPlants;
+    private List<SearchSuggestion>? filteredSuggestions;
+    private List<PlantInformationModel>? allPlantInfo;
+
+
+
 
     protected override async Task OnInitializedAsync()
     {
         allPlants = await PlantService.GetAllPlants();
+        allPlantInfo = await PlantInformationService.GetAll();
 
         // Sort alphabetically by CommonName or fallback to Name
         allPlants = allPlants
             .OrderBy(p => p.CommonName ?? p.Name)
             .ToList();
+
     }
 
     private void ShowSuggestions() => showSuggestions = true;
+
+    public class SearchSuggestion
+    {
+        public int? PlantId { get; set; }
+        public int? PlantInformationId { get; set; }
+
+        public string? Name { get; set; }
+        public string? CommonName { get; set; }
+        public string? ScientificName { get; set; }
+
+        public string? Photo { get; set; }
+        public string? PhotoMimeType { get; set; }
+
+        public string? PlantPhoto { get; set; }
+        public string? PlantPhotoMimeType { get; set; }
+
+        public bool IsPlant { get; set; }
+        public bool IsPlantInfo { get; set; }
+    }
+
+
+    private void SelectSuggestion(SearchSuggestion s)
+    {
+        showSuggestions = false;
+        searchText = "";
+
+        if (s.IsPlant)
+            Nav.NavigateTo($"/plants?plantId={s.PlantId}");
+        else
+            Nav.NavigateTo($"/plantinformation/details/{s.PlantInformationId}");
+    }
+
 
     private async Task UpdateSuggestions()
     {
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            filteredPlants = allPlants!.Take(10).ToList();
+            filteredSuggestions = allPlants!
+                .Take(10)
+                .Select(p => new SearchSuggestion
+                {
+                    PlantId = p.PlantId,
+                    Name = p.Name,
+                    CommonName = p.CommonName,
+                    ScientificName = p.ScientificName,
+
+                    PlantPhoto = p.PlantPhoto,
+                    PlantPhotoMimeType = p.PlantPhotoMimeType,
+
+                    Photo = null,
+                    PhotoMimeType = null,
+
+                    IsPlant = true
+                })
+                .ToList();
+
+
             showSuggestions = true;
             return;
         }
 
         string q = searchText.Trim().ToLower();
 
-        filteredPlants = allPlants!
-            .Select(p => new
+        var plantResults = allPlants!
+            .Select(p => new SearchSuggestion
             {
-                Plant = p,
-                Score =
-                    (p.CommonName?.ToLower().StartsWith(q) == true ? 100 : 0) +
-                    (p.CommonName?.ToLower().Contains(q) == true ? 60 : 0) +
-                    (p.ScientificName?.ToLower().StartsWith(q) == true ? 80 : 0) +
-                    (p.ScientificName?.ToLower().Contains(q) == true ? 40 : 0) +
-                    (p.Name?.ToLower().Contains(q) == true ? 20 : 0) +
-                    FuzzyScore(p.CommonName?.ToLower() ?? "", q)
-            })
-            .OrderByDescending(x => x.Score)
-            .ThenBy(x => x.Plant.CommonName ?? x.Plant.Name)
+                PlantId = p.PlantId,
+                Name = p.Name,
+                CommonName = p.CommonName,
+                ScientificName = p.ScientificName,
+
+                // PLANT photos (your new fields)
+                PlantPhoto = p.PlantPhoto,
+                PlantPhotoMimeType = p.PlantPhotoMimeType,
+
+                // PLANT INFORMATION photos (still available for infoResults)
+                Photo = null,
+                PhotoMimeType = null,
+
+                IsPlant = true
+            });
+
+
+        var infoResults = allPlantInfo!
+            .Select(i => new SearchSuggestion
+            {
+                PlantInformationId = i.PlantInformationId,
+                Name = "Plant Information",
+                CommonName = i.CommonName,
+                ScientificName = i.ScientificName,
+                Photo = i.Photo,
+                PhotoMimeType = i.PhotoMimeType,
+                IsPlantInfo = true
+            });
+
+        var combined = plantResults.Concat(infoResults);
+
+        filteredSuggestions = combined
+            .Where(s =>
+                (s.Name?.ToLower().Contains(q) ?? false) ||
+                (s.CommonName?.ToLower().Contains(q) ?? false) ||
+                (s.ScientificName?.ToLower().Contains(q) ?? false)
+            )
+            .OrderBy(s => s.CommonName ?? s.Name)
             .Take(10)
-            .Select(x => x.Plant)
             .ToList();
 
         showSuggestions = true;
     }
+
 
     private async Task HideSuggestionsDelayed()
     {
@@ -135,4 +338,19 @@
         searchText = e.Value?.ToString();
         await UpdateSuggestions();
     }
+
+    private string GetCreateGardenUrl()
+    {
+        // If we know the current user, pass it
+        if (Session.CurrentUserId != null)
+        {
+            var encodedReturnUrl = Uri.EscapeDataString(Nav.Uri);
+            return $"/gardens/create/{Session.CurrentUserId}/{encodedReturnUrl}";
+        }
+
+        // If no user is selected, fall back safely
+        return "/gardens";
+    }
+
+
 }
