@@ -1,0 +1,54 @@
+﻿.garden-summary-tile {
+    padding: 1rem;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+}
+
+    .garden-summary-tile:hover {
+        background: #f7f9f7;
+        transform: translateY(-2px);
+    }
+
+.gst-header {
+    margin-bottom: 0.75rem;
+}
+
+.gst-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #4F6F52;
+}
+
+.gst-sub {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.gst-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.gst-stat {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    color: #4F6F52;
+    font-weight: 500;
+}
+
+.gst-zones {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.gst-zone {
+    display: flex;
+    align-items: center;
+}

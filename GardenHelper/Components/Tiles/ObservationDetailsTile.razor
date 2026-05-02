@@ -1,0 +1,110 @@
+﻿@using GardenHelperApp.Shared.Models
+@inject ObservationService ObservationService
+
+<div class="observation-details-tile">
+
+    <h3 class="section-title">Details</h3>
+
+    @if (SelectedDate == null)
+    {
+        <p class="placeholder">Select a date to view observations.</p>
+    }
+    else if (ObservationsForDate.Count == 0)
+    {
+        <p class="placeholder">No observations for this date.</p>
+    }
+    else
+    {
+        @foreach (var o in ObservationsForDate)
+        {
+            var plant = Plants.First(p => p.PlantId == o.PlantId);
+
+            <div class="obs-card @(o.ActiveObservation ? "active" : "")">
+
+                <!-- TOP ROW -->
+                <div class="obs-top-row">
+                    <div class="created-at">@FormatDate(o.CreatedAt)</div>
+
+                    <div class="active-toggle">
+                        <label>Active</label>
+                        <input type="checkbox"
+                               checked="@o.ActiveObservation"
+                               @onchange="() => ToggleActive(o)" />
+                    </div>
+                </div>
+
+                <!-- PLANT TILE -->
+                <div class="obs-plant-tile">
+                    <div class="plant-thumb">
+                        @if (!string.IsNullOrWhiteSpace(plant.Photo))
+                        {
+                            <img src="@($"data:{plant.PhotoMimeType ?? "image/jpeg"};base64,{plant.Photo}")" />
+                        }
+                        else
+                        {
+                            <div class="plant-thumb-placeholder">🌿</div>
+                        }
+                    </div>
+
+                    <div class="plant-text">
+                        <div class="plant-name"><strong>@plant.Name</strong></div>
+                        <div class="plant-common">@plant.CommonName</div>
+                        <div class="plant-scientific"><em>@plant.ScientificName</em></div>
+                    </div>
+                </div>
+
+                <!-- OBSERVATION BODY -->
+                <div class="obs-body">
+                    <h5>Observation</h5>
+                    <p>@o.Observation</p>
+                </div>
+
+                <!-- UPDATED AT -->
+                @if (o.UpdatedAt > o.CreatedAt)
+                {
+                    <div class="updated-at">
+                        <strong>Updated:</strong> @FormatDate(o.UpdatedAt)
+                    </div>
+                }
+
+                <!-- EDIT BUTTON -->
+                <div class="edit-row">
+                    <button class="btn btn-primary btn-sm"
+                            @onclick="() => OnEdit.InvokeAsync(o.ObservationId)">
+                        Edit
+                    </button>
+                </div>
+
+            </div>
+        }
+    }
+
+</div>
+
+@code {
+    [Parameter] public DateTime? SelectedDate { get; set; }
+    [Parameter] public List<ObservationModel> Observations { get; set; }
+    [Parameter] public List<PlantWithInfoDto> Plants { get; set; }
+    [Parameter] public EventCallback<int> OnEdit { get; set; }
+    [Parameter] public EventCallback OnRefresh { get; set; }
+    [Parameter] public int? SelectedGardenId { get; set; }
+
+    List<ObservationModel> ObservationsForDate =>
+        Observations
+            .Where(o => o.CreatedAt.Date == SelectedDate)
+            .Where(o => SelectedGardenId == null ||
+                Plants.First(p => p.PlantId == o.PlantId).GardenId == SelectedGardenId)
+            .OrderByDescending(o => o.ActiveObservation)
+            .ThenByDescending(o => o.CreatedAt)
+            .ToList();
+
+    async Task ToggleActive(ObservationModel obs)
+    {
+        obs.ActiveObservation = !obs.ActiveObservation;
+        await ObservationService.UpdateActiveStatus(obs.ObservationId, obs.ActiveObservation);
+        await OnRefresh.InvokeAsync();
+    }
+
+    string FormatDate(DateTime dt) =>
+        dt.ToString("dddd, MMM dd • hh:mm tt");
+}

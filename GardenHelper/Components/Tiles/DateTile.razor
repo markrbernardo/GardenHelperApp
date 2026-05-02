@@ -1,0 +1,22 @@
+﻿<div class="date-tile @(Selected ? "selected" : "")"
+     @onclick="() => OnSelect.InvokeAsync(Date)">
+
+    <div class="date-main">
+        @Date.ToString("MMM dd, yyyy")
+    </div>
+
+    <div class="date-sub">
+        @Count @PluralizedLabel
+    </div>
+</div>
+
+@code {
+    [Parameter] public DateTime Date { get; set; }
+    [Parameter] public int Count { get; set; }
+    [Parameter] public string Label { get; set; } = "item"; // default fallback
+    [Parameter] public bool Selected { get; set; }
+    [Parameter] public EventCallback<DateTime> OnSelect { get; set; }
+
+    private string PluralizedLabel =>
+        Count == 1 ? Label : $"{Label}s";
+}

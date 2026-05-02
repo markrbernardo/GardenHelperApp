@@ -1,0 +1,84 @@
+﻿<div class="plant-dropdown-container">
+
+    <!-- SELECTED VALUE -->
+    <div class="plant-dropdown-selected" @onclick="Toggle">
+        @if (SelectedPlant != null)
+        {
+            <div class="plant-tile selected">
+                <div class="plant-thumb">
+                    @if (!string.IsNullOrWhiteSpace(SelectedPlant.Photo))
+                    {
+                        <img src="@($"data:{SelectedPlant.PhotoMimeType ?? "image/jpeg"};base64,{SelectedPlant.Photo}")" />
+                    }
+                    else
+                    {
+                        <div class="plant-thumb-placeholder">🌿</div>
+                    }
+                </div>
+
+                <div class="plant-text">
+                    <div class="plant-name"><strong>@SelectedPlant.Name</strong></div>
+                    <div class="plant-common">@SelectedPlant.CommonName</div>
+                    <div class="plant-scientific"><em>@SelectedPlant.ScientificName</em></div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="placeholder-tile">Select a plant…</div>
+        }
+    </div>
+
+    <!-- DROPDOWN LIST -->
+    @if (IsOpen)
+    {
+        <div class="plant-dropdown-list" tabindex="0" @onblur="Close">
+            @foreach (var p in Plants)
+            {
+                <div class="plant-tile @(SelectedPlant?.PlantId == p.PlantId ? "selected" : "")"
+                     @onclick="() => Select(p)">
+                    <div class="plant-thumb">
+                        @if (!string.IsNullOrWhiteSpace(p.Photo))
+                        {
+                            <img src="@($"data:{p.PhotoMimeType ?? "image/jpeg"};base64,{p.Photo}")" />
+                        }
+                        else
+                        {
+                            <div class="plant-thumb-placeholder">🌿</div>
+                        }
+                    </div>
+
+                    <div class="plant-text">
+                        <div class="plant-name"><strong>@p.Name</strong></div>
+                        <div class="plant-common">@p.CommonName</div>
+                        <div class="plant-scientific"><em>@p.ScientificName</em></div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public List<PlantWithInfoDto> Plants { get; set; } = new();
+    [Parameter] public int Value { get; set; }
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+
+    PlantWithInfoDto? SelectedPlant;
+    bool IsOpen = false;
+
+    protected override void OnParametersSet()
+    {
+        SelectedPlant = Plants.FirstOrDefault(p => p.PlantId == Value);
+    }
+
+    void Toggle() => IsOpen = !IsOpen;
+    void Close() => IsOpen = false;
+
+    async Task Select(PlantWithInfoDto plant)
+    {
+        SelectedPlant = plant;
+        IsOpen = false;
+        await ValueChanged.InvokeAsync(plant.PlantId);
+    }
+}

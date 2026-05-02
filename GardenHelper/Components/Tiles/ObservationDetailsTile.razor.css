@@ -1,0 +1,112 @@
+﻿.observation-details-tile {
+    padding: 1rem;
+}
+
+.section-title {
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: var(--green-forest);
+}
+
+/* CARD */
+.obs-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm, 0 1px 4px rgba(0,0,0,0.1));
+}
+
+    .obs-card.active {
+        border-left: 4px solid var(--green-forest);
+    }
+
+/* TOP ROW */
+.obs-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.created-at {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.active-toggle {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+/* PLANT TILE */
+.obs-plant-tile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f7f7f7;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 12px 0;
+}
+
+.plant-thumb {
+    width: 70px;
+    height: 70px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #dcefe2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .plant-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.plant-thumb-placeholder {
+    font-size: 1.4rem;
+    opacity: 0.7;
+}
+
+.plant-text .plant-name {
+    font-size: 1rem;
+}
+
+.plant-text .plant-common {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.plant-text .plant-scientific {
+    font-size: 0.85rem;
+    color: #777;
+}
+
+/* BODY */
+.obs-body h5 {
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.obs-body p {
+    margin: 0;
+}
+
+/* UPDATED AT */
+.updated-at {
+    text-align: right;
+    margin-top: 10px;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+/* EDIT BUTTON */
+.edit-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}

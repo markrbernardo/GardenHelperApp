@@ -7,11 +7,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Components\ObservationDateList.razor" />
+    <Content Remove="Components\ObservationDetails.razor" />
+    <Content Remove="Components\PlantDetails.razor" />
+    <Content Remove="Components\PlantInfoDetails.razor" />
+    <Content Remove="Components\PlantInfoHeader.razor" />
+    <Content Remove="Components\PlantTile.razor" />
     <Content Remove="Pages\Dashboard.razor" />
     <Content Remove="Pages\DbCheck.razor" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Components\PlantDetails.razor.css" />
+    <None Remove="Components\PlantInfoDetails.razor.css" />
+    <None Remove="Components\PlantInfoHeader.razor.css" />
+    <None Remove="Components\PlantTile.razor.css" />
     <None Remove="Pages\Dashboard.razor.css" />
   </ItemGroup>
 

@@ -1,0 +1,34 @@
+﻿<div class="plant-nametag-tile @(Selected ? "selected" : "")"
+     @onclick="() => OnSelect.InvokeAsync(Plant)">
+
+    <div class="plant-thumb">
+        @if (!string.IsNullOrWhiteSpace(Plant.PlantPhoto))   @* FUTURE FIELD *@
+        {
+            <img src="data:image/jpeg;base64,@Plant.PlantPhoto" />
+        }
+        else
+        {
+            <div class="plant-thumb-placeholder">🌿</div>
+        }
+    </div>
+
+    <div class="plant-text">
+        <div class="plant-name">@Plant.Name</div>
+
+        @if (!string.IsNullOrWhiteSpace(Plant.CommonName))
+        {
+            <div class="plant-sub">@Plant.CommonName</div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Plant.ScientificName))
+        {
+            <div class="plant-sub plant-scientific">@Plant.ScientificName</div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public PlantWithInfoDto Plant { get; set; } = default!;
+    [Parameter] public bool Selected { get; set; }
+    [Parameter] public EventCallback<PlantWithInfoDto> OnSelect { get; set; }
+}

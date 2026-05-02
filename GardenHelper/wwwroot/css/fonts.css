@@ -1,7 +1,9 @@
+/* ============================
+   FONT IMPORTS
+============================ */
 @font-face {
     font-family: 'GardenaQuantoRegular';
-    src: url('/fonts/GardenaQuanto-Regular.woff2') format('woff2'),
-        url('/fonts/GardenaQuanto-Regular.woff') format('woff');
+    src: url('/fonts/GardenaQuanto-Regular.woff2') format('woff2'), url('/fonts/GardenaQuanto-Regular.woff') format('woff');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -14,5 +16,3 @@
     font-style: normal;
     font-display: swap;
 }
-
-

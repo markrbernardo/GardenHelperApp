@@ -1,0 +1,31 @@
+﻿.date-tile {
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 6px;
+    background: #f7f7f7;
+    transition: background 0.15s ease;
+}
+
+    .date-tile:hover {
+        background: #eee;
+    }
+
+    .date-tile.selected {
+        background: #4F6F52;
+        color: #fff;
+    }
+
+.date-main {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.date-sub {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.date-tile.selected .date-sub {
+    color: #fff;
+}

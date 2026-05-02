@@ -22,27 +22,42 @@ public class GardenContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // When a Garden is deleted → delete its Locations
+        // GARDEN → LOCATIONS
         modelBuilder.Entity<LocationModel>()
-            .HasOne<GardenModel>()
-            .WithMany()
+            .HasOne<GardenModel>()              // no navigation property
+            .WithMany()                         // no navigation property
             .HasForeignKey(l => l.GardenId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // When a Location is deleted → delete its Plants
-        modelBuilder.Entity<PlantModel>()
-            .HasOne<LocationModel>()
-            .WithMany()
-            .HasForeignKey(p => p.LocationId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        // OPTIONAL: When a Garden is deleted → delete its Plants directly
+        // GARDEN → PLANTS
         modelBuilder.Entity<PlantModel>()
             .HasOne<GardenModel>()
             .WithMany()
             .HasForeignKey(p => p.GardenId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // LOCATION → PLANTS
+        modelBuilder.Entity<PlantModel>()
+            .HasOne<LocationModel>()
+            .WithMany()
+            .HasForeignKey(p => p.LocationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // PLANT → OBSERVATIONS
+        modelBuilder.Entity<ObservationModel>()
+            .HasOne<PlantModel>()
+            .WithMany()
+            .HasForeignKey(o => o.PlantId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // GARDEN → JOURNAL ENTRIES
+        modelBuilder.Entity<JournalEntryModel>()
+            .HasOne<GardenModel>()
+            .WithMany()
+            .HasForeignKey(j => j.GardenId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Timestamp fields
         modelBuilder.Entity<ObservationModel>()
             .Property(o => o.CreatedAt)
             .HasColumnType("TEXT");
@@ -51,4 +66,6 @@ public class GardenContext : DbContext
             .Property(o => o.UpdatedAt)
             .HasColumnType("TEXT");
     }
+
+
 }

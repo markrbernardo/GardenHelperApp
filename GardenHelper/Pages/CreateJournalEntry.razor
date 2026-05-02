@@ -12,28 +12,13 @@
 }
 else
 {
-    <EditForm Model="@entry" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    <JournalEntryForm Entry="entry"
+                      Gardens="gardens"
+                      SubmitLabel="Create"
+                      OnSubmitCallback="HandleSubmit"
+                      OnCancelCallback="GoBack"
+                      ShowDelete="false" />
 
-        <div class="mb-3">
-            <label>Garden</label>
-            <select class="form-select" @bind="entry.GardenId">
-                @foreach (var g in gardens)
-                {
-                    <option value="@g.GardenId">@g.Name</option>
-                }
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label>Entry</label>
-            <InputTextArea class="form-control" @bind-Value="entry.Entry" rows="5" />
-        </div>
-
-        <button class="btn btn-success">Create</button>
-        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
-    </EditForm>
 }
 
 @code {

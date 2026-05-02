@@ -7,95 +7,42 @@
 
 <h3>Edit Location</h3>
 
+
+@if (isDeleted)
+{
+    <p>Redirecting...</p>
+    return;
+}
+
 @if (location == null || gardens == null)
 {
     <p>Loading...</p>
 }
 else
 {
-    <EditForm Model="@location" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    <LocationForm Location="location"
+                  Gardens="gardens"
+                  SubmitLabel="Save"
+                  OnSubmitCallback="HandleSubmit"
+                  OnCancelCallback="GoBack"
+                  OnDeleteCallback="DeleteLocation"
+                  ShowDelete="true"
+                  IsDisabled="isDeleted" />
 
-        <!-- GARDEN -->
-        <div class="mb-3">
-            <label class="form-label">Garden</label>
-            <select class="form-select" @bind="location.GardenId">
-                @foreach (var g in gardens)
-                {
-                    <option value="@g.GardenId">@g.Name</option>
-                }
-            </select>
-        </div>
 
-        <!-- NAME -->
-        <div class="mb-3">
-            <label class="form-label">Name</label>
-            <InputText class="form-control" @bind-Value="location.Name" />
-        </div>
-
-        <!-- IS OUTSIDE -->
-        <div class="mb-3">
-            <label class="form-label">Is Outside?</label>
-            <InputSelect class="form-select" @bind-Value="location.IsOutside">
-                <option value="true">Yes</option>
-                <option value="false">No</option>
-            </InputSelect>
-        </div>
-
-        <!-- LIGHTING -->
-        <div class="mb-3">
-            <label class="form-label">Lighting</label>
-            <InputText class="form-control" @bind-Value="location.Lighting" />
-        </div>
-
-        <!-- WINDOW FACING -->
-        <div class="mb-3">
-            <label class="form-label">Window Facing</label>
-            <InputText class="form-control" @bind-Value="location.WindowFacing" />
-        </div>
-
-        <!-- DISTANCE TO LIGHT -->
-        <div class="mb-3">
-            <label class="form-label">Distance to Light (inches)</label>
-            <InputNumber class="form-control" @bind-Value="location.DistancetoLight" />
-        </div>
-
-        <!-- HUMIDITY -->
-        <div class="mb-3">
-            <label class="form-label">Humidity</label>
-            <InputText class="form-control" @bind-Value="location.Humidity" />
-        </div>
-
-        <!-- TEMPERATURE CONSISTENCY -->
-        <div class="mb-3">
-            <label class="form-label">Temperature Consistency</label>
-            <InputText class="form-control" @bind-Value="location.TemperatureConsistency" />
-        </div>
-
-        <!-- NOTES -->
-        <div class="mb-3">
-            <label class="form-label">Notes</label>
-            <InputTextArea class="form-control" rows="3" @bind-Value="location.Notes" />
-        </div>
-
-        <!-- PHOTO -->
-        <div class="mb-3">
-            <label class="form-label">Photo (Base64)</label>
-            <InputTextArea class="form-control" rows="3" @bind-Value="location.Photo" />
-        </div>
-
-        <button class="btn btn-success">Save</button>
-        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
-
-        <button class="btn btn-danger ms-2" @onclick="DeleteLocation">
-            Delete
-        </button>
-    </EditForm>
 }
+@if (isDeleted)
+{
+    <p>Deleting...</p>
+    return;
+}
+
 
 @code {
     [Parameter] public int id { get; set; }
+    [Parameter] public bool IsDisabled { get; set; }
+    bool isDeleted = false;
+
 
     LocationModel? location;
     List<GardenModel>? gardens;
@@ -104,6 +51,12 @@ else
     {
         gardens = await GardenService.GetAllGardens();
         location = await LocationService.Get(id);
+
+        if (location == null)
+        {
+            Nav.NavigateTo("/not-found");
+            return;
+        }
     }
 
     async Task HandleSubmit()
@@ -122,11 +75,17 @@ else
         var confirmed = await JS.InvokeAsync<bool>("confirm",
             $"Are you sure you want to delete the location '{location?.Name}'?");
 
-        if (confirmed)
-        {
-            await LocationService.Delete(id);
-            await UserSessionService.TriggerChange();
-            Nav.NavigateTo($"/garden-profile/{location.GardenId}");
-        }
+        if (!confirmed)
+            return;
+
+        await LocationService.Delete(id);
+        await UserSessionService.TriggerChange();
+
+        isDeleted = true; // ← stop the form from rendering
+
+        Nav.NavigateTo($"/garden-profile/{location.GardenId}", forceLoad: true);
     }
+
+
+
 }

@@ -3,6 +3,7 @@
 
 @inject GardenService GardenService
 @inject UserService UserService
+@inject UserSessionService Session
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -15,70 +16,24 @@
 }
 else
 {
-    <EditForm Model="@garden" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    @if (users == null || garden == null)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <GardenForm Garden="garden"
+                    Users="users"
+                    SubmitLabel="Save Changes"
+                    OnSubmitCallback="HandleSubmit"
+                    OnCancelCallback="GoBack" />
+        <button class="btn btn-danger mt-3"
+                @onclick="ConfirmDelete">
+            Delete Garden
+        </button>
 
-        <!-- USER -->
-        <div class="mb-3">
-            <label class="form-label">User</label>
-            <select class="form-select" @bind="garden.UserId">
-                @foreach (var u in users)
-                {
-                    <option value="@u.UserId">@u.Name</option>
-                }
-            </select>
-        </div>
+    }
 
-        <!-- NAME -->
-        <div class="mb-3">
-            <label class="form-label">Garden Name</label>
-            <InputText class="form-control" @bind-Value="garden.Name" />
-        </div>
-
-        <!-- ZIP -->
-        <div class="mb-3">
-            <label class="form-label">Zip Code</label>
-            <InputNumber class="form-control" @bind-Value="garden.ZipCode" />
-        </div>
-
-        <!-- NEW FIELDS -->
-        <div class="mb-3">
-            <label class="form-label">Hardiness Zone</label>
-            <InputText class="form-control" @bind-Value="garden.HardinessZone" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Heat Zone</label>
-            <InputText class="form-control" @bind-Value="garden.HeatZone" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Wind Orientation</label>
-            <InputText class="form-control" @bind-Value="garden.WindOrientation" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Soil Type</label>
-            <InputText class="form-control" @bind-Value="garden.SoilType" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Marine Influence</label>
-            <InputText class="form-control" @bind-Value="garden.MarineInfluence" />
-        </div>
-
-        <!-- BUTTONS -->
-        <div class="d-flex gap-2 mt-3">
-            <button class="btn btn-success" type="submit">Save</button>
-            <button class="btn btn-secondary" type="button" @onclick="GoBack">Cancel</button>
-
-            <button class="btn btn-danger ms-auto" type="button" @onclick="ConfirmDelete">
-                <i class="bi bi-trash"></i> Delete
-            </button>
-        </div>
-
-    </EditForm>
 }
 
 @code {
@@ -112,23 +67,19 @@ else
 
     private async Task ConfirmDelete()
     {
-        bool confirmed = await JS.InvokeAsync<bool>("confirm",
-            $"Are you sure you want to delete the garden \"{garden!.Name}\"?");
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"Are you sure you want to delete '{garden.Name}'? This cannot be undone.");
 
         if (!confirmed)
             return;
 
-        await GardenService.DeleteGarden(garden!.GardenId);
+        await GardenService.DeleteGarden(garden.GardenId);
 
-        // If returnUrl exists, go back there
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-        {
-            Nav.NavigateTo(returnUrl);
-            return;
-        }
+        // If this was the default garden, clear it
+        await Session.ClearCurrentGarden();
 
-        // Otherwise go to the gardens list for that user
-        Nav.NavigateTo($"/gardens?userId={garden!.UserId}");
+        Nav.NavigateTo("/gardens");
     }
+
 
 }

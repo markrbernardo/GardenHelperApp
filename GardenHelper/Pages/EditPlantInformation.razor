@@ -15,117 +15,20 @@ else if (loadError != null)
 }
 else if (plantInfo != null)
 {
-    <EditForm Model="@plantInfo" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    @if (isDeleted)
+    {
+        <p>Redirecting...</p>
+        return;
+    }
 
-        <!-- BASIC INFO -->
-        <div class="mb-3">
-            <label class="form-label">Common Name</label>
-            <InputText class="form-control" @bind-Value="plantInfo.CommonName" />
-        </div>
+    <PlantInfoForm PlantInfo="plantInfo"
+                   SubmitLabel="Save"
+                   OnSubmitCallback="HandleSubmit"
+                   OnCancelCallback="GoBack"
+                   OnDeleteCallback="DeleteEntry"
+                   ShowDelete="true"
+                   IsDisabled="isDeleted" />
 
-        <div class="mb-3">
-            <label class="form-label">Scientific Name</label>
-            <InputText class="form-control" @bind-Value="plantInfo.ScientificName" />
-        </div>
-
-        <!-- PHOTO UPLOAD -->
-        <div class="mb-3">
-            <label class="form-label">Upload Photo</label>
-            <InputFile OnChange="HandleFileSelected" accept="image/*" />
-            <small class="text-muted">Choose an image to upload.</small>
-        </div>
-
-        @if (!string.IsNullOrEmpty(plantInfo.Photo))
-        {
-            <div class="mt-2">
-                <img src="@($"data:{plantInfo.PhotoMimeType ?? "image/png"};base64,{plantInfo.Photo}")"
-                     style="max-width:200px; border-radius:8px;" />
-
-                <button class="btn btn-danger btn-sm mt-2" @onclick="RemovePhoto">
-                    Remove Photo
-                </button>
-            </div>
-        }
-
-        <!-- DESCRIPTION -->
-        <div class="mb-3">
-            <label class="form-label">Description</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Description" rows="3" />
-        </div>
-
-        <!-- ⭐ NEW FIELD: GROWING SEASON -->
-        <div class="mb-3">
-            <label class="form-label">Growing Season</label>
-            <InputText class="form-control" @bind-Value="plantInfo.GrowingSeason" />
-        </div>
-
-        <!-- CARE SECTIONS -->
-        <h5 class="mt-4">Care Information</h5>
-
-        <div class="mb-3">
-            <label class="form-label">Seeds</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Seeds" rows="2" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Light</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Light" rows="2" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Water</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Water" rows="2" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Air</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Air" rows="2" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Soil</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Soil" rows="2" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Container</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Container" rows="2" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Fertilization</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Fertilization" rows="2" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Pruning</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Pruning" rows="2" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Propagation</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Propagation" rows="2" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Health</label>
-            <InputTextArea class="form-control" @bind-Value="plantInfo.Health" rows="2" />
-        </div>
-
-        <!-- BUTTONS -->
-        <div class="d-flex gap-2 mt-4">
-            <button class="btn btn-success" disabled="@isSubmitting">Save</button>
-            <button class="btn btn-secondary" @onclick="GoBack" disabled="@isSubmitting">Cancel</button>
-
-            <button class="btn btn-danger ms-auto"
-                    @onclick="ConfirmDelete"
-                    disabled="@isSubmitting">
-                Delete
-            </button>
-        </div>
-    </EditForm>
 }
 
 @if (deleteConfirm)
@@ -261,4 +164,21 @@ else if (plantInfo != null)
         plantInfo.Photo = null;
         plantInfo.PhotoMimeType = null;
     }
+
+    bool isDeleted = false;
+    async Task DeleteEntry()
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            "Are you sure you want to delete this plant information?");
+
+        if (!confirmed)
+            return;
+
+        await PlantInfoService.Delete(id);
+
+        isDeleted = true;
+
+        Nav.NavigateTo("/plantinformation", forceLoad: true);
+    }
+
 }

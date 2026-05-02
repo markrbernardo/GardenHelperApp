@@ -3,6 +3,7 @@
 @inject GardenService GardenService
 @inject UserSessionService Session
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <h3>Edit Journal Entry</h3>
 
@@ -12,57 +13,21 @@
 }
 else
 {
-    <EditForm Model="@entry" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    @if (isDeleted)
+    {
+        <p>Redirecting...</p>
+        return;
+    }
 
-        <div class="mb-3">
-            <label>Garden</label>
-            <select class="form-select" @bind="entry.GardenId">
-                @foreach (var g in gardens)
-                {
-                    <option value="@g.GardenId">@g.Name</option>
-                }
-            </select>
-        </div>
+    <JournalEntryForm Entry="entry"
+                      Gardens="gardens"
+                      SubmitLabel="Save"
+                      OnSubmitCallback="HandleSubmit"
+                      OnCancelCallback="GoBack"
+                      OnDeleteCallback="DeleteEntry"
+                      ShowDelete="true"
+                      IsDisabled="isDeleted" />
 
-        <div class="mb-3">
-            <label>Entry</label>
-            <InputTextArea class="form-control" @bind-Value="entry.Entry" rows="5" />
-        </div>
-
-        <button class="btn btn-success">Save</button>
-        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
-        <button type="button" class="btn btn-danger ms-2" @onclick="ShowDeleteConfirm">
-            Delete
-        </button>
-
-        @if (showDeleteConfirm)
-        {
-            <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-
-                        <div class="modal-header">
-                            <h5 class="modal-title">Delete Journal Entry</h5>
-                        </div>
-
-                        <div class="modal-body">
-                            <p>Are you sure you want to delete this journal entry?</p>
-                        </div>
-
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" @onclick="HideDeleteConfirm">Cancel</button>
-                            <button class="btn btn-danger" @onclick="ConfirmDelete">Delete</button>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        }
-
-
-    </EditForm>
 }
 
 @code {
@@ -71,6 +36,7 @@ else
     JournalEntryModel? entry;
     List<GardenModel>? gardens;
     string? returnUrl;
+    bool isDeleted = false;
 
 
     bool showDeleteConfirm = false;
@@ -132,4 +98,23 @@ else
         else
             Nav.NavigateTo("/journalentries");
     }
+
+    async Task DeleteEntry()
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            "Are you sure you want to delete this journal entry?");
+
+        if (!confirmed)
+            return;
+
+        await JournalEntryService.Delete(entry!.JournalEntryId);
+
+        isDeleted = true;
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl!, forceLoad: true);
+        else
+            Nav.NavigateTo("/journalentries", forceLoad: true);
+    }
+
 }

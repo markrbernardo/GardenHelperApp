@@ -84,29 +84,86 @@
         border-color: #0d6efd;
     }
 
-.gp-locations-scroll {
-    max-height: calc(100vh - 320px); /* adjust as needed */
+/* Scrollable plant list */
+.plant-list-scroll {
+    min-height: 86.78px;
+    max-height: 311px;
     overflow-y: auto;
-    padding-right: 4px; /* prevents scrollbar overlap */
 }
 
+/* Add Plant tile styling */
+.add-plant-tile {
+    border: 1px dashed #4F6F52;
+    background: #f0f7f2;
+    display: flex;
+    margin-bottom: .4rem;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 .5rem;
+}
 
-    /* WebKit browsers (Chrome, Edge, Safari) */
-    .gp-locations-scroll::-webkit-scrollbar {
-        width: 6px; /* Narrower scrollbar */
+    .add-plant-tile:hover {
+        background: #e6f0e8;
+        cursor: pointer;
     }
 
-    .gp-locations-scroll::-webkit-scrollbar-track {
-        background: transparent;
+    .add-plant-tile .plant-text {
+        padding-top: 0.25rem;
     }
 
-    .gp-locations-scroll::-webkit-scrollbar-thumb {
-        background-color: #c7c7c7;
-        border-radius: 3px;
+    .add-plant-tile .plant-name {
+        font-size: 1rem;
     }
 
-/* Firefox */
-.gp-locations-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: #c7c7c7 transparent;
+    .add-plant-tile .plant-scientific {
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+
+
+.plant-thumb-placeholder {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.25rem; /* same visual weight as missing-photo icon */
+    color: #4F6F52;
+    border: 1px solid #5a7d64;
+    border-radius: .5rem;
+}
+
+.garden-summary-card {
+    border-radius: 12px;
+    border: none;
+}
+
+.summary-header h4 {
+    font-weight: 600;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.summary-label {
+    font-size: 1rem;
+    color: #6c757d;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.summary-value {
+    font-weight: 400;
+    font-size: .90rem;
 }

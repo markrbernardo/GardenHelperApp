@@ -6,7 +6,7 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<h1 class="border-bottom pb-2">Journal</h1>
+<PageHeader Title="Journal" />
 
 @if (entries == null || gardens == null)
 {
@@ -19,7 +19,7 @@ else if (entries.Count == 0)
 else
 {
     <!-- MOBILE DROPDOWN -->
-    <div class="plant-dropdown d-md-none mb-3">
+    <div class="d-md-none mb-3">
         <select class="form-select" @onchange="OnMobileDateChange">
             <option value="">Select a date...</option>
             @foreach (var group in groupedEntries)
@@ -32,47 +32,46 @@ else
     </div>
 
     <!-- MOBILE DETAILS -->
-    <div class="plant-details d-md-none mt-3">
-        <JournalEntryDetails SelectedDate="selectedDate"
+    <div class="d-md-none mt-3">
+        <JournalEntryDetailsTile SelectedDate="selectedDate"
                              Entries="filteredEntries"
                              Gardens="gardens"
                              OnEdit="EditEntry" />
     </div>
 
+    <!-- DESKTOP LAYOUT -->
+    <div class="d-none d-md-block">
+        <TwoColumnLayout>
+            <Left>
+                <ScrollColumn>
+                    <h3 class="mb-3">Dates</h3>
 
-    <!-- DESKTOP TWO-COLUMN LAYOUT -->
-    <div class="plant-layout d-none d-md-grid">
+                    @foreach (var group in groupedEntries)
+                    {
+                        <DateTile Date="group.Key"
+                                  Count="group.Count()"
+                                  Label="entry"
+                                  Selected="(selectedDate == group.Key)"
+                                  OnSelect="SelectDate" />
 
-        <!-- LEFT COLUMN -->
-        <div class="plant-list">
-            <h3 class="mb-3">Dates</h3>
+                    }
+                </ScrollColumn>
+            </Left>
 
-            @foreach (var group in groupedEntries)
-            {
-                <div class="obs-date
-                            @(selectedDate == group.Key ? "selected" : "")"
-                     @onclick="() => SelectDate(group.Key)">
-                    <strong>@group.Key.ToString("MMM dd, yyyy")</strong><br />
-                    <small>@group.Count() entry(s)</small>
-                </div>
-            }
-        </div>
+            <Right>
+                <ScrollColumn>
+                    <h3 class="pb-2">Entry</h3>
 
-        <!-- RIGHT COLUMN -->
-        <div>
-            <h3 class="pb-2">Entry</h3>
-            @foreach (var j in filteredEntries)
-            {
-                <JournalEntryDetails SelectedDate="selectedDate"
-                                     Entries="filteredEntries"
-                                     Gardens="gardens"
-                                     OnEdit="EditEntry" />
-
-            }
-        </div>
-
+                    <JournalEntryDetailsTile SelectedDate="selectedDate"
+                                         Entries="filteredEntries"
+                                         Gardens="gardens"
+                                         OnEdit="EditEntry" />
+                </ScrollColumn>
+            </Right>
+        </TwoColumnLayout>
     </div>
 }
+
 
 @code {
     List<JournalEntryModel>? entries;

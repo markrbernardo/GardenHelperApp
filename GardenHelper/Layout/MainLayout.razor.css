@@ -165,3 +165,30 @@ main {
 .search-suggestion-hover:hover {
     background-color: #eef5f0 !important;
 }
+
+.search-suggestion-wrapper {
+    padding: 2px 0;
+}
+
+.list-group {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.list-group {
+    background: #ffffff !important;
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+}
+
+.list-group-item {
+    background-color: #ffffff !important;
+}
+
+.search-suggestion-wrapper {
+    background: #ffffff;
+}
+
+    .search-suggestion-wrapper + .search-suggestion-wrapper {
+        border-top: 1px solid #f0f0f0;
+    }

@@ -3,24 +3,24 @@
 @using Microsoft.AspNetCore.WebUtilities
 @inject ObservationService ObservationService
 @inject PlantService PlantService
-@inject UserSessionService UserSessionService
+@inject UserSessionService Session
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<h1 class="border-bottom pb-2">Observations</h1>
+<PageHeader Title="Observations" />
 
 @if (observations == null || plants == null)
 {
     <p>Loading...</p>
 }
-else if (!observations.Any(o => plants.Any(p => p.PlantId == o.PlantId && p.GardenId == selectedGardenId)))
+else if (!filteredObservations.Any())
 {
     <p>No observations found for this garden.</p>
 }
 else
 {
     <!-- MOBILE DROPDOWN -->
-    <div class="plant-dropdown d-md-none mb-3">
+    <div class="d-md-none mb-3">
         <select class="form-select" @onchange="OnMobileDateChange">
             <option value="">Select a date...</option>
             @foreach (var group in groupedObservations)
@@ -33,43 +33,50 @@ else
     </div>
 
     <!-- MOBILE DETAILS -->
-    <div class="plant-details d-md-none mt-3">
-        <ObservationDetails SelectedDate="selectedDate"
-                            Observations="filteredObservations"
-                            Plants="plants"
-                            SelectedGardenId="selectedGardenId"
-                            OnEdit="EditObservation"
-                            OnRefresh="RefreshObservations" />
+    <div class="d-md-none mt-3">
+        <ObservationDetailsTile SelectedDate="selectedDate"
+                                Observations="observations"
+                                Plants="plants"
+                                SelectedGardenId="selectedGardenId"
+                                OnEdit="HandleEditObservation"
+                                OnRefresh="LoadObservations" />
+
     </div>
 
-    <!-- DESKTOP TWO-COLUMN LAYOUT -->
-    <div class="plant-layout d-none d-md-grid">
+    <!-- DESKTOP LAYOUT -->
+    <div class="d-none d-md-block">
+        <TwoColumnLayout>
+            <Left>
+                <ScrollColumn>
+                    <h3 class="mb-3">Dates</h3>
 
-        <!-- LEFT COLUMN -->
-        <div class="plant-list">
-            <h3 class="mb-3">Dates</h3>
+                    @foreach (var group in groupedObservations)
+                    {
+                        <DateTile Date="group.Key"
+                                  Count="group.Count()"
+                                  Label="observation"
+                                  Selected="(selectedDate == group.Key)"
+                                  OnSelect="SelectDate" />
 
-            @foreach (var group in groupedObservations)
-            {
-                <div class="obs-date
-                            @(selectedDate == group.Key ? "selected" : "")
-                            @(DateHasActiveObservation(group.Key) ? "active-date" : "")"
-                     @onclick="() => SelectDate(group.Key)">
-                    <strong>@group.Key.ToString("MMM dd, yyyy")</strong><br />
-                    <small>@group.Count() observation(s)</small>
-                </div>
-            }
-        </div>
+                    }
+                </ScrollColumn>
+            </Left>
 
-        <!-- RIGHT COLUMN -->
-        <ObservationDetails SelectedDate="selectedDate"
-                            Observations="filteredObservations"
-                            Plants="plants"
-                            SelectedGardenId="selectedGardenId"
-                            OnEdit="EditObservation"
-                            OnRefresh="RefreshObservations" />
+            <Right>
+                <ScrollColumn>
+                    <ObservationDetailsTile SelectedDate="selectedDate"
+                                            Observations="observations"
+                                            Plants="plants"
+                                            SelectedGardenId="selectedGardenId"
+                                            OnEdit="HandleEditObservation"
+                                            OnRefresh="LoadObservations" />
+
+                </ScrollColumn>
+            </Right>
+        </TwoColumnLayout>
     </div>
 }
+
 
 @code {
     List<ObservationModel>? observations;
@@ -82,10 +89,10 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        observations = await ObservationService.GetByUser(UserSessionService.CurrentUserId!.Value);
+        observations = await ObservationService.GetByUser(Session.CurrentUserId!.Value);
         plants = await PlantService.GetAllPlants();
 
-        selectedGardenId = UserSessionService.CurrentGardenId;
+        selectedGardenId = Session.CurrentGardenId;
 
         ApplyFilteringAndGrouping();
 
@@ -96,9 +103,7 @@ else
         {
             var obs = observations.FirstOrDefault(o => o.ObservationId == obsId);
             if (obs != null)
-            {
                 selectedDate = obs.CreatedAt.Date;
-            }
         }
         else if (query.TryGetValue("date", out var ds) && DateTime.TryParse(ds, out var dt))
         {
@@ -140,7 +145,7 @@ else
 
     async Task RefreshObservations()
     {
-        observations = await ObservationService.GetByUser(UserSessionService.CurrentUserId!.Value);
+        observations = await ObservationService.GetByUser(Session.CurrentUserId!.Value);
         ApplyFilteringAndGrouping();
         StateHasChanged();
     }
@@ -150,4 +155,20 @@ else
         return filteredObservations
             .Any(o => o.CreatedAt.Date == date.Date && o.ActiveObservation);
     }
+
+    void HandleEditObservation(int id)
+    {
+        Nav.NavigateTo($"/observations/edit/{id}?returnUrl=/observations");
+    }
+
+    async Task LoadObservations()
+    {
+        observations = await ObservationService.GetByUser(Session.CurrentUserId!.Value);
+
+        // Reapply filtering + grouping using the new method
+        ApplyFilteringAndGrouping();
+
+        StateHasChanged();
+    }
 }
+

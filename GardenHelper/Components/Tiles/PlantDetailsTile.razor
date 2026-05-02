@@ -1,0 +1,155 @@
+﻿@using GardenHelperApp.Shared.Models
+@inject ObservationService ObservationService
+@inject NavigationManager Nav
+
+@if (Plant == null)
+{
+    <p class="placeholder">Select a plant to view its profile.</p>
+}
+else
+{
+    <div class="plantdetails-tile">
+
+        <!-- HEADER -->
+        <div class="header-row">
+            <div>
+                <h2 class="plant-name">@Plant.Name</h2>
+                <div class="plant-sub">
+                    @Plant.CommonName • <em>@Plant.ScientificName</em>
+                </div>
+            </div>
+
+            <button class="btn btn-sm btn-outline-primary edit-btn"
+                    @onclick="() => OnEditPlant.InvokeAsync(Plant.PlantId)">
+                <i class="bi bi-pencil-square"></i> Edit
+            </button>
+        </div>
+
+        <!-- PHOTO -->
+        @if (!string.IsNullOrWhiteSpace(Plant.Photo))
+        {
+            <img src="@($"data:{Plant.PhotoMimeType ?? "image/jpeg"};base64,{Plant.Photo}")"
+                 class="plant-photo" />
+        }
+
+        <!-- BASIC INFO -->
+        <div class="info-section">
+            @Detail("Description", Plant.Description)
+            @Detail("Growing Season", Plant.GrowingSeason)
+        </div>
+
+        <!-- CARE INFO -->
+        <h4 class="section-title">Care Information</h4>
+
+        <div class="info-section">
+            @Detail("Seeds", Plant.Seeds)
+            @Detail("Light", Plant.Light)
+            @Detail("Water", Plant.Water)
+            @Detail("Air", Plant.Air)
+            @Detail("Soil", Plant.Soil)
+            @Detail("Container", Plant.Container)
+            @Detail("Fertilization", Plant.Fertilization)
+            @Detail("Pruning", Plant.Pruning)
+            @Detail("Propagation", Plant.Propagation)
+            @Detail("Health", Plant.Health)
+        </div>
+
+        <!-- NOTES -->
+        @Detail("Notes", Plant.Notes)
+
+        <hr />
+
+        <!-- OBSERVATIONS -->
+        <div class="obs-header">
+            <h3 class="mb-0">Observations</h3>
+
+            <button class="btn btn-sm btn-outline-success"
+                    @onclick="() => OnAddObservation.InvokeAsync(Plant.PlantId)">
+                <i class="bi bi-plus-lg"></i> Add Observation
+            </button>
+        </div>
+
+        @if (observations == null)
+        {
+            <p>Loading observations...</p>
+        }
+        else if (observations.Count == 0)
+        {
+            <p>No observations yet.</p>
+        }
+        else
+        {
+            @foreach (var o in observations
+                .OrderByDescending(o => o.ActiveObservation)
+                .ThenByDescending(o => o.CreatedAt))
+            {
+                <div class="observation-tile"
+                     @onclick="() => OpenObservation(o.ObservationId)">
+
+                    <div class="obs-date">
+                        @o.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
+                    </div>
+
+                    <div class="obs-text">
+                        <strong>@o.Observation</strong>
+                    </div>
+
+                    <div class="obs-status">
+                        @if (o.ActiveObservation)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public PlantWithInfoDto? Plant { get; set; }
+    [Parameter] public EventCallback<int> OnAddObservation { get; set; }
+    [Parameter] public EventCallback<int> OnEditObservation { get; set; }
+    [Parameter] public EventCallback<int> OnEditPlant { get; set; }
+
+    List<ObservationModel>? observations;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Plant == null)
+        {
+            observations = null;
+            return;
+        }
+
+        observations = await ObservationService.GetByPlant(Plant.PlantId);
+    }
+
+    void OpenObservation(int id)
+    {
+        Nav.NavigateTo($"/observations?obsId={id}&plantId={Plant!.PlantId}");
+    }
+
+    RenderFragment Detail(string title, string? value) => builder =>
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            builder.OpenElement(0, "div");
+            builder.AddAttribute(1, "class", "detail-block");
+
+            builder.OpenElement(2, "h5");
+            builder.AddContent(3, title);
+            builder.CloseElement();
+
+            builder.OpenElement(4, "p");
+            builder.AddContent(5, value);
+            builder.CloseElement();
+
+            builder.CloseElement();
+        }
+    };
+}

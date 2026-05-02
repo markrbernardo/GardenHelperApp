@@ -1,11 +1,12 @@
 ﻿<div class="photo-gallery">
     @foreach (var photo in Photos)
     {
-        <img src="data:image/jpeg;base64,@photo.Photo" class="gallery-photo" />
+        <img src="@($"data:{photo.PhotoMimeType ?? "image/jpeg"};base64,{photo.Photo}")"
+             class="gallery-photo"
+             alt="Plant photo" />
     }
 </div>
 
 @code {
     [Parameter] public List<PlantPhotoModel> Photos { get; set; } = new();
 }
-

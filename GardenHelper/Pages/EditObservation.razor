@@ -4,6 +4,7 @@
 @inject ObservationService ObservationService
 @inject PlantService PlantService
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <h3>Edit Observation</h3>
 
@@ -13,51 +14,21 @@
 }
 else
 {
-    <EditForm Model="@observation" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    @if (isDeleted)
+    {
+        <p>Redirecting...</p>
+        return;
+    }
 
-        <div class="mb-3">
-            <label>Plant</label>
-            <PlantDropdown Plants="plants" @bind-Value="observation.PlantId" />
-        </div>
+    <ObservationForm Observation="observation"
+                     Plants="plants"
+                     SubmitLabel="Save"
+                     OnSubmitCallback="HandleSubmit"
+                     OnCancelCallback="GoBack"
+                     OnDeleteCallback="DeleteObservation"
+                     ShowDelete="true"
+                     IsDisabled="isDeleted" />
 
-        <div class="mb-3">
-            <label>Observation</label>
-            <InputTextArea class="form-control" @bind-Value="observation.Observation" rows="4" />
-        </div>
-
-        <button type="submit" class="btn btn-success">Save</button>
-        <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
-        <button type="button" class="btn btn-danger ms-2" @onclick="ShowDeleteConfirm">
-            Delete
-        </button>
-
-        @if (showDeleteConfirm)
-        {
-            <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-
-                        <div class="modal-header">
-                            <h5 class="modal-title">Delete Observation</h5>
-                        </div>
-
-                        <div class="modal-body">
-                            <p>Are you sure you want to delete this observation?</p>
-                        </div>
-
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" @onclick="HideDeleteConfirm">Cancel</button>
-                            <button class="btn btn-danger" @onclick="ConfirmDelete">Delete</button>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        }
-
-    </EditForm>
 }
 
 @code {
@@ -123,4 +94,25 @@ else
         else
             Nav.NavigateTo("/observations");
     }
+
+    bool isDeleted = false;
+
+    async Task DeleteObservation()
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            "Are you sure you want to delete this observation?");
+
+        if (!confirmed)
+            return;
+
+        await ObservationService.Delete(observation!.ObservationId);
+
+        isDeleted = true;
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+            Nav.NavigateTo(returnUrl!, forceLoad: true);
+        else
+            Nav.NavigateTo("/observations", forceLoad: true);
+    }
+
 }

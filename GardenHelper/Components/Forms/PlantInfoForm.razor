@@ -1,0 +1,178 @@
+﻿@using GardenHelperApp.Shared.Models
+
+<EditForm Model="@PlantInfo" OnValidSubmit="OnSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <!-- BASIC INFO -->
+    <div class="mb-3">
+        <label class="form-label">Common Name</label>
+        <InputText class="form-control" @bind-Value="PlantInfo.CommonName" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Scientific Name</label>
+        <InputText class="form-control" @bind-Value="PlantInfo.ScientificName" />
+    </div>
+
+    <!-- PHOTO UPLOAD -->
+    <div class="mb-3">
+        <label class="form-label">Upload Photo</label>
+        <InputFile OnChange="HandleFileSelected" accept="image/*" />
+        <small class="text-muted">Choose an image to upload.</small>
+    </div>
+
+    @if (!string.IsNullOrEmpty(PlantInfo.Photo))
+    {
+        <div class="mt-2">
+            <img src="@($"data:{PlantInfo.PhotoMimeType};base64,{PlantInfo.Photo}")"
+                 style="max-width:200px; border-radius:8px;" />
+
+            <button class="btn btn-danger btn-sm mt-2" @onclick="RemovePhoto">
+                Remove Photo
+            </button>
+        </div>
+    }
+
+    <!-- DESCRIPTION -->
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <InputTextArea class="form-control" rows="3" @bind-Value="PlantInfo.Description" />
+    </div>
+
+    <!-- GROWING SEASON -->
+    <div class="mb-3">
+        <label class="form-label">Growing Season</label>
+        <InputText class="form-control" @bind-Value="PlantInfo.GrowingSeason" />
+    </div>
+
+    <!-- CARE SECTIONS -->
+    <h5 class="mt-4">Care Information</h5>
+
+    <div class="mb-3">
+        <label class="form-label">Seeds</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Seeds" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Light</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Light" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Water</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Water" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Air</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Air" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Soil</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Soil" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Container</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Container" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fertilization</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Fertilization" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Pruning</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Pruning" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Propagation</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Propagation" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Health</label>
+        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Health" />
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="d-flex gap-2 mt-4">
+        <button class="btn btn-success" disabled="@IsDisabled">@SubmitLabel</button>
+        <button class="btn btn-secondary" @onclick="Cancel" disabled="@IsDisabled">Cancel</button>
+
+        @if (ShowDelete)
+        {
+            <button class="btn btn-danger ms-auto" @onclick="Delete" disabled="@IsDisabled">
+                Delete
+            </button>
+        }
+    </div>
+</EditForm>
+
+@code {
+    [Parameter] public PlantInformationModel PlantInfo { get; set; } = default!;
+    [Parameter] public string SubmitLabel { get; set; } = "Save";
+
+    [Parameter] public EventCallback OnSubmitCallback { get; set; }
+    [Parameter] public EventCallback OnCancelCallback { get; set; }
+    [Parameter] public EventCallback OnDeleteCallback { get; set; }
+
+    [Parameter] public bool ShowDelete { get; set; } = false;
+    [Parameter] public bool IsDisabled { get; set; } = false;
+
+    [Inject] public IJSRuntime JS { get; set; } = default!;
+
+    private async Task OnSubmit()
+    {
+        if (!IsDisabled)
+            await OnSubmitCallback.InvokeAsync();
+    }
+
+    private async Task Cancel()
+    {
+        if (!IsDisabled)
+            await OnCancelCallback.InvokeAsync();
+    }
+
+    private async Task Delete()
+    {
+        if (!IsDisabled)
+            await OnDeleteCallback.InvokeAsync();
+    }
+
+    async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null)
+            return;
+
+        using var stream = file.OpenReadStream(maxAllowedSize: 10_000_000);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var bytes = ms.ToArray();
+
+        var base64 = Convert.ToBase64String(bytes);
+        var dataUrl = $"data:{file.ContentType};base64,{base64}";
+
+        var resizedDataUrl = await JS.InvokeAsync<string>(
+            "resizeImageFromBase64",
+            dataUrl,
+            800,
+            800
+        );
+
+        var parts = resizedDataUrl.Split(',');
+        PlantInfo.PhotoMimeType = parts[0].Split(':')[1].Split(';')[0];
+        PlantInfo.Photo = parts[1];
+    }
+
+    void RemovePhoto()
+    {
+        PlantInfo.Photo = null;
+        PlantInfo.PhotoMimeType = null;
+    }
+}

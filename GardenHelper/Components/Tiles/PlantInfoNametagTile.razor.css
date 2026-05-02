@@ -1,0 +1,74 @@
+﻿.plantinfo-nametag-tile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 6px;
+    background: #f7f7f7;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+    .plantinfo-nametag-tile:hover {
+        background: #eee;
+    }
+
+    .plantinfo-nametag-tile.selected {
+        background: #4F6F52;
+        color: #FFFFFF;
+    }
+
+        .plantinfo-nametag-tile.selected .info-name,
+        .plantinfo-nametag-tile.selected .info-scientific {
+            color: #FFFFFF;
+        }
+
+/* Thumbnail */
+.info-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #dcefe2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .info-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.info-thumb-placeholder {
+    font-size: 1.4rem;
+    opacity: 0.7;
+}
+
+/* Text */
+.info-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #2F3E2C;
+}
+
+.info-scientific {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: #666;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .info-scientific {
+        display: none;
+    }
+}

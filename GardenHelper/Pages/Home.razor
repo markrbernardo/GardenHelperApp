@@ -14,11 +14,19 @@
     <!-- GARDENS TILE -->
     @if (Session.CurrentGardenId != null && defaultGarden != null)
     {
-        <div class="dash-tile card">
+        <div class="dash-tile card garden-hero-tile">
 
             <!-- HEADER -->
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="mb-0">@defaultGarden.Name</h2>
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-tree-fill fs-3 me-2 garden-accent"></i>
+                    <h2 class="mb-0">@defaultGarden.Name</h2>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-label"><i class="bi bi-geo me-1"></i> Zip Code: @defaultGarden.ZipCode</div>
+                    
+                </div>
 
                 <button class="btn btn-sm btn-outline-primary"
                         @onclick="@(() => Nav.NavigateTo($"/garden-profile/{defaultGarden.GardenId}"))">
@@ -26,72 +34,25 @@
                 </button>
             </div>
 
-            <!-- GENERAL GARDEN INFO (TWO COLUMNS) -->
-            <div class="mb-3 small text-muted">
-                <div class="row">
-                    <div class="col-6">
-                        <div><strong>Zip Code:</strong> @defaultGarden.ZipCode</div>
-
-                        @if (!string.IsNullOrWhiteSpace(defaultGarden.HardinessZone))
-                        {
-                            <div><strong>Hardiness Zone:</strong> @defaultGarden.HardinessZone</div>
-                        }
-
-                        @if (!string.IsNullOrWhiteSpace(defaultGarden.HeatZone))
-                        {
-                            <div><strong>Heat Zone:</strong> @defaultGarden.HeatZone</div>
-                        }
-                    </div>
-
-                    <div class="col-6 ps-4">
-                        @if (!string.IsNullOrWhiteSpace(defaultGarden.WindOrientation))
-                        {
-                            <div><strong>Wind:</strong> @defaultGarden.WindOrientation</div>
-                        }
-
-                        @if (!string.IsNullOrWhiteSpace(defaultGarden.SoilType))
-                        {
-                            <div><strong>Soil:</strong> @defaultGarden.SoilType</div>
-                        }
-
-                        @if (!string.IsNullOrWhiteSpace(defaultGarden.MarineInfluence))
-                        {
-                            <div><strong>Marine:</strong> @defaultGarden.MarineInfluence</div>
-                        }
-                    </div>
-                </div>
-            </div>
-
-
             <!-- COUNTS ROW -->
             <div class="d-flex gap-3">
 
                 <!-- LOCATIONS CARD -->
-                <div class="flex-fill p-3 border rounded dash-mini-card btn btn-outline-primary"
-                     style="cursor:pointer;"
+                <div class="mini-stat-card"
                      @onclick="@(() => Nav.NavigateTo($"/garden-profile/{defaultGarden.GardenId}"))">
 
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="fw-bold">Locations</div>
-                            <div class="display-6">@locationCount</div>
-                        </div>
-                        <i class="bi bi-geo-alt fs-3 text-primary"></i>
-                    </div>
+                    <div class="stat-label">Locations</div>
+                    <div class="stat-value">@locationCount</div>
+                    <i class="bi bi-geo-alt stat-icon"></i>
                 </div>
 
                 <!-- PLANTS CARD -->
-                <div class="flex-fill p-3 border rounded dash-mini-card btn btn-outline-success"
-                     style="cursor:pointer;"
+                <div class="mini-stat-card"
                      @onclick="@(() => Nav.NavigateTo($"/plants?gardenId={defaultGarden.GardenId}"))">
 
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="fw-bold">Plants</div>
-                            <div class="display-6">@plantCount</div>
-                        </div>
-                        <i class="bi bi-flower3 fs-3 text-success"></i>
-                    </div>
+                    <div class="stat-label">Plants</div>
+                    <div class="stat-value">@plantCount</div>
+                    <i class="bi bi-flower3 stat-icon"></i>
                 </div>
 
             </div>
@@ -136,55 +97,44 @@
     </div>
 
     <!-- RECENT OBSERVATIONS -->
-    <div class="dash-tile card">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h4 class="mb-0">Recent Observations</h4>
+    <div class="dash-tile modern-tile">
+        <div class="tile-header">
+            <h4>Recent Observations</h4>
 
-            <button class="btn btn-sm btn-primary"
+            <button class="btn-add"
                     @onclick="@(() => Nav.NavigateTo("/observations/create?returnUrl=/home"))">
-                Add
+                + Add
             </button>
         </div>
 
         @if (recentObservations == null)
         {
-            <p>Loading…</p>
+            <p class="placeholder">Loading…</p>
         }
         else if (recentObservations.Count == 0)
         {
-            <p>No recent observations.</p>
+            <p class="placeholder">No recent observations.</p>
         }
         else
         {
-            <ul>
+            <ul class="obs-list">
                 @foreach (var o in recentObservations)
                 {
-                    <li class="obs-item"
+                    <li class="obs-row"
                         @onclick="@(() => GoToObservation(o))">
 
-                        <div class="obs-left">
-                            <span class="obs-date">@o.CreatedAt.ToString("MMM dd")</span>
-                            <span class="obs-time">@o.CreatedAt.ToString("h:mm tt")</span>
+                        <div class="obs-date-block">
+                            <span class="date">@o.CreatedAt.ToString("MMM dd")</span>
+                            <span class="time">@o.CreatedAt.ToString("h:mm tt")</span>
                         </div>
 
-                        <div class="obs-middle">
-
-                            <div class="obs-plant d-flex justify-content-between">
-                                @GetPlantName(o.PlantId)
-                            </div>
-
-                            <div class="obs-meta">
-                                @GetGardenName(o.PlantId) • @GetLocationName(o.PlantId)
-                            </div>
-
-                            <div class="obs-snippet">
-                                @o.Observation
-                            </div>
-
+                        <div class="obs-content">
+                            <div class="plant">@GetPlantName(o.PlantId)</div>
+                            <div class="meta">@GetGardenName(o.PlantId) • @GetLocationName(o.PlantId)</div>
+                            <div class="snippet">@o.Observation</div>
                         </div>
-                        <div class="obs-right">
-                            <span class="status-dot @(o.ActiveObservation ? "active" : "inactive")"></span>
-                        </div>
+
+                        <span class="status-dot @(o.ActiveObservation ? "active" : "inactive")"></span>
                     </li>
                 }
             </ul>
@@ -192,51 +142,48 @@
     </div>
 
     <!-- RECENT JOURNAL ENTRIES -->
-    <div class="dash-tile card">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h4 class="mb-0">Recent Journal Entries</h4>
+    <div class="dash-tile modern-tile">
+        <div class="tile-header">
+            <h4>Recent Journal Entries</h4>
 
-            <button class="btn btn-sm btn-secondary"
+            <button class="btn-add secondary"
                     @onclick="@(() => Nav.NavigateTo("/journalentries/create?returnUrl=/home"))">
-                Add
+                + Add
             </button>
         </div>
 
         @if (recentJournals == null)
         {
-            <p>Loading…</p>
+            <p class="placeholder">Loading…</p>
         }
         else if (recentJournals.Count == 0)
         {
-            <p>No recent journal entries.</p>
+            <p class="placeholder">No recent journal entries.</p>
         }
         else
         {
-            <ul>
+            <ul class="obs-list">
                 @foreach (var j in recentJournals)
                 {
-                    <li class="obs-item"
+                    <li class="obs-row"
                         @onclick="@(() => Nav.NavigateTo($"/journalentries?entryId={j.JournalEntryId}"))">
 
-                        <div class="obs-left">
-                            <span class="obs-date">@j.CreatedAt.ToString("MMM dd")</span>
-                            <span class="obs-time">@j.CreatedAt.ToString("h:mm tt")</span>
+                        <div class="obs-date-block">
+                            <span class="date">@j.CreatedAt.ToString("MMM dd")</span>
+                            <span class="time">@j.CreatedAt.ToString("h:mm tt")</span>
                         </div>
 
-                        <div class="obs-middle">
-
-                            <div class="obs-meta">
-                                @GetJournalGardenName(j.GardenId)
-                            </div>
-
-                            <div class="obs-snippet">@j.Entry</div>
-
+                        <div class="obs-content">
+                            <div class="title fw-semibold">@j.Title</div>
+                            <div class="meta">@GetJournalGardenName(j.GardenId)</div>
+                            <div class="snippet">@j.Entry</div>
                         </div>
                     </li>
                 }
             </ul>
         }
     </div>
+
 
 </div>
 

@@ -3,6 +3,9 @@
 @inject LocationService LocationService
 @inject PlantInformationService PlantInfoService
 @inject NavigationManager Nav
+@inject UserSessionService Session
+@inject IJSRuntime JS
+
 
 <h3>Edit Plant</h3>
 
@@ -12,51 +15,16 @@
 }
 else
 {
-    <EditForm Model="@plant" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    <PlantForm Plant="plant"
+               Locations="locations"
+               PlantInfoList="plantInfoList"
+               SubmitLabel="Save"
+               OnSubmitCallback="HandleSubmit"
+               OnCancelCallback="GoBack"
+               OnDeleteCallback="DeletePlant"
+               ShowDelete="true"
+               IsDisabled="isDeleted" />
 
-        <div class="mb-3">
-            <label>Plant Name</label>
-            <InputText class="form-control" @bind-Value="plant.Name" />
-        </div>
-
-        <div class="mb-3">
-            <label>Plant Information</label>
-            <select class="form-select" @bind="plant.PlantInformationId">
-                @foreach (var info in plantInfoList)
-                {
-                    <option value="@info.PlantInformationId">
-                        @info.CommonName (@info.ScientificName)
-                    </option>
-                }
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label>Location</label>
-            <select class="form-select" @bind="plant.LocationId">
-                @foreach (var loc in locations)
-                {
-                    <option value="@loc.LocationId">@loc.Name</option>
-                }
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Description</label>
-            <InputTextArea class="form-control" rows="3" @bind-Value="plant.Description" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Notes</label>
-            <InputTextArea class="form-control" rows="3" @bind-Value="plant.Notes" />
-        </div>
-
-
-        <button class="btn btn-success">Save</button>
-        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
-    </EditForm>
 }
 
 @code {
@@ -106,5 +74,24 @@ else
         else
             Nav.NavigateTo("/plants");
     }
+
+    bool isDeleted = false;
+
+    async Task DeletePlant()
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"Are you sure you want to delete '{plant?.Name}'?");
+
+        if (!confirmed)
+            return;
+
+        await PlantService.Delete(id);
+        await Session.TriggerChange();
+
+        isDeleted = true;
+
+        Nav.NavigateTo($"/location-profile/{plant.LocationId}", forceLoad: true);
+    }
+
 
 }

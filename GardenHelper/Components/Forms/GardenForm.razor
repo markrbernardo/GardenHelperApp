@@ -1,0 +1,70 @@
+﻿<EditForm Model="@Garden" OnValidSubmit="OnSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <!-- USER -->
+    <div class="mb-3">
+        <label class="form-label">User</label>
+        <select class="form-select" @bind="Garden.UserId">
+            @foreach (var u in Users)
+            {
+                <option value="@u.UserId">@u.Name</option>
+            }
+        </select>
+    </div>
+
+    <!-- NAME -->
+    <div class="mb-3">
+        <label class="form-label">Garden Name</label>
+        <InputText class="form-control" @bind-Value="Garden.Name" />
+    </div>
+
+    <!-- ZIP -->
+    <div class="mb-3">
+        <label class="form-label">Zip Code</label>
+        <InputNumber class="form-control" @bind-Value="Garden.ZipCode" />
+    </div>
+
+    <!-- NEW FIELDS -->
+    <div class="mb-3">
+        <label class="form-label">Hardiness Zone</label>
+        <InputText class="form-control" @bind-Value="Garden.HardinessZone" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Heat Zone</label>
+        <InputText class="form-control" @bind-Value="Garden.HeatZone" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Wind Orientation</label>
+        <InputText class="form-control" @bind-Value="Garden.WindOrientation" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Soil Type</label>
+        <InputText class="form-control" @bind-Value="Garden.SoilType" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Marine Influence</label>
+        <InputText class="form-control" @bind-Value="Garden.MarineInfluence" />
+    </div>
+
+    <!-- BUTTONS -->
+    <button class="btn btn-success">@SubmitLabel</button>
+    <button class="btn btn-secondary ms-2" @onclick="OnCancel">Cancel</button>
+</EditForm>
+
+@code {
+    [Parameter] public GardenModel Garden { get; set; }
+    [Parameter] public List<UserModel> Users { get; set; }
+
+    [Parameter] public EventCallback OnSubmitCallback { get; set; }
+    [Parameter] public EventCallback OnCancelCallback { get; set; }
+
+    [Parameter] public string SubmitLabel { get; set; } = "Save";
+
+    private Task OnSubmit() => OnSubmitCallback.InvokeAsync();
+    private Task OnCancel() => OnCancelCallback.InvokeAsync();
+}

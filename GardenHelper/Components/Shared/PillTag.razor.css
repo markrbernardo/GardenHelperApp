@@ -1,0 +1,33 @@
+﻿.pill-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.pill-default {
+    background: #e8efe9;
+    color: #4F6F52;
+}
+
+.pill-green {
+    background: #d8f3dc;
+    color: #2d6a4f;
+}
+
+.pill-yellow {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.pill-red {
+    background: #f8d7da;
+    color: #842029;
+}
+
+.pill-blue {
+    background: #d1ecf1;
+    color: #0c5460;
+}

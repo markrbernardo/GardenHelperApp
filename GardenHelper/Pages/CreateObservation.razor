@@ -12,23 +12,13 @@
 }
 else
 {
-    <EditForm Model="@observation" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    <ObservationForm Observation="observation"
+                     Plants="plants"
+                     SubmitLabel="Create"
+                     OnSubmitCallback="HandleSubmit"
+                     OnCancelCallback="GoBack"
+                     ShowDelete="false" />
 
-        <div class="mb-3">
-            <label>Plant</label>
-            <PlantDropdown Plants="plants" @bind-Value="observation.PlantId" />
-        </div>
-
-        <div class="mb-3">
-            <label>Observation</label>
-            <InputTextArea class="form-control" @bind-Value="observation.Observation" rows="4" />
-        </div>
-
-        <button class="btn btn-success">Create</button>
-        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
-    </EditForm>
 }
 
 @code {

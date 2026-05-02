@@ -1,0 +1,45 @@
+﻿<div class="search-suggestion-tile" @onclick="HandleClick">
+
+    <div class="sst-thumb">
+        @if (!string.IsNullOrWhiteSpace(Suggestion.PhotoBase64))
+        {
+            <img src="data:@Suggestion.PhotoMimeType;base64,@Suggestion.PhotoBase64" />
+        }
+        else
+        {
+            <div class="sst-thumb-placeholder">@GetIcon()</div>
+        }
+    </div>
+
+    <div class="sst-text">
+        <div class="sst-primary">@Suggestion.Primary</div>
+
+        @if (!string.IsNullOrWhiteSpace(Suggestion.Secondary))
+        {
+            <div class="sst-secondary">@Suggestion.Secondary</div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Suggestion.Tertiary))
+        {
+            <div class="sst-tertiary">@Suggestion.Tertiary</div>
+        }
+    </div>
+
+</div>
+
+@code {
+    [Parameter] public SearchSuggestionDto Suggestion { get; set; }
+    [Parameter] public EventCallback<SearchSuggestionDto> OnSelect { get; set; }
+
+    Task HandleClick() => OnSelect.InvokeAsync(Suggestion);
+
+    string GetIcon() =>
+        Suggestion.Type switch
+        {
+            "plant" => "🌿",
+            "plantInfo" => "📘",
+            "location" => "📍",
+            "garden" => "🌱",
+            _ => "🔎"
+        };
+}

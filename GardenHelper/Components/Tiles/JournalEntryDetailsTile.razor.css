@@ -1,0 +1,40 @@
+﻿.journal-details-tile {
+    padding: 1rem;
+}
+
+.journal-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm, 0 1px 4px rgba(0,0,0,0.1));
+}
+
+/* HEADER */
+.journal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .75rem;
+}
+
+.journal-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.journal-date {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.journal-garden {
+    color: #888;
+    font-size: 0.85rem;
+}
+
+/* BODY */
+.journal-body p {
+    margin: 0;
+    line-height: 1.4;
+}

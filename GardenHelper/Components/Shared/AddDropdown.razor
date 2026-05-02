@@ -1,0 +1,96 @@
+﻿@inject NavigationManager Nav
+
+<div class="dropdown">
+    <button class="btn btn-success dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-plus-circle me-1"></i> Add
+    </button>
+
+    <ul class="dropdown-menu">
+
+        <!-- PLANT RELATED -->
+        <li><h6 class="dropdown-header">Plant Related</h6></li>
+
+        <li>
+            <a class="dropdown-item" href="@BuildUrl("/plants/create")">
+                <i class="bi bi-flower1 me-2"></i> Add Plant
+            </a>
+        </li>
+
+        <li>
+            <a class="dropdown-item" href="@BuildUrl("/plantinformation/create")">
+                <i class="bi bi-journal-plus me-2"></i> Add Plant Information
+            </a>
+        </li>
+
+        <li>
+            <a class="dropdown-item" href="@BuildUrl("/observations/create", PlantId)">
+                <i class="bi bi-eye me-2"></i> Add Observation
+            </a>
+        </li>
+
+        <li><hr class="dropdown-divider" /></li>
+
+        <!-- GARDEN RELATED -->
+        <li><h6 class="dropdown-header">Garden Related</h6></li>
+
+        <li>
+            <a class="dropdown-item" href="@BuildUrl("/locations/create", gardenId: GardenId)">
+                <i class="bi bi-geo-alt me-2"></i> Add Location
+            </a>
+        </li>
+
+        <li>
+            <a class="dropdown-item" href="@BuildUrl("/gardens/create")">
+                <i class="bi bi-tree me-2"></i> Add Garden
+            </a>
+        </li>
+
+        <li>
+            <a class="dropdown-item" href="@BuildUrl("/journalentries/create")">
+                <i class="bi bi-pencil-square me-2"></i> Add Journal Entry
+            </a>
+        </li>
+
+        <li><hr class="dropdown-divider" /></li>
+
+        <!-- FUTURE -->
+        <li><h6 class="dropdown-header">Coming Soon</h6></li>
+
+        <li>
+            <a class="dropdown-item disabled">
+                <i class="bi bi-list-task me-2"></i> Add Task (coming soon)
+            </a>
+        </li>
+
+    </ul>
+</div>
+
+@code {
+    [Parameter] public int? GardenId { get; set; }
+    [Parameter] public int? LocationId { get; set; }
+    [Parameter] public int? PlantId { get; set; }
+    [Parameter] public string? ReturnUrl { get; set; }
+
+    private string BuildUrl(string baseUrl, int? plantId = null, int? gardenId = null)
+    {
+        var url = baseUrl;
+        var query = new List<string>();
+
+        if (plantId != null)
+            query.Add($"plantId={plantId}");
+
+        if (gardenId != null)
+            query.Add($"gardenId={gardenId}");
+
+        if (LocationId != null)
+            query.Add($"locationId={LocationId}");
+
+        var returnUrl = ReturnUrl ?? Nav.Uri;
+        query.Add($"returnUrl={Uri.EscapeDataString(returnUrl)}");
+
+        if (query.Count > 0)
+            url += "?" + string.Join("&", query);
+
+        return url;
+    }
+}

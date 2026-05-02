@@ -1,65 +1,31 @@
 ﻿@page "/plantinformation"
 @page "/plantinformation/{plantId:int}"
 
+@using GardenHelper.Components.Tiles
+
 @inject PlantInformationService PlantInfoService
 @inject PlantPhotoService PhotoService
 @inject NavigationManager Nav
 
-<h1 class="border-bottom pb-2">Plant Information</h1>
 
-<div class="two-column-layout">
+<PageHeader Title="Plant Information">
+    <Actions>
+        <button class="btn btn-primary" @onclick="CreateInfo">
+            <i class="bi bi-plus-lg"></i> Add Info Card
+        </button>
+    </Actions>
+</PageHeader>
 
-    <!-- LEFT COLUMN (DESKTOP) -->
-    <div class="left-column d-none d-md-block">
-
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <h3 class="mb-0">Plants</h3>
-
-            <button class="btn btn-sm btn-success" @onclick="CreateInfo">
-                <i class="bi bi-plus-lg"></i> Add Info Card
-            </button>
-        </div>
-
-        @if (allInfo?.Any() == true)
-        {
-            <div class="info-list">
-                @foreach (var pi in allInfo)
-                {
-                    <div class="info-tile @(selectedId == pi.PlantInformationId ? "selected" : "")"
-                         @onclick="() => SelectPlant(pi.PlantInformationId)">
-
-                        <div class="info-thumb">
-                            @if (!string.IsNullOrWhiteSpace(pi.Photo))
-                            {
-                                <img src="data:@pi.PhotoMimeType;base64,@pi.Photo" />
-                            }
-                            else
-                            {
-                                <div class="info-thumb-placeholder">🌿</div>
-                            }
-                        </div>
-
-                        <div class="info-text">
-                            <div class="info-name">@pi.CommonName</div>
-                            <div class="info-scientific">@pi.ScientificName</div>
-                        </div>
-                    </div>
-
-                }
-            </div>
-
-        }
-        else
-        {
-            <p>No plant information available.</p>
-        }
-    </div>
-
+@if (allInfo == null || allInfo.Count == 0)
+{
+    <p>No plant information available.</p>
+}
+else
+{
     <!-- MOBILE DROPDOWN -->
     <div class="d-md-none mb-3">
         <label class="form-label fw-bold">Select Plant</label>
-        <select class="form-select"
-                @onchange="OnMobileSelect">
+        <select class="form-select" @onchange="OnMobileSelect">
             <option value="">-- Choose a plant --</option>
 
             @foreach (var pi in allInfo)
@@ -71,32 +37,44 @@
             }
         </select>
 
-        <button class="btn btn-sm btn-success mt-2" @onclick="CreateInfo">
+        <button class="btn btn-primary mt-2" @onclick="CreateInfo">
             <i class="bi bi-plus-lg"></i> Add Info Card
         </button>
     </div>
 
+    <!-- DESKTOP LAYOUT -->
 
+        <TwoColumnLayout>
+            <Left>
+                <ScrollColumn>
+                    @foreach (var pi in allInfo)
+                    {
+                    <PlantInfoNametagTile Info="pi"
+                                          Selected="(selectedId == pi.PlantInformationId)"
+                                          OnSelect="@(info => SelectPlant(info.PlantInformationId))" />
 
-    <!-- RIGHT COLUMN -->
-    <div class="right-column">
-        <h3>Information</h3>
+                    }
+                </ScrollColumn>
+            </Left>
 
-        @if (selectedId == null)
-        {
-            <p class="text-muted">Select a plant to view its information.</p>
-        }
-        else if (info != null)
-        {
-            <PlantInfoDetails Info="@info" />
+            <Right>
+                @if (selectedId == null)
+                {
+                    <p class="text-muted">Select a plant to view its information.</p>
+                }
+                else if (info != null)
+                {
+                    <ScrollColumn>
+                        <PlantInfoDetailsTile Info="@info" />
 
-            <hr />
-            <h4 class="mt-4">Photo Gallery</h4>
-            <PlantPhotoGallery Photos="@photos" />
-        }
-    </div>
+                        <SectionHeader Title="Photo Gallery" />
+                        <PlantPhotoGallery Photos="@photos" />
+                    </ScrollColumn>
+                }
+            </Right>
+        </TwoColumnLayout>
+}
 
-</div>
 
 @code {
     [Parameter] public int? plantId { get; set; }

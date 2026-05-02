@@ -1,0 +1,45 @@
+﻿.location-tile {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm, 0 1px 4px rgba(0,0,0,0.1));
+    transition: background 0.15s ease;
+}
+
+    .location-tile:hover {
+        background: #f5f5f5;
+    }
+
+.location-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.location-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.location-tag {
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #fff;
+}
+
+    .location-tag.outside {
+        background: #4F6F52;
+    }
+
+    .location-tag.inside {
+        background: #6C8EAD;
+    }
+
+.location-details {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: #666;
+}

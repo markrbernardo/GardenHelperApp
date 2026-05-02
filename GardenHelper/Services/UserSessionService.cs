@@ -8,6 +8,9 @@ public class UserSessionService
     public string? CurrentUserName { get; private set; }
     public int? CurrentGardenId { get; private set; }
     public int? DefaultGardenId { get; private set; }
+    public int? CurrentLocationId { get; private set; }
+    public int? CurrentPlantId { get; private set; }
+
 
 
     public event Func<Task>? OnChange;
@@ -107,6 +110,18 @@ public class UserSessionService
         CurrentGardenId = null;
         await _js.InvokeVoidAsync("localStorage.removeItem", "gardenId");
         await NotifyStateChanged();
+    }
+
+    public void SetCurrentLocation(int? locationId)
+    {
+        CurrentLocationId = locationId;
+        NotifyStateChanged();
+    }
+
+    public void SetCurrentPlant(int? plantId)
+    {
+        CurrentPlantId = plantId;
+        NotifyStateChanged();
     }
 
 }

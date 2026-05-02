@@ -10,6 +10,8 @@ public class PlantPhotoModel
     public int PlantId { get; set; }
 
     public string? Photo { get; set; } = string.Empty;
+    public string? PhotoMimeType { get; set; }
+
 
     // Match SQLite TEXT column exactly
     public string? CreatedAt { get; set; }

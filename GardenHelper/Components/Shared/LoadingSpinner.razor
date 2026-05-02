@@ -1,0 +1,13 @@
+﻿<div class="loading-spinner text-center py-4">
+    <div class="spinner-border text-success" role="status" style="width: 2.5rem; height: 2.5rem;">
+    </div>
+
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <div class="mt-2 text-muted">@Message</div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Message { get; set; }
+}

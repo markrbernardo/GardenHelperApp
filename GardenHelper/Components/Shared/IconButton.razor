@@ -1,0 +1,28 @@
+﻿<button class="@BuildClasses()"
+        @onclick="OnClick"
+        disabled="@Disabled">
+    <i class="@Icon me-1"></i>
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        @Label
+    }
+</button>
+
+@code {
+    [Parameter] public string Icon { get; set; } = "bi bi-question-circle";
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string Color { get; set; } = "primary"; // bootstrap color
+    [Parameter] public string Size { get; set; } = "sm";       // sm, md, lg
+    [Parameter] public bool Outline { get; set; } = false;
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    private string BuildClasses()
+    {
+        var btnType = Outline ? $"btn btn-outline-{Color}" : $"btn btn-{Color}";
+        var sizeClass = Size == "sm" ? "btn-sm" :
+                        Size == "lg" ? "btn-lg" : "";
+
+        return $"{btnType} {sizeClass}";
+    }
+}

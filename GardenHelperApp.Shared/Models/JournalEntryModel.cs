@@ -10,7 +10,7 @@ namespace GardenHelperApp.Shared.Models
         public int GardenId { get; set; }
 
         public DateTime CreatedAt { get; set; }
-
+        public string? Title { get; set; }
         public string? Entry {  get; set; }
 
     }

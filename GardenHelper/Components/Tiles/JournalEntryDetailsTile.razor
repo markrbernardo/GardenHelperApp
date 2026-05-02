@@ -1,6 +1,6 @@
 ﻿@using GardenHelperApp.Shared.Models
 
-<div class="plant-details">
+<div class="journal-details-tile">
 
     @if (SelectedDate == null)
     {
@@ -14,15 +14,14 @@
     {
         @foreach (var j in EntriesForDate)
         {
-            <div class="obs-card pb-3">
+            <div class="journal-card">
 
-                <!-- HEADER: DATE + GARDEN + EDIT BUTTON -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <p class="mb-0 text-muted">
-                        @FormatDate(j.CreatedAt)
-                        <br />
-                        <span class="text-muted">@GetGardenName(j.GardenId)</span>
-                    </p>
+                <!-- HEADER -->
+                <div class="journal-header">
+                    <div class="journal-meta">
+                        <div class="journal-date">@FormatDate(j.CreatedAt)</div>
+                        <div class="journal-garden">@GetGardenName(j.GardenId)</div>
+                    </div>
 
                     <button class="btn btn-primary btn-sm"
                             @onclick="() => OnEdit.InvokeAsync(j.JournalEntryId)">
@@ -31,8 +30,9 @@
                 </div>
 
                 <!-- ENTRY TEXT -->
-                <p>@j.Entry</p>
-
+                <div class="journal-body">
+                    <p>@j.Entry</p>
+                </div>
 
             </div>
         }
@@ -42,19 +42,22 @@
 
 @code {
     [Parameter] public DateTime? SelectedDate { get; set; }
-    [Parameter] public List<JournalEntryModel> Entries { get; set; }
-    [Parameter] public List<GardenModel> Gardens { get; set; }
+    [Parameter] public List<JournalEntryModel> Entries { get; set; } = new();
+    [Parameter] public List<GardenModel> Gardens { get; set; } = new();
     [Parameter] public EventCallback<int> OnEdit { get; set; }
 
+    // Matches your JournalEntries.razor filtering logic
     List<JournalEntryModel> EntriesForDate =>
         Entries
             .Where(j => j.CreatedAt.Date == SelectedDate)
             .OrderByDescending(j => j.CreatedAt)
             .ToList();
 
+    // Matches your page helper
     string GetGardenName(int gardenId) =>
         Gardens?.FirstOrDefault(g => g.GardenId == gardenId)?.Name ?? "Unknown Garden";
 
+    // Matches your page helper
     string FormatDate(DateTime dt) =>
         dt.ToString("dddd, MMM dd • hh:mm tt");
 }

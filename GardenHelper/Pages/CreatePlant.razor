@@ -13,52 +13,14 @@
 }
 else
 {
-    <EditForm Model="@plant" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    <PlantForm Plant="plant"
+               Locations="locations"
+               PlantInfoList="plantInfoList"
+               SubmitLabel="Create"
+               OnSubmitCallback="HandleSubmit"
+               OnCancelCallback="GoBack"
+               ShowDelete="false" />
 
-        <div class="mb-3">
-            <label>Plant Name</label>
-            <InputText class="form-control" @bind-Value="plant.Name" />
-        </div>
-
-        <div class="mb-3">
-            <label>Plant Information</label>
-            <select class="form-select" @bind="plant.PlantInformationId">
-                @foreach (var info in plantInfoList)
-                {
-                    <option value="@info.PlantInformationId">
-                        @info.CommonName (@info.ScientificName)
-                    </option>
-                }
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label>Location</label>
-            <select class="form-select" @bind="plant.LocationId">
-                @foreach (var loc in locations)
-                {
-                    <option value="@loc.LocationId">@loc.Name</option>
-                }
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Description</label>
-            <InputTextArea class="form-control" rows="3" @bind-Value="plant.Description" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Notes</label>
-            <InputTextArea class="form-control" rows="3" @bind-Value="plant.Notes" />
-        </div>
-
-
-
-        <button class="btn btn-success">Create</button>
-        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
-    </EditForm>
 }
 
 @code {

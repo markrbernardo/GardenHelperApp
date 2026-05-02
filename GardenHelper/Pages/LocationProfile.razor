@@ -1,88 +1,105 @@
 ﻿@page "/location-profile/{locationId:int}"
+@inject GardenService GardenService
 @inject LocationService LocationService
 @inject PlantService PlantService
 @inject NavigationManager Nav
+@inject UserSessionService Session
 
+<PageHeader Title="@($"{garden?.Name}: {location?.Name}")">
+        <Actions>
+        @if (location != null)
+        {
+            <button class="btn btn-outline-primary"
+                    @onclick="@(() => Nav.NavigateTo($"/locations/edit/{location.LocationId}"))">
+                <i class="bi bi-pencil-square me-1"></i>
+            </button>
+        }
+        </Actions>
+</PageHeader>
 
-<div class="location-page">
-    @if (location == null)
-    {
-        <p>Loading location...</p>
-    }
-    else
-    {
-        <!-- LOCATION HEADER -->
-        <div class="location-header pb-3 mb-3 border-bottom">
+@if (location == null)
+{
+    <p>Loading location...</p>
+}
+else
+{
+    <!-- MODERN LOCATION SUMMARY -->
+    <div class="location-summary-card card shadow-sm mb-4">
+        <div class="card-body">
 
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h1 class="mb-0">Location: @location.Name</h1>
+            <div class="summary-header d-flex align-items-center mb-2">
+                <i class="bi bi-geo-alt-fill fs-3 me-2 icon-accent-orange"></i>
+                <div class="d-flex flex-row gap-1">
+                    <h4 class="mb-0">@location.Name</h4>
 
-                <button class="btn btn-outline-primary"
-                        @onclick="@(() => Nav.NavigateTo($"/locations/edit/{location.LocationId}"))">
-                    <i class="bi bi-pencil-square me-1"></i>
-                </button>
+                    <span class="location-tag @(location.IsOutside ?? false ? "outside" : "inside")">
+                        @((location.IsOutside ?? false) ? "Outside" : "Indoor")
+                    </span>
+                </div>
             </div>
 
-            <div class="row mt-3">
 
-                <div class="col-md-4 mb-3">
-                    <label class="text-muted">Outside?</label>
-                    <div class="fw-semibold">
-                        @((location.IsOutside ?? false) ? "Outside" : "Indoor")
-                    </div>
+            <div class="summary-grid">
+
+                <div class="summary-item">
+                    <div class="summary-label"><i class="bi bi-brightness-high me-1"></i> Lighting</div>
+                    <div class="summary-value">@location.Lighting</div>
                 </div>
 
-                <div class="col-md-4 mb-3">
-                    <label class="text-muted">Lighting</label>
-                    <div class="fw-semibold">@location.Lighting</div>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="text-muted">Window Facing</label>
-                    <div class="fw-semibold">@location.WindowFacing</div>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="text-muted">Distance to Light</label>
-                    <div class="fw-semibold">
-                        @(location.DistancetoLight.HasValue ? $"{location.DistancetoLight} in" : "—")
-                    </div>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="text-muted">Humidity</label>
-                    <div class="fw-semibold">@location.Humidity</div>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="text-muted">Temperature Consistency</label>
-                    <div class="fw-semibold">@location.TemperatureConsistency</div>
-                </div>
-
-                <div class="col-12 mb-3">
-                    <label class="text-muted">Notes</label>
-                    <div>@location.Notes</div>
-                </div>
-
-                @if (!string.IsNullOrWhiteSpace(location.Photo))
+                @if (!(location.IsOutside ?? false))
                 {
-                    <div class="col-12 mb-3">
-                        <label class="text-muted">Photo</label>
-                        <div>
-                            <img src="data:image/jpeg;base64,@location.Photo"
-                                 class="img-fluid rounded shadow-sm"
-                                 style="max-height: 250px; object-fit: cover;" />
+                    <div class="summary-item">
+                        <div class="summary-label"><i class="bi bi-compass me-1"></i> Window Facing</div>
+                        <div class="summary-value">@location.WindowFacing</div>
+                    </div>
+
+                    <div class="summary-item">
+                        <div class="summary-label"><i class="bi bi-rulers me-1"></i> Distance to Light</div>
+                        <div class="summary-value">
+                            @(location.DistancetoLight.HasValue ? $"{location.DistancetoLight} in" : "—")
                         </div>
                     </div>
                 }
+
+                <div class="summary-item">
+                    <div class="summary-label"><i class="bi bi-droplet-half me-1"></i> Humidity</div>
+                    <div class="summary-value">@location.Humidity</div>
+                </div>
+
+                <div class="summary-item">
+                    <div class="summary-label"><i class="bi bi-thermometer-half me-1"></i> Temperature</div>
+                    <div class="summary-value">@location.TemperatureConsistency</div>
+                </div>
+
             </div>
+
+
+            @if (!string.IsNullOrWhiteSpace(location.Notes))
+            {
+                <div class="summary-notes mt-3">
+                    <div class="summary-label"><i class="bi bi-journal-text me-1"></i> Notes</div>
+                    <div class="summary-value">@location.Notes</div>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(location.Photo))
+            {
+                <div class="summary-photo mt-4">
+                    <img src="data:image/jpeg;base64,@location.Photo"
+                         class="img-fluid rounded shadow-sm"
+                         style="max-height: 260px; object-fit: cover;" />
+                </div>
+            }
+
         </div>
+    </div>
 
-        <!-- MAIN GRID -->
-        <div class="location-grid">
 
-            <!-- LEFT COLUMN -->
-            <div class="loc-left">
+    <!-- MAIN LAYOUT -->
+<div class="location-two-col">
+    <TwoColumnLayout>
+        <Left>
+            <ScrollColumn>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h3 class="mb-0">Plants</h3>
 
@@ -92,64 +109,65 @@
                     </button>
                 </div>
 
-                <!-- MOBILE DROPDOWN -->
-                <div class="plant-dropdown d-md-none mb-3">
-                    @if (plants != null && plants.Count > 0)
+                @if (plants != null && plants.Count > 0)
+                {
+                    @foreach (var p in plants)
                     {
-                        <select class="form-select" @onchange="OnDropdownChange">
-                            <option value="">Select a plant...</option>
-                            @foreach (var p in plants)
-                            {
-                                <option value="@p.PlantId">@p.CommonName</option>
-                            }
-                        </select>
+                        <PlantNametagTile Plant="p"
+                                   Selected="(selectedPlant?.PlantId == p.PlantId)"
+                                   OnSelect="SelectPlant" />
                     }
-                </div>
+                }
+                else
+                {
+                    <p class="placeholder">No plants in this location.</p>
+                }
+            </ScrollColumn>
+        </Left>
 
-                <!-- DESKTOP LIST -->
-                <div class="loc-scroll d-none d-md-block">
-                    @if (plants != null && plants.Count > 0)
-                    {
-                        @foreach (var p in plants)
-                        {
-                            <PlantTile Plant="p"
-                                       Selected="(selectedPlant?.PlantId == p.PlantId)"
-                                       OnSelect="SelectPlant" />
-                        }
-                    }
-                    else
-                    {
-                        <p class="placeholder">No plants in this location.</p>
-                    }
-                </div>
-            </div>
-
-            <!-- RIGHT COLUMN -->
-            <div class="loc-right">
+        <Right>
+            <ScrollColumn>
                 <h3>Details</h3>
-                <div class="plant-details d-none d-md-block">
-                    <PlantDetails Plant="selectedPlant"
-                                  OnAddObservation="HandleAddObservation"
-                                  OnEditObservation="HandleEditObservation"
-                                  OnEditPlant="HandleEditPlant" />
-                </div>
-            </div>
+                <PlantDetailsTile Plant="selectedPlant"
+                              OnAddObservation="HandleAddObservation"
+                              OnEditObservation="HandleEditObservation"
+                              OnEditPlant="HandleEditPlant" />
+            </ScrollColumn>
+        </Right>
+    </TwoColumnLayout>
+</div>
+
+  
+
+    <!-- MOBILE DROPDOWN + DETAILS -->
+    <div class="d-md-none">
+        <div class="plant-dropdown mb-3">
+            @if (plants != null && plants.Count > 0)
+            {
+                <select class="form-select" @onchange="OnDropdownChange">
+                    <option value="">Select a plant...</option>
+                    @foreach (var p in plants)
+                    {
+                        <option value="@p.PlantId">@p.CommonName</option>
+                    }
+                </select>
+            }
         </div>
 
-        <!-- MOBILE DETAILS -->
-        <div class="plant-details d-md-none mt-3">
-            <PlantDetails Plant="selectedPlant"
+        <div class="plant-details mt-3">
+            <PlantDetailsTile Plant="selectedPlant"
                           OnAddObservation="HandleAddObservation"
                           OnEditObservation="HandleEditObservation"
                           OnEditPlant="HandleEditPlant" />
         </div>
-    }
-
-</div>
+    </div>
+}
 
 @code {
     List<PlantWithInfoDto>? plants;
     PlantWithInfoDto? selectedPlant;
+
+    GardenModel? garden;
 
     [Parameter] public int locationId { get; set; }
     LocationModel? location;
@@ -169,6 +187,16 @@
         {
             selectedPlant = plants?.FirstOrDefault(p => p.PlantId == parsedId);
         }
+
+        location = await LocationService.GetLocation(locationId);
+
+        if (location != null)
+        {
+            garden = await GardenService.GetGarden(location.GardenId);
+        }
+
+        Session.SetCurrentLocation(locationId);
+
     }
 
     async Task SelectPlant(PlantWithInfoDto plant)

@@ -1,0 +1,58 @@
+﻿@using GardenHelperApp.Shared.Models
+
+<EditForm Model="@Observation" OnValidSubmit="OnSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <!-- PLANT -->
+    <div class="mb-3">
+        <label class="form-label">Plant</label>
+        <PlantDropdown Plants="Plants" @bind-Value="Observation.PlantId" />
+    </div>
+
+    <!-- OBSERVATION TEXT -->
+    <div class="mb-3">
+        <label class="form-label">Observation</label>
+        <InputTextArea class="form-control" rows="4" @bind-Value="Observation.Observation" />
+    </div>
+
+    <button class="btn btn-success">@SubmitLabel</button>
+    <button class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+
+    @if (ShowDelete)
+    {
+        <button class="btn btn-danger ms-2" @onclick="Delete">Delete</button>
+    }
+</EditForm>
+
+@code {
+    [Parameter] public ObservationModel Observation { get; set; } = default!;
+    [Parameter] public List<PlantWithInfoDto> Plants { get; set; } = new();
+
+    [Parameter] public string SubmitLabel { get; set; } = "Save";
+
+    [Parameter] public EventCallback OnSubmitCallback { get; set; }
+    [Parameter] public EventCallback OnCancelCallback { get; set; }
+    [Parameter] public EventCallback OnDeleteCallback { get; set; }
+
+    [Parameter] public bool ShowDelete { get; set; } = false;
+    [Parameter] public bool IsDisabled { get; set; } = false;
+
+    private async Task OnSubmit()
+    {
+        if (!IsDisabled)
+            await OnSubmitCallback.InvokeAsync();
+    }
+
+    private async Task Cancel()
+    {
+        if (!IsDisabled)
+            await OnCancelCallback.InvokeAsync();
+    }
+
+    private async Task Delete()
+    {
+        if (!IsDisabled)
+            await OnDeleteCallback.InvokeAsync();
+    }
+}

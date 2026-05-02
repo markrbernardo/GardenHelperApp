@@ -1,0 +1,60 @@
+﻿.plantinfo-details-tile {
+    background: var(--bg-panel, #fff);
+    padding: 1.25rem;
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
+}
+
+/* HEADER */
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.common-name {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+
+.scientific-name {
+    font-size: 1.1rem;
+    color: #666;
+    margin-top: 2px;
+}
+
+.edit-btn {
+    white-space: nowrap;
+}
+
+/* PHOTO */
+.info-photo {
+    width: 100%;
+    max-height: 350px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+/* DETAILS */
+.info-section {
+    margin-top: 1rem;
+}
+
+.detail-block {
+    margin-bottom: 1.25rem;
+}
+
+    .detail-block h5 {
+        margin: 0 0 4px 0;
+        font-weight: 600;
+        color: var(--green-forest, #2F3E2C);
+    }
+
+    .detail-block p {
+        margin: 0;
+        line-height: 1.4;
+        color: #444;
+    }

@@ -1,0 +1,14 @@
+﻿<div class="two-col-layout">
+    <div class="left-pane">
+        @Left
+    </div>
+
+    <div class="right-pane">
+        @Right
+    </div>
+</div>
+
+@code {
+    [Parameter] public RenderFragment Left { get; set; }
+    [Parameter] public RenderFragment Right { get; set; }
+}

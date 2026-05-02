@@ -1,0 +1,69 @@
+﻿@using GardenHelperApp.Shared.Models
+
+<EditForm Model="@Entry" OnValidSubmit="OnSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <!-- TITLE -->
+    <div class="mb-3">
+        <label class="form-label">Title</label>
+        <InputText class="form-control" @bind-Value="Entry.Title" />
+    </div>
+
+    <!-- GARDEN -->
+    <div class="mb-3">
+        <label class="form-label">Garden</label>
+        <select class="form-select" @bind="Entry.GardenId">
+            @foreach (var g in Gardens)
+            {
+                <option value="@g.GardenId">@g.Name</option>
+            }
+        </select>
+    </div>
+
+    <!-- ENTRY TEXT -->
+    <div class="mb-3">
+        <label class="form-label">Entry</label>
+        <InputTextArea class="form-control" rows="5" @bind-Value="Entry.Entry" />
+    </div>
+
+    <button class="btn btn-success">@SubmitLabel</button>
+    <button class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+
+    @if (ShowDelete)
+    {
+        <button class="btn btn-danger ms-2" @onclick="Delete">Delete</button>
+    }
+</EditForm>
+
+@code {
+    [Parameter] public JournalEntryModel Entry { get; set; } = default!;
+    [Parameter] public List<GardenModel> Gardens { get; set; } = new();
+
+    [Parameter] public string SubmitLabel { get; set; } = "Save";
+
+    [Parameter] public EventCallback OnSubmitCallback { get; set; }
+    [Parameter] public EventCallback OnCancelCallback { get; set; }
+    [Parameter] public EventCallback OnDeleteCallback { get; set; }
+
+    [Parameter] public bool ShowDelete { get; set; } = false;
+    [Parameter] public bool IsDisabled { get; set; } = false;
+
+    private async Task OnSubmit()
+    {
+        if (!IsDisabled)
+            await OnSubmitCallback.InvokeAsync();
+    }
+
+    private async Task Cancel()
+    {
+        if (!IsDisabled)
+            await OnCancelCallback.InvokeAsync();
+    }
+
+    private async Task Delete()
+    {
+        if (!IsDisabled)
+            await OnDeleteCallback.InvokeAsync();
+    }
+}

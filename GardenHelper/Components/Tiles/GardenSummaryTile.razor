@@ -1,0 +1,47 @@
+﻿<div class="garden-summary-tile" @onclick="HandleClick">
+
+    <div class="gst-header">
+        <div class="gst-title">@Garden.Name</div>
+        <div class="gst-sub">@Garden.ZipCode</div>
+    </div>
+
+    <div class="gst-stats">
+        <div class="gst-stat">
+            <i class="bi bi-flower3 me-1"></i>
+            @PlantCount plants
+        </div>
+
+        <div class="gst-stat">
+            <i class="bi bi-geo-alt me-1"></i>
+            @LocationCount locations
+        </div>
+    </div>
+
+    <div class="gst-zones">
+        @if (!string.IsNullOrWhiteSpace(Garden.HardinessZone))
+        {
+            <div class="gst-zone">
+                <i class="bi bi-thermometer-snow me-1"></i>
+                Zone @Garden.HardinessZone
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Garden.HeatZone))
+        {
+            <div class="gst-zone">
+                <i class="bi bi-thermometer-sun me-1"></i>
+                Heat @Garden.HeatZone
+            </div>
+        }
+    </div>
+
+</div>
+
+@code {
+    [Parameter] public GardenModel Garden { get; set; }
+    [Parameter] public int PlantCount { get; set; }
+    [Parameter] public int LocationCount { get; set; }
+    [Parameter] public EventCallback<int> OnSelect { get; set; }
+
+    Task HandleClick() => OnSelect.InvokeAsync(Garden.GardenId);
+}

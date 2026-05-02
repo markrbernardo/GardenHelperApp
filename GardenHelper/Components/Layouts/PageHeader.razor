@@ -1,0 +1,15 @@
+﻿<div class="page-header">
+    <h1>@Title</h1>
+
+    @if (Actions != null)
+    {
+        <div class="header-actions">
+            @Actions
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+}
