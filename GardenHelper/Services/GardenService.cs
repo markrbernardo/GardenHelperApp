@@ -1,7 +1,7 @@
-﻿using GardenHelper.Pages;
-using GardenHelperApp.Shared.Models;
+﻿using GardenHelperApp.Shared.Models;
+using GardenHelperApp.Shared.Enums;
+using GardenHelperApp.Shared.Constants;
 using System.Net.Http.Json;
-using static System.Net.WebRequestMethods;
 
 namespace GardenHelperApp.Client.Services;
 
@@ -14,19 +14,27 @@ public class GardenService
         _http = http;
     }
 
-    // REQUIRED: Get gardens for a specific user
-    public async Task<List<GardenModel>> GetGardensByUser(int userId)
+    // ---------------------------------------------------------
+    // GET ALL GARDENS FOR A USER
+    // ---------------------------------------------------------
+    public async Task<List<GardenModel>> GetByUserAsync(int userId)
     {
-        return await _http.GetFromJsonAsync<List<GardenModel>>($"api/gardens/user/{userId}")
+        var url = ApiRoutes.Gardens.ByUser.Replace("{userId}", userId.ToString());
+
+        return await _http.GetFromJsonAsync<List<GardenModel>>(url)
                ?? new List<GardenModel>();
     }
 
-    // Get a single garden
-    public async Task<GardenModel?> GetGarden(int id)
+    // ---------------------------------------------------------
+    // GET SINGLE GARDEN
+    // ---------------------------------------------------------
+    public async Task<GardenModel?> GetAsync(int id)
     {
+        var url = ApiRoutes.Gardens.ById.Replace("{id}", id.ToString());
+
         try
         {
-            return await _http.GetFromJsonAsync<GardenModel>($"api/gardens/{id}");
+            return await _http.GetFromJsonAsync<GardenModel>(url);
         }
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
@@ -34,66 +42,12 @@ public class GardenService
         }
     }
 
-
-    public async Task<List<GardenModel?>> GetAllGardens()
+    // ---------------------------------------------------------
+    // CREATE GARDEN
+    // ---------------------------------------------------------
+    public async Task<GardenModel?> CreateAsync(GardenModel model)
     {
-        var gardens = await _http.GetFromJsonAsync<List<GardenModel>>("api/gardens/");
-        return gardens ?? new List<GardenModel>();
-    }
-
-    // Create a garden
-    public async Task CreateGarden(GardenModel garden)
-    {
-        await _http.PostAsJsonAsync("api/gardens", garden);
-    }
-
-    // Update a garden
-    public async Task UpdateGarden(GardenModel garden)
-    {
-        await _http.PutAsJsonAsync($"api/gardens/{garden.GardenId}", garden);
-    }
-
-    // Delete a garden
-    public async Task DeleteGarden(int id)
-    {
-        await _http.DeleteAsync($"api/gardens/{id}");
-    }
-
-    // Get locations for a garden
-    public async Task<List<LocationModel>> GetLocationsByGarden(int gardenId)
-    {
-        return await _http.GetFromJsonAsync<List<LocationModel>>(
-            $"api/locations/garden/{gardenId}"
-        ) ?? new List<LocationModel>();
-    }
-
-    // Get plants for a garden
-    public async Task<List<PlantModel>> GetPlantsByGarden(int gardenId)
-    {
-        return await _http.GetFromJsonAsync<List<PlantModel>>(
-            $"api/plants/garden/{gardenId}"
-        ) ?? new List<PlantModel>();
-    }
-
-    public async Task<int?> GetDefaultGardenId(int userId)
-    {
-        var user = await _http.GetFromJsonAsync<UserModel>($"api/users/{userId}");
-        return user?.DefaultGardenId;
-    }
-
-    public async Task SetDefaultGarden(int userId, int gardenId)
-    {
-        await _http.PutAsync($"api/users/{userId}/default-garden/{gardenId}", null);
-    }
-
-    public async Task<List<LocationModel>> GetAllLocations()
-    {
-        return await _http.GetFromJsonAsync<List<LocationModel>>("api/gardens/locations");
-    }
-
-    public async Task<GardenModel?> CreateGardenWithReturn(GardenModel model)
-    {
-        var response = await _http.PostAsJsonAsync("api/gardens", model);
+        var response = await _http.PostAsJsonAsync(ApiRoutes.Gardens.Base, model);
 
         if (!response.IsSuccessStatusCode)
             return null;
@@ -101,4 +55,51 @@ public class GardenService
         return await response.Content.ReadFromJsonAsync<GardenModel>();
     }
 
+    // ---------------------------------------------------------
+    // UPDATE GARDEN
+    // ---------------------------------------------------------
+    public async Task<bool> UpdateAsync(GardenModel model)
+    {
+        var url = ApiRoutes.Gardens.ById.Replace("{id}", model.GardenId.ToString());
+
+        var response = await _http.PutAsJsonAsync(url, model);
+
+        return response.IsSuccessStatusCode;
+    }
+
+    // ---------------------------------------------------------
+    // DELETE GARDEN
+    // ---------------------------------------------------------
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var url = ApiRoutes.Gardens.ById.Replace("{id}", id.ToString());
+
+        var response = await _http.DeleteAsync(url);
+
+        return response.IsSuccessStatusCode;
+    }
+
+    // ---------------------------------------------------------
+    // SET DEFAULT GARDEN FOR USER
+    // ---------------------------------------------------------
+    public async Task<bool> SetDefaultGardenAsync(int userId, int gardenId)
+    {
+        var url = ApiRoutes.Gardens.SetDefaultGarden
+            .Replace("{userId}", userId.ToString())
+            .Replace("{gardenId}", gardenId.ToString());
+
+        var response = await _http.PutAsync(url, null);
+
+        return response.IsSuccessStatusCode;
+    }
+
+    // ---------------------------------------------------------
+    // GET DEFAULT GARDEN FOR USER
+    // ---------------------------------------------------------
+    public async Task<int?> GetDefaultGardenAsync(int userId)
+    {
+        var url = ApiRoutes.Gardens.DefaultGarden.Replace("{userId}", userId.ToString());
+
+        return await _http.GetFromJsonAsync<int?>(url);
+    }
 }

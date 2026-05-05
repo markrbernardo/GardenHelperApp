@@ -14,18 +14,20 @@ public class GardenContext : DbContext
     public DbSet<PlantModel> Plants { get; set; }
     public DbSet<ObservationModel> Observations { get; set; }
     public DbSet<JournalEntryModel> JournalEntries { get; set; }
-
-    // ADD: PlantPhotos DbSet so EF knows about the table
     public DbSet<PlantPhotoModel> PlantPhotos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
+        // ---------------------------------------------------------
+        // RELATIONSHIPS
+        // ---------------------------------------------------------
+
         // GARDEN → LOCATIONS
         modelBuilder.Entity<LocationModel>()
-            .HasOne<GardenModel>()              // no navigation property
-            .WithMany()                         // no navigation property
+            .HasOne<GardenModel>()
+            .WithMany()
             .HasForeignKey(l => l.GardenId)
             .OnDelete(DeleteBehavior.Cascade);
 
@@ -50,6 +52,13 @@ public class GardenContext : DbContext
             .HasForeignKey(o => o.PlantId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // PLANT → PHOTOS
+        modelBuilder.Entity<PlantPhotoModel>()
+            .HasOne<PlantModel>()
+            .WithMany()
+            .HasForeignKey(p => p.PlantId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // GARDEN → JOURNAL ENTRIES
         modelBuilder.Entity<JournalEntryModel>()
             .HasOne<GardenModel>()
@@ -57,7 +66,10 @@ public class GardenContext : DbContext
             .HasForeignKey(j => j.GardenId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Timestamp fields
+        // ---------------------------------------------------------
+        // TIMESTAMP FIELDS (SQLite stores DateTime as TEXT)
+        // ---------------------------------------------------------
+
         modelBuilder.Entity<ObservationModel>()
             .Property(o => o.CreatedAt)
             .HasColumnType("TEXT");
@@ -65,7 +77,13 @@ public class GardenContext : DbContext
         modelBuilder.Entity<ObservationModel>()
             .Property(o => o.UpdatedAt)
             .HasColumnType("TEXT");
+
+        modelBuilder.Entity<PlantPhotoModel>()
+            .Property(p => p.CreatedAt)
+            .HasColumnType("TEXT");
+
+        modelBuilder.Entity<JournalEntryModel>()
+            .Property(j => j.CreatedAt)
+            .HasColumnType("TEXT");
     }
-
-
 }

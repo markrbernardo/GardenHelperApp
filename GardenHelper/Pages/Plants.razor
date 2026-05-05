@@ -1,4 +1,5 @@
 ﻿@page "/plants"
+
 @inject PlantService PlantService
 @inject LocationService LocationService
 @inject GardenService GardenService
@@ -7,7 +8,7 @@
 @inject UserSessionService UserSession
 @inject NavigationManager Nav
 
-<PageHeader Title="Plant Inventory">
+<PageHeader Title=@($"{Garden?.Name ?? "Garden: "}: Plant Inventory") Divider="false">
     <Actions>
         <button class="btn btn-primary"
                 @onclick="@(() => Nav.NavigateTo($"/plants/create?returnUrl=/plants"))">
@@ -16,88 +17,107 @@
     </Actions>
 </PageHeader>
 
-@if (groupedPlants == null)
-{
-    <p>Loading plants...</p>
-}
-else
-{
-    <!-- MOBILE DROPDOWN -->
-    <div class="plant-dropdown d-md-none mb-3">
-        <select class="form-select" @onchange="OnDropdownChange">
-            <option value="">Select a plant...</option>
-            @foreach (var loc in groupedPlants)
-            {
-                <optgroup label="@loc.Key">
-                    @foreach (var p in loc.Value)
-                    {
-                        <option value="@p.PlantId">
-                            @p.CommonName (@p.ScientificName)
-                        </option>
-                    }
-                </optgroup>
-            }
-        </select>
-    </div>
+<div class="page-section">
 
-    <!-- DESKTOP LAYOUT -->
-    <div class="d-none d-md-block">
-        <TwoColumnLayout>
-            <Left>
-                <ScrollColumn>
-                    @foreach (var group in groupedPlants)
-                    {
-                        <h5 class="mt-3">@group.Key</h5>
+    @if (GroupedPlants == null)
+    {
+        <LoadingSpinner Message="Loading plants..." />
+    }
+    else if (GroupedPlants.Count == 0)
+    {
+        <EmptyState Message="No plants found in this garden." />
+    }
+    else
+    {
+        <!-- MOBILE DROPDOWN -->
+        <div class="plant-dropdown d-md-none mb-3">
+            <select class="form-select" @onchange="OnDropdownChange">
+                <option value="">Select a plant...</option>
 
-                        @foreach (var p in group.Value)
+                @foreach (var loc in GroupedPlants)
+                {
+                    <optgroup label="@loc.Key">
+                        @foreach (var p in loc.Value)
                         {
-                            <PlantNametagTile Plant="p"
-                                              Selected="(selectedPlant?.PlantId == p.PlantId)"
-                                              OnSelect="SelectPlant" />
+                            <option value="@p.PlantId">
+                                @p.CommonName (@p.ScientificName)
+                            </option>
                         }
-                    }
-                </ScrollColumn>
-            </Left>
-
-            <Right>
-                @if (selectedPlant == null)
-                {
-                    <p class="placeholder">Select a plant to view details.</p>
+                    </optgroup>
                 }
-                else
-                {
-                    <ScrollColumn>
-                        <h3>@selectedPlant.Name</h3>
+            </select>
+        </div>
 
-                        <PlantDetailsTile Plant="selectedPlant"
-                                          OnAddObservation="HandleAddObservation"
-                                          OnEditObservation="HandleEditObservation"
-                                          OnEditPlant="HandleEditPlant" />
+        <!-- DESKTOP LAYOUT -->
+        <div class="d-none d-md-block">
+            <TwoColumnLayout FullHeight="true">
+                <Left>
+                    <ScrollColumn HideScrollbar="true" Height="100%" CssClass="pt-0">
+                        @foreach (var group in GroupedPlants)
+                        {
+                            <h5 class="mt-3">@group.Key</h5>
 
+                            @foreach (var p in group.Value)
+                            {
+                                <PlantNametagTile Plant="p"
+                                                  Selected="(SelectedPlant?.PlantId == p.PlantId)"
+                                                  OnSelect="SelectPlantAsync" />
+                            }
+                        }
                     </ScrollColumn>
-                }
-            </Right>
-        </TwoColumnLayout>
-    </div>
+                </Left>
 
-    <!-- MOBILE DETAILS -->
-    <div class="d-md-none mt-3">
-        <PlantDetailsTile Plant="selectedPlant"
-                          OnAddObservation="HandleAddObservation"
-                          OnEditObservation="HandleEditObservation"
-                          OnEditPlant="HandleEditPlant" />
+                <Right>
+                    @if (SelectedPlant == null)
+                    {
+                        <p class="placeholder">Select a plant to view details.</p>
+                    }
+                    else
+                    {
+                        <ScrollColumn>
+                            <PlantDetailsTile Plant="SelectedPlant"
+                                              OnAddObservation="HandleAddObservation"
+                                              OnEditObservation="HandleEditObservation"
+                                              OnEditPlant="HandleEditPlant" />
+                        </ScrollColumn>
+                    }
+                </Right>
 
-    </div>
-}
+            </TwoColumnLayout>
+        </div>
+
+        <!-- MOBILE DETAILS -->
+        <div class="d-md-none mt-3">
+            <PlantDetailsTile Plant="SelectedPlant"
+                              OnAddObservation="HandleAddObservation"
+                              OnEditObservation="HandleEditObservation"
+                              OnEditPlant="HandleEditPlant" />
+        </div>
+    }
+
+</div>
 
 @code {
-    Dictionary<string, List<PlantWithInfoDto>>? groupedPlants;
-    PlantWithInfoDto? selectedPlant;
+    private Dictionary<string, List<PlantWithInfoDto>>? GroupedPlants;
+    private PlantWithInfoDto? SelectedPlant;
+    private GardenModel? Garden;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var gardenId = UserSession.CurrentGardenId;
+        if (gardenId == null)
+        {
+            Nav.NavigateTo("/gardens");
+            return;
+        }
+
+        Garden = await GardenService.GetAsync(gardenId.Value);
+    }
+
 
     protected override async Task OnParametersSetAsync()
     {
         var userId = UserSession.CurrentUserId;
-
         if (userId == null)
         {
             Nav.NavigateTo("/login");
@@ -105,75 +125,68 @@ else
         }
 
         var gardenId = UserSession.CurrentGardenId;
-
         if (gardenId == null)
         {
             Nav.NavigateTo("/gardens");
             return;
         }
 
-        var locations = await LocationService.GetByGarden(gardenId.Value);
 
-        groupedPlants = new Dictionary<string, List<PlantWithInfoDto>>();
+        // Load locations for this garden
+        var locations = await LocationService.GetByGardenAsync(gardenId.Value);
+
+        GroupedPlants = new Dictionary<string, List<PlantWithInfoDto>>();
 
         foreach (var loc in locations.OrderBy(l => l.Name))
         {
-            var plants = await PlantService.GetPlantsByLocation(loc.LocationId);
-            groupedPlants[loc.Name] = plants;
+            var plants = await PlantService.GetByLocationAsync(loc.LocationId);
+            GroupedPlants[loc.Name] = plants;
         }
 
+        // Preselect plant from querystring
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
         if (query.TryGetValue("plantId", out var pid) &&
             int.TryParse(pid, out int parsedId))
         {
-            foreach (var group in groupedPlants.Values)
-            {
-                var plant = group.FirstOrDefault(p => p.PlantId == parsedId);
-                if (plant != null)
-                {
-                    selectedPlant = plant;
-                    break;
-                }
-            }
+            SelectedPlant = GroupedPlants
+                .SelectMany(g => g.Value)
+                .FirstOrDefault(p => p.PlantId == parsedId);
         }
 
-        UserSession.SetCurrentPlant(selectedPlant?.PlantId);
+        await UserSession.SetCurrentPlantAsync(SelectedPlant?.PlantId, persist: true);
     }
 
-    async Task SelectPlant(PlantWithInfoDto plant)
+    private Task SelectPlantAsync(PlantWithInfoDto plant)
     {
-        selectedPlant = plant;
+        SelectedPlant = plant;
+        return Task.CompletedTask;
     }
 
-    async Task OnDropdownChange(ChangeEventArgs e)
+    private async Task OnDropdownChange(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int plantId))
         {
-            foreach (var group in groupedPlants.Values)
-            {
-                var plant = group.FirstOrDefault(p => p.PlantId == plantId);
-                if (plant != null)
-                {
-                    await SelectPlant(plant);
-                    break;
-                }
-            }
+            SelectedPlant = GroupedPlants!
+                .SelectMany(g => g.Value)
+                .FirstOrDefault(p => p.PlantId == plantId);
+
+            await Task.CompletedTask;
         }
     }
 
-    void HandleAddObservation(int plantId)
+    private void HandleAddObservation(int plantId)
     {
         Nav.NavigateTo($"/observations/create?plantId={plantId}&returnUrl=/plants?plantId={plantId}");
     }
 
-    void HandleEditObservation(int obsId)
+    private void HandleEditObservation(int obsId)
     {
         Nav.NavigateTo($"/observations/edit/{obsId}?returnUrl=/plants");
     }
 
-    void HandleEditPlant(int plantId)
+    private void HandleEditPlant(int plantId)
     {
         Nav.NavigateTo($"/plants/edit/{plantId}?returnUrl=/plants?plantId={plantId}");
     }

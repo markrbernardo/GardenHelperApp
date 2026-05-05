@@ -4,6 +4,7 @@
 @code {
     protected override void OnInitialized()
     {
-        Nav.NavigateTo("/login");
+        // Silent redirect to login
+        Nav.NavigateTo("/login", replace: true);
     }
 }

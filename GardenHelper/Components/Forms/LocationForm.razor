@@ -1,102 +1,105 @@
 ﻿@using GardenHelperApp.Shared.Models
+@using GardenHelperApp.Shared.Enums
 
 <EditForm Model="@Location" OnValidSubmit="OnSubmit">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-    <!-- GARDEN -->
-    <div class="mb-3">
-        <label class="form-label">Garden</label>
-        <select class="form-select" @bind="Location.GardenId">
-            @foreach (var g in Gardens)
-            {
-                <option value="@g.GardenId">@g.Name</option>
-            }
-        </select>
-    </div>
-
     <!-- NAME -->
     <div class="mb-3">
         <label class="form-label">Name</label>
-        <InputText class="form-control" @bind-Value="Location.Name" />
+        <InputText class="form-control" @bind-Value="Location.Name" disabled="@IsDisabled" />
     </div>
 
     <!-- IS OUTSIDE -->
     <div class="mb-3">
         <label class="form-label">Is Outside?</label>
-        <InputSelect class="form-select" @bind-Value="Location.IsOutside">
+        <InputSelect class="form-select" @bind-Value="Location.IsOutside" disabled="@IsDisabled">
             <option value="true">Yes</option>
             <option value="false">No</option>
         </InputSelect>
     </div>
 
-    <!-- LIGHTING -->
+    <!-- LIGHTING (ENUM) -->
     <div class="mb-3">
         <label class="form-label">Lighting</label>
-        <InputText class="form-control" @bind-Value="Location.Lighting" />
+        <select class="form-select" @bind="Location.Lighting" disabled="@IsDisabled">
+            @foreach (var value in Enum.GetValues<LocationLighting>())
+            {
+                <option value="@value">@value</option>
+            }
+        </select>
     </div>
 
-    <!-- WINDOW FACING -->
-    <div class="mb-3">
-        <label class="form-label">Window Facing</label>
-        <InputText class="form-control" @bind-Value="Location.WindowFacing" />
-    </div>
+    @if (Location.IsOutside == false)
+    {
+        <!-- WINDOW FACING -->
+        <div class="mb-3">
+            <label class="form-label">Window Facing</label>
+            <InputText class="form-control" @bind-Value="Location.WindowFacing" disabled="@IsDisabled" />
+        </div>
 
-    <!-- DISTANCE TO LIGHT -->
-    <div class="mb-3">
-        <label class="form-label">Distance to Light (inches)</label>
-        <InputNumber class="form-control" @bind-Value="Location.DistancetoLight" />
-    </div>
+        <!-- DISTANCE TO LIGHT -->
+        <div class="mb-3">
+            <label class="form-label">Distance to Light (inches)</label>
+            <InputNumber class="form-control" @bind-Value="Location.DistancetoLight" disabled="@IsDisabled" />
+        </div>
+    }
 
     <!-- HUMIDITY -->
     <div class="mb-3">
         <label class="form-label">Humidity</label>
-        <InputText class="form-control" @bind-Value="Location.Humidity" />
+        <InputText class="form-control" @bind-Value="Location.Humidity" disabled="@IsDisabled" />
     </div>
 
     <!-- TEMPERATURE CONSISTENCY -->
     <div class="mb-3">
         <label class="form-label">Temperature Consistency</label>
-        <InputText class="form-control" @bind-Value="Location.TemperatureConsistency" />
+        <InputText class="form-control" @bind-Value="Location.TemperatureConsistency" disabled="@IsDisabled" />
     </div>
 
     <!-- NOTES -->
     <div class="mb-3">
         <label class="form-label">Notes</label>
-        <InputTextArea class="form-control" rows="3" @bind-Value="Location.Notes" />
+        <InputTextArea class="form-control" rows="3" @bind-Value="Location.Notes" disabled="@IsDisabled" />
     </div>
 
     <!-- PHOTO -->
     <div class="mb-3">
         <label class="form-label">Photo (Base64)</label>
-        <InputTextArea class="form-control" rows="3" @bind-Value="Location.Photo" />
+        <InputTextArea class="form-control" rows="3" @bind-Value="Location.Photo" disabled="@IsDisabled" />
     </div>
 
-    <button class="btn btn-success">@SubmitLabel</button>
-    @if (!IsDisabled)
-    {
-        <button class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
-    }
+    <!-- BUTTONS -->
+    <button class="btn btn-success" disabled="@IsDisabled">@SubmitLabel</button>
 
+    <button class="btn btn-secondary ms-2" @onclick="Cancel" disabled="@IsDisabled">
+        Cancel
+    </button>
 
     @if (ShowDelete)
     {
-        <button class="btn btn-danger ms-2" @onclick="Delete">Delete</button>
+        <button class="btn btn-danger ms-2" @onclick="Delete" disabled="@IsDisabled">
+            Delete
+        </button>
     }
 </EditForm>
 
 @code {
     [Parameter] public LocationModel Location { get; set; } = default!;
-    [Parameter] public List<GardenModel> Gardens { get; set; } = new();
     [Parameter] public string SubmitLabel { get; set; } = "Save";
+
+    [Parameter] public IEnumerable<GardenModel>? Gardens { get; set; }   // <-- ADD THIS
+
     [Parameter] public EventCallback OnSubmitCallback { get; set; }
     [Parameter] public EventCallback OnCancelCallback { get; set; }
     [Parameter] public EventCallback OnDeleteCallback { get; set; }
+
     [Parameter] public bool ShowDelete { get; set; } = false;
     [Parameter] public bool IsDisabled { get; set; }
 
 
-    private async Task OnSubmit() => await OnSubmitCallback.InvokeAsync();
-    private async Task Cancel() => await OnCancelCallback.InvokeAsync();
-    private async Task Delete() => await OnDeleteCallback.InvokeAsync();
+    private Task OnSubmit() => OnSubmitCallback.InvokeAsync();
+    private Task Cancel() => OnCancelCallback.InvokeAsync();
+    private Task Delete() => OnDeleteCallback.InvokeAsync();
 }

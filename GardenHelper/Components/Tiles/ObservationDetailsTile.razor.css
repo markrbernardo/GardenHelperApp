@@ -93,13 +93,15 @@
 }
 
 .obs-body p {
-    margin: 0;
+    font-weight: 300;
+    margin-bottom: 3rem;
 }
 
 /* UPDATED AT */
 .updated-at {
     text-align: right;
     margin-top: 10px;
+    margin-bottom: 0px;
     color: #555;
     font-size: 0.9rem;
 }
@@ -108,5 +110,4 @@
 .edit-row {
     display: flex;
     justify-content: flex-end;
-    margin-top: 10px;
 }

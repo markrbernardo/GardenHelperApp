@@ -1,69 +1,128 @@
-﻿@inject NavigationManager Nav
+﻿@using GardenHelperApp.Shared.Models
 
-<div class="plantinfo-details-tile">
+<div class="@BuildContainerClasses()">
 
-    <!-- HEADER -->
-    <div class="header-row">
-        <div>
-            <h2 class="common-name">@Info.CommonName</h2>
-            <div class="scientific-name"><em>@Info.ScientificName</em></div>
-        </div>
-
-        <button class="btn btn-sm btn-outline-primary edit-btn"
-                @onclick="Edit">
-            <i class="bi bi-pencil"></i> Edit
-        </button>
-    </div>
-
-    <!-- PHOTO -->
-    @if (!string.IsNullOrEmpty(Info.Photo))
+    @if (Plant == null)
     {
-        <img src="@($"data:{Info.PhotoMimeType ?? "image/jpeg"};base64,{Info.Photo}")"
-             class="info-photo" />
+        <EmptyState Icon="bi bi-flower1" Title="No plant selected">
+            Select a plant to view its profile.
+        </EmptyState>
     }
+    else
+    {
+        <div class="@BuildCardClasses()">
 
-    <!-- DETAILS -->
-    <div class="info-section">
-        @DetailBlock("Description", Info.Description)
-        @DetailBlock("Growing Season", Info.GrowingSeason)
-        @DetailBlock("Seeds", Info.Seeds)
-        @DetailBlock("Light", Info.Light)
-        @DetailBlock("Water", Info.Water)
-        @DetailBlock("Air", Info.Air)
-        @DetailBlock("Soil", Info.Soil)
-        @DetailBlock("Container", Info.Container)
-        @DetailBlock("Fertilization", Info.Fertilization)
-        @DetailBlock("Pruning", Info.Pruning)
-        @DetailBlock("Propagation", Info.Propagation)
-        @DetailBlock("Health", Info.Health)
-    </div>
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h2 class="m-0">@Plant.CommonName</h2>
 
+                    @if (!string.IsNullOrWhiteSpace(Plant.ScientificName))
+                    {
+                        <div class="text-muted">
+                            <em>@Plant.ScientificName</em>
+                        </div>
+                    }
+                </div>
+
+                <IconButton Icon="bi bi-pencil-square"
+                            Label="Edit"
+                            Size="sm"
+                            Disabled="@Disabled"
+                            OnClick="() => OnEditInfo.InvokeAsync(Plant.PlantInformationId)" />
+            </div>
+
+            <!-- PHOTO -->
+            @if (!string.IsNullOrWhiteSpace(Plant.Photo))
+            {
+                <img src="@($"data:{Plant.PhotoMimeType ?? "image/jpeg"};base64,{Plant.Photo}")"
+                     class="plant-photo mb-3"
+                     alt="Plant photo" />
+            }
+
+            <!-- DESCRIPTION -->
+            @Detail("Description", Plant.Description)
+
+            <!-- BASIC INFO -->
+            <SectionHeader Title="Basic Information" Size="h5" CssClass="mt-3" />
+            <div class="info-section">
+                @Detail("Growing Season", Plant.GrowingSeason)
+                @Detail("Seeds", Plant.Seeds)
+            </div>
+
+            <!-- CARE INFO -->
+            <SectionHeader Title="Care Information" Size="h5" CssClass="mt-4" />
+            <div class="info-section">
+                @Detail("Light", Plant.Light)
+                @Detail("Water", Plant.Water)
+                @Detail("Air", Plant.Air)
+                @Detail("Soil", Plant.Soil)
+                @Detail("Container", Plant.Container)
+                @Detail("Fertilization", Plant.Fertilization)
+                @Detail("Pruning", Plant.Pruning)
+                @Detail("Propagation", Plant.Propagation)
+                @Detail("Health", Plant.Health)
+            </div>
+
+        </div>
+    }
 </div>
 
 @code {
-    [Parameter] public PlantInformationModel Info { get; set; } = new();
+    [Parameter] public PlantInformationModel? Plant { get; set; }
 
-    void Edit()
+    // Editing callback (renamed to match info cards)
+    [Parameter] public EventCallback<int> OnEditInfo { get; set; }
+
+    // Standardized component features
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string CardClass { get; set; } = "plantinfo-details-tile";
+    [Parameter] public string HoverClass { get; set; } = "tile-hover";
+    [Parameter] public string Size { get; set; } = "md";
+    [Parameter] public bool Rounded { get; set; } = true;
+    [Parameter] public bool Padding { get; set; } = true;
+
+    RenderFragment Detail(string title, object? value) => builder =>
     {
-        Nav.NavigateTo($"/plantinformation/edit/{Info.PlantInformationId}");
+        if (value is null)
+            return;
+
+        var text = value.ToString();
+        if (string.IsNullOrWhiteSpace(text))
+            return;
+
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "detail-block");
+
+        builder.OpenElement(2, "h5");
+        builder.AddContent(3, title);
+        builder.CloseElement();
+
+        builder.OpenElement(4, "p");
+        builder.AddContent(5, text);
+        builder.CloseElement();
+
+        builder.CloseElement();
+    };
+
+    private string BuildContainerClasses()
+    {
+        var sizeClass = Size switch
+        {
+            "sm" => "tile-sm",
+            "lg" => "tile-lg",
+            _ => "tile-md"
+        };
+
+        return $"plantdetails-container {sizeClass} {CssClass}".Trim();
     }
 
-    RenderFragment DetailBlock(string title, string? value) => builder =>
+    private string BuildCardClasses()
     {
-        if (!string.IsNullOrWhiteSpace(value))
-        {
-            builder.OpenElement(0, "div");
-            builder.AddAttribute(1, "class", "detail-block");
+        var roundedClass = Rounded ? "tile-rounded" : "";
+        var paddingClass = Padding ? "p-3" : "p-0";
 
-            builder.OpenElement(2, "h5");
-            builder.AddContent(3, title);
-            builder.CloseElement();
-
-            builder.OpenElement(4, "p");
-            builder.AddContent(5, value);
-            builder.CloseElement();
-
-            builder.CloseElement();
-        }
-    };
+        return $"{CardClass} {roundedClass} {paddingClass} {HoverClass}".Trim();
+    }
 }

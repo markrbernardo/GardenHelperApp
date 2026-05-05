@@ -1,82 +1,59 @@
 ﻿@page "/plantinformation/create"
+
 @inject PlantInformationService PlantInfoService
 @inject NavigationManager Nav
-@inject IJSRuntime JS
 
-<h3>Create Plant Information</h3>
+<PageHeader Title="Create Plant Information" />
 
-@if (isSubmitting)
-{
-    <p><em>Saving...</em></p>
-}
-else
-{
-    <PlantInfoForm PlantInfo="plantInfo"
-                   SubmitLabel="Create"
-                   OnSubmitCallback="HandleSubmit"
-                   OnCancelCallback="GoBack"
-                   ShowDelete="false" />
+<div class="page-section">
 
-}
-
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="alert alert-danger mt-3">@errorMessage</div>
-}
-
-@code {
-    PlantInformationModel plantInfo = new();
-    bool isSubmitting = false;
-    string? errorMessage;
-
-    async Task HandleFileSelected(InputFileChangeEventArgs e)
+    @if (IsSubmitting)
     {
-        var file = e.File;
-        if (file == null)
-            return;
-
-        using var stream = file.OpenReadStream(maxAllowedSize: 10_000_000);
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
-        var bytes = ms.ToArray();
-
-        var base64 = Convert.ToBase64String(bytes);
-        var dataUrl = $"data:{file.ContentType};base64,{base64}";
-
-        var resizedDataUrl = await JS.InvokeAsync<string>(
-            "resizeImageFromBase64",
-            dataUrl,
-            800,
-            800
-        );
-
-        var parts = resizedDataUrl.Split(',');
-        plantInfo.PhotoMimeType = parts[0].Split(':')[1].Split(';')[0];
-        plantInfo.Photo = parts[1];
+        <LoadingSpinner Message="Saving..." />
+    }
+    else
+    {
+        <PlantInfoForm PlantInfo="PlantInfo"
+                       SubmitLabel="Create"
+                       OnSubmitCallback="HandleSubmitAsync"
+                       OnCancelCallback="GoBack"
+                       ShowDelete="false" />
     }
 
-    async Task HandleSubmit()
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger mt-3">@ErrorMessage</div>
+    }
+
+</div>
+
+@code {
+    private PlantInformationModel PlantInfo { get; set; } = new();
+    private bool IsSubmitting = false;
+    private string? ErrorMessage;
+
+    private async Task HandleSubmitAsync()
     {
         try
         {
-            isSubmitting = true;
-            errorMessage = null;
+            IsSubmitting = true;
+            ErrorMessage = null;
 
-            await PlantInfoService.Create(plantInfo);
+            await PlantInfoService.CreateAsync(PlantInfo);
             Nav.NavigateTo("/plantinformation");
         }
         catch (Exception ex)
         {
-            errorMessage = "Failed to create plant information.";
+            ErrorMessage = "Failed to create plant information.";
             Console.WriteLine("ERROR in CreatePlantInformation: " + ex);
         }
         finally
         {
-            isSubmitting = false;
+            IsSubmitting = false;
         }
     }
 
-    void GoBack()
+    private void GoBack()
     {
         Nav.NavigateTo("/plantinformation");
     }

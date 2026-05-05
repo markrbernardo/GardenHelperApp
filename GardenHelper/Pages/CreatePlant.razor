@@ -1,38 +1,40 @@
 ﻿@page "/plants/create"
+
 @inject PlantService PlantService
 @inject LocationService LocationService
 @inject PlantInformationService PlantInfoService
 @inject UserSessionService UserSession
 @inject NavigationManager Nav
 
-<h3>Create Plant</h3>
+<PageHeader Title="Create Plant" />
 
-@if (locations == null || plantInfoList == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <PlantForm Plant="plant"
-               Locations="locations"
-               PlantInfoList="plantInfoList"
-               SubmitLabel="Create"
-               OnSubmitCallback="HandleSubmit"
-               OnCancelCallback="GoBack"
-               ShowDelete="false" />
+<div class="page-section">
 
-}
+    @if (Locations == null || PlantInfoList == null)
+    {
+        <LoadingSpinner Message="Loading plant data..." />
+    }
+    else
+    {
+        <PlantForm Plant="Plant"
+                   Locations="Locations"
+                   PlantInfoList="PlantInfoList"
+                   SubmitLabel="Create"
+                   OnSubmitCallback="HandleSubmitAsync"
+                   OnCancelCallback="GoBack"
+                   ShowDelete="false" />
+    }
+
+</div>
 
 @code {
-    [Parameter] public int? locationId { get; set; }
+    [Parameter] public int? LocationId { get; set; }
 
-    PlantModel plant = new();
+    private PlantModel Plant { get; set; } = new();
+    private List<LocationModel>? Locations;
+    private List<PlantInformationModel>? PlantInfoList;
 
-    List<LocationModel>? locations;
-    List<PlantInformationModel>? plantInfoList;
-
-    string? returnUrl;
-
+    private string? ReturnUrl;
 
     protected override async Task OnInitializedAsync()
     {
@@ -44,62 +46,60 @@ else
             return;
         }
 
-        // Load locations
-        locations = await LocationService.GetByGarden(gardenId.Value);
+        // Load locations for this garden
+        Locations = await LocationService.GetByGardenAsync(gardenId.Value);
 
-        // Set garden
-        plant.GardenId = gardenId.Value;
+        // Assign garden
+        Plant.GardenId = gardenId.Value;
 
-        // Load plant info
-        plantInfoList = await PlantInfoService.GetAll();
-        if (plantInfoList.Count > 0)
-            plant.PlantInformationId = plantInfoList.First().PlantInformationId;
+        // Load plant information list
+        PlantInfoList = await PlantInfoService.GetAllAsync();
 
-        // Read query params
+        if (PlantInfoList.Count > 0)
+            Plant.PlantInformationId = PlantInfoList.First().PlantInformationId;
+
+        // Parse query parameters
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
-        // locationId
+        // locationId override
         if (query.TryGetValue("locationId", out var locIdString) &&
             int.TryParse(locIdString, out int parsedId) &&
-            locations.Any(l => l.LocationId == parsedId))
+            Locations.Any(l => l.LocationId == parsedId))
         {
-            plant.LocationId = parsedId;
+            Plant.LocationId = parsedId;
         }
-        else if (locations.Count > 0)
+        else if (Locations.Count > 0)
         {
-            plant.LocationId = locations.First().LocationId;
+            Plant.LocationId = Locations.First().LocationId;
         }
 
         // returnUrl
         if (query.TryGetValue("returnUrl", out var url))
-            returnUrl = url!;
+            ReturnUrl = url!;
     }
 
-
-
-    async Task HandleSubmit()
+    private async Task HandleSubmitAsync()
     {
-        var response = await PlantService.CreateWithResponse(plant);
+        var created = await PlantService.CreateAsync(Plant);
 
-        if (!response.IsSuccessStatusCode)
+        if (created == null)
         {
-            Console.WriteLine("Error creating plant: " + response.StatusCode);
+            Console.WriteLine("Error creating plant.");
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
-            Nav.NavigateTo("/plants");
+            Nav.NavigateTo($"/plants?plantId={created.PlantId}");
     }
 
-    void GoBack()
+    private void GoBack()
     {
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
             Nav.NavigateTo("/plants");
     }
-
 }

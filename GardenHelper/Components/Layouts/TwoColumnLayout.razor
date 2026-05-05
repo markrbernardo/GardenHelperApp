@@ -1,14 +1,77 @@
-﻿<div class="two-col-layout">
-    <div class="left-pane">
+﻿<div class="@BuildContainerClasses()">
+
+    <div class="@BuildLeftClasses()" style="@BuildLeftStyle()">
         @Left
     </div>
 
-    <div class="right-pane">
+    <div class="@BuildRightClasses()" style="@BuildRightStyle()">
         @Right
     </div>
+
 </div>
 
 @code {
-    [Parameter] public RenderFragment Left { get; set; }
-    [Parameter] public RenderFragment Right { get; set; }
+    [Parameter] public RenderFragment Left { get; set; } = default!;
+    [Parameter] public RenderFragment Right { get; set; } = default!;
+
+    // Layout customization
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string LeftClass { get; set; } = "";
+    [Parameter] public string RightClass { get; set; } = "";
+
+    [Parameter] public int Gap { get; set; } = 3; // gap-3 default
+    [Parameter] public string WidthRatio { get; set; } = "50-50"; // 50-50, 40-60, 30-70
+
+    // Height control
+    [Parameter] public bool FullHeight { get; set; } = false;
+    [Parameter] public string? Height { get; set; }
+
+    // Mobile behavior
+    [Parameter] public bool StackOnMobile { get; set; } = true;
+
+    private string BuildContainerClasses()
+    {
+        var ratioClass = WidthRatio switch
+        {
+            "40-60" => "two-col-40-60",
+            "30-70" => "two-col-30-70",
+            _ => "two-col-50-50"
+        };
+
+        var stackClass = StackOnMobile ? "two-col-stack" : "";
+
+        return $"two-col-layout gap-{Gap} {ratioClass} {stackClass} {CssClass}".Trim();
+    }
+
+    private string BuildLeftClasses()
+    {
+        return $"left-pane {LeftClass}".Trim();
+    }
+
+    private string BuildRightClasses()
+    {
+        return $"right-pane {RightClass}".Trim();
+    }
+
+    private string BuildLeftStyle()
+    {
+        if (FullHeight && string.IsNullOrEmpty(Height))
+            return "height:100%";
+
+        if (!string.IsNullOrEmpty(Height))
+            return $"height:{Height}";
+
+        return "";
+    }
+
+    private string BuildRightStyle()
+    {
+        if (FullHeight && string.IsNullOrEmpty(Height))
+            return "height:100%";
+
+        if (!string.IsNullOrEmpty(Height))
+            return $"height:{Height}";
+
+        return "";
+    }
 }

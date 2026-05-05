@@ -1,72 +1,81 @@
 ﻿@page "/observations/create"
+
 @inject ObservationService ObservationService
 @inject PlantService PlantService
 @inject UserSessionService Session
 @inject NavigationManager Nav
 
-<h3>Create Observation</h3>
+<PageHeader Title="Create Observation" />
 
-@if (plants == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <ObservationForm Observation="observation"
-                     Plants="plants"
-                     SubmitLabel="Create"
-                     OnSubmitCallback="HandleSubmit"
-                     OnCancelCallback="GoBack"
-                     ShowDelete="false" />
+<div class="page-section">
 
-}
+    @if (Plants == null)
+    {
+        <LoadingSpinner Message="Loading plants..." />
+    }
+    else
+    {
+        <ObservationForm Observation="Observation"
+                         Plants="Plants"
+                         SubmitLabel="Create"
+                         OnSubmitCallback="HandleSubmitAsync"
+                         OnCancelCallback="GoBack"
+                         ShowDelete="false" />
+    }
+
+</div>
 
 @code {
-    ObservationModel observation = new();
-
-    List<PlantWithInfoDto>? plants;
-
-    string? returnUrl;
+    private ObservationModel Observation { get; set; } = new();
+    private List<PlantWithInfoDto>? Plants;
+    private string? ReturnUrl;
 
     protected override async Task OnInitializedAsync()
     {
-        plants = await PlantService.GetAllPlants();
+        // Load all plants
+        Plants = await PlantService.GetAllAsync();
 
-        observation.UserId = Session.CurrentUserId!.Value;
+        // Assign logged-in user
+        Observation.UserId = Session.CurrentUserId!.Value;
 
-        if (plants.Count > 0)
-            observation.PlantId = plants.First().PlantId;
+        // Default to first plant
+        if (Plants.Count > 0)
+            Observation.PlantId = Plants.First().PlantId;
 
+        // Parse query parameters
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
+        // plantId override
         if (query.TryGetValue("plantId", out var pid) &&
             int.TryParse(pid, out int parsedId) &&
-            plants.Any(p => p.PlantId == parsedId))
+            Plants.Any(p => p.PlantId == parsedId))
         {
-            observation.PlantId = parsedId;
+            Observation.PlantId = parsedId;
         }
 
+        // returnUrl
         if (query.TryGetValue("returnUrl", out var url))
-            returnUrl = url!;
+            ReturnUrl = url!;
     }
 
-    async Task HandleSubmit()
+    private async Task HandleSubmitAsync()
     {
-        observation.UserId = Session.CurrentUserId!.Value;
+        Observation.UserId = Session.CurrentUserId!.Value;
+        Observation.CreatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
 
-        await ObservationService.Create(observation);
+        await ObservationService.CreateAsync(Observation);
 
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
             Nav.NavigateTo("/observations");
     }
 
-    void GoBack()
+    private void GoBack()
     {
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
             Nav.NavigateTo("/observations");
     }

@@ -1,10 +1,30 @@
-﻿<span class="pill-tag @ColorClass">
-    @Text
+﻿<span class="pill-tag @ColorClass @SizeClass @RoundedClass @CssClass"
+      title="@Tooltip"
+      @onclick="HandleClick"
+      style="cursor:@(Clickable ? "pointer" : "default")">
+
+    @if (ChildContent != null)
+    {
+        @ChildContent
+    }
+    else
+    {
+        @Text
+    }
 </span>
 
 @code {
     [Parameter] public string Text { get; set; } = "";
-    [Parameter] public string Color { get; set; } = "default";
+    [Parameter] public string Color { get; set; } = "default"; // green, yellow, red, blue, default
+    [Parameter] public string Size { get; set; } = "md";        // sm, md, lg
+    [Parameter] public bool Rounded { get; set; } = true;
+    [Parameter] public bool Clickable { get; set; } = false;
+
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string? Tooltip { get; set; }
+
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private string ColorClass =>
         Color switch
@@ -15,4 +35,20 @@
             "blue" => "pill-blue",
             _ => "pill-default"
         };
+
+    private string SizeClass =>
+        Size switch
+        {
+            "sm" => "pill-sm",
+            "lg" => "pill-lg",
+            _ => "pill-md"
+        };
+
+    private string RoundedClass => Rounded ? "pill-rounded" : "pill-square";
+
+    private async Task HandleClick()
+    {
+        if (Clickable && OnClick.HasDelegate)
+            await OnClick.InvokeAsync();
+    }
 }

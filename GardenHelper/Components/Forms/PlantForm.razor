@@ -7,13 +7,17 @@
     <!-- NAME -->
     <div class="mb-3">
         <label class="form-label">Plant Name</label>
-        <InputText class="form-control" @bind-Value="Plant.Name" />
+        <InputText class="form-control"
+                   @bind-Value="Plant.Name"
+                   disabled="@IsDisabled" />
     </div>
 
     <!-- PLANT INFORMATION -->
     <div class="mb-3">
         <label class="form-label">Plant Information</label>
-        <select class="form-select" @bind="Plant.PlantInformationId">
+        <select class="form-select"
+                @bind="Plant.PlantInformationId"
+                disabled="@IsDisabled">
             @foreach (var info in PlantInfoList)
             {
                 <option value="@info.PlantInformationId">
@@ -26,7 +30,9 @@
     <!-- LOCATION -->
     <div class="mb-3">
         <label class="form-label">Location</label>
-        <select class="form-select" @bind="Plant.LocationId">
+        <select class="form-select"
+                @bind="Plant.LocationId"
+                disabled="@IsDisabled">
             @foreach (var loc in Locations)
             {
                 <option value="@loc.LocationId">@loc.Name</option>
@@ -37,21 +43,37 @@
     <!-- DESCRIPTION -->
     <div class="mb-3">
         <label class="form-label">Description</label>
-        <InputTextArea class="form-control" rows="3" @bind-Value="Plant.Description" />
+        <InputTextArea class="form-control"
+                       rows="3"
+                       @bind-Value="Plant.Description"
+                       disabled="@IsDisabled" />
     </div>
 
     <!-- NOTES -->
     <div class="mb-3">
         <label class="form-label">Notes</label>
-        <InputTextArea class="form-control" rows="3" @bind-Value="Plant.Notes" />
+        <InputTextArea class="form-control"
+                       rows="3"
+                       @bind-Value="Plant.Notes"
+                       disabled="@IsDisabled" />
     </div>
 
-    <button class="btn btn-success">@SubmitLabel</button>
-    <button class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+    <!-- BUTTONS -->
+    <button class="btn btn-success" disabled="@IsDisabled">@SubmitLabel</button>
+
+    <button class="btn btn-secondary ms-2"
+            @onclick="Cancel"
+            disabled="@IsDisabled">
+        Cancel
+    </button>
 
     @if (ShowDelete)
     {
-        <button class="btn btn-danger ms-2" @onclick="Delete">Delete</button>
+        <button class="btn btn-danger ms-2"
+                @onclick="Delete"
+                disabled="@IsDisabled">
+            Delete
+        </button>
     }
 </EditForm>
 
@@ -69,21 +91,7 @@
     [Parameter] public bool ShowDelete { get; set; } = false;
     [Parameter] public bool IsDisabled { get; set; } = false;
 
-    private async Task OnSubmit()
-    {
-        if (!IsDisabled)
-            await OnSubmitCallback.InvokeAsync();
-    }
-
-    private async Task Cancel()
-    {
-        if (!IsDisabled)
-            await OnCancelCallback.InvokeAsync();
-    }
-
-    private async Task Delete()
-    {
-        if (!IsDisabled)
-            await OnDeleteCallback.InvokeAsync();
-    }
+    private Task OnSubmit() => !IsDisabled ? OnSubmitCallback.InvokeAsync() : Task.CompletedTask;
+    private Task Cancel() => !IsDisabled ? OnCancelCallback.InvokeAsync() : Task.CompletedTask;
+    private Task Delete() => !IsDisabled ? OnDeleteCallback.InvokeAsync() : Task.CompletedTask;
 }

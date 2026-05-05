@@ -1,54 +1,145 @@
 ﻿using System.Net.Http.Json;
 using GardenHelperApp.Shared.Models;
+using GardenHelperApp.Shared.Constants;
 
-namespace GardenHelperApp.Client.Services
+namespace GardenHelperApp.Client.Services;
+
+public class JournalEntryService
 {
-    public class JournalEntryService
+    private readonly HttpClient _http;
+
+    public JournalEntryService(HttpClient http)
     {
-        private readonly HttpClient _http;
+        _http = http;
+    }
 
-        public JournalEntryService(HttpClient http)
+    // ---------------------------------------------------------
+    // GET ALL (rarely used)
+    // ---------------------------------------------------------
+    public async Task<List<JournalEntryModel>> GetAllAsync()
+    {
+        return await _http.GetFromJsonAsync<List<JournalEntryModel>>(ApiRoutes.JournalEntries.Base)
+               ?? new List<JournalEntryModel>();
+    }
+
+    // ---------------------------------------------------------
+    // GET SINGLE
+    // ---------------------------------------------------------
+    public async Task<JournalEntryModel?> GetAsync(int id)
+    {
+        var url = ApiRoutes.JournalEntries.ById.Replace("{id}", id.ToString());
+
+        try
         {
-            _http = http;
+            return await _http.GetFromJsonAsync<JournalEntryModel>(url);
         }
-
-        public async Task<List<JournalEntryModel>> GetAll()
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            return await _http.GetFromJsonAsync<List<JournalEntryModel>>("api/journalentries")
-                   ?? new List<JournalEntryModel>();
+            return null;
         }
+    }
 
-        public async Task<JournalEntryModel?> Get(int id)
-        {
-            return await _http.GetFromJsonAsync<JournalEntryModel>($"api/journalentries/{id}");
-        }
+    // ---------------------------------------------------------
+    // GET BY USER
+    // ---------------------------------------------------------
+    public async Task<List<JournalEntryModel>> GetByUserAsync(int userId)
+    {
+        var url = ApiRoutes.JournalEntries.ByUser.Replace("{userId}", userId.ToString());
 
-        public async Task<List<JournalEntryModel>> GetByUser(int userId)
-        {
-            return await _http.GetFromJsonAsync<List<JournalEntryModel>>($"api/journalentries/user/{userId}")
-                   ?? new List<JournalEntryModel>();
-        }
+        return await _http.GetFromJsonAsync<List<JournalEntryModel>>(url)
+               ?? new List<JournalEntryModel>();
+    }
 
-        public async Task<List<JournalEntryModel>> GetByGarden(int gardenId)
-        {
-            return await _http.GetFromJsonAsync<List<JournalEntryModel>>($"api/journalentries/garden/{gardenId}")
-                   ?? new List<JournalEntryModel>();
-        }
+    // ---------------------------------------------------------
+    // GET BY GARDEN
+    // ---------------------------------------------------------
+    public async Task<List<JournalEntryModel>> GetByGardenAsync(int gardenId)
+    {
+        var url = ApiRoutes.JournalEntries.ByGarden.Replace("{gardenId}", gardenId.ToString());
 
-        public async Task Create(JournalEntryModel model)
-        {
-            await _http.PostAsJsonAsync("api/journalentries", model);
-        }
+        return await _http.GetFromJsonAsync<List<JournalEntryModel>>(url)
+               ?? new List<JournalEntryModel>();
+    }
 
-        public async Task Update(JournalEntryModel model)
-        {
-            await _http.PutAsJsonAsync($"api/journalentries/{model.JournalEntryId}", model);
-        }
+    // ---------------------------------------------------------
+    // GET BY DATE RANGE (ALL JOURNAL ENTRIES)
+    // ---------------------------------------------------------
+    public async Task<List<JournalEntryModel>> GetByDateRangeAsync(DateTime start, DateTime end)
+    {
+        var url = $"{ApiRoutes.JournalEntries.Range}?start={start:O}&end={end:O}";
 
-        public async Task Delete(int id)
-        {
-            await _http.DeleteAsync($"api/journalentries/{id}");
-        }
+        return await _http.GetFromJsonAsync<List<JournalEntryModel>>(url)
+               ?? new List<JournalEntryModel>();
+    }
 
+    // ---------------------------------------------------------
+    // GET BY USER + DATE RANGE
+    // ---------------------------------------------------------
+    public async Task<List<JournalEntryModel>> GetByUserAndDateRangeAsync(
+        int userId,
+        DateTime start,
+        DateTime end)
+    {
+        var url = ApiRoutes.JournalEntries.UserRange
+            .Replace("{userId}", userId.ToString());
+
+        url += $"?start={start:O}&end={end:O}";
+
+        return await _http.GetFromJsonAsync<List<JournalEntryModel>>(url)
+               ?? new List<JournalEntryModel>();
+    }
+
+    // ---------------------------------------------------------
+    // GET BY GARDEN + DATE RANGE
+    // ---------------------------------------------------------
+    public async Task<List<JournalEntryModel>> GetByGardenAndDateRangeAsync(
+        int gardenId,
+        DateTime start,
+        DateTime end)
+    {
+        var url = ApiRoutes.JournalEntries.GardenRange
+            .Replace("{gardenId}", gardenId.ToString());
+
+        url += $"?start={start:O}&end={end:O}";
+
+        return await _http.GetFromJsonAsync<List<JournalEntryModel>>(url)
+               ?? new List<JournalEntryModel>();
+    }
+
+    // ---------------------------------------------------------
+    // CREATE
+    // ---------------------------------------------------------
+    public async Task<JournalEntryModel?> CreateAsync(JournalEntryModel model)
+    {
+        var response = await _http.PostAsJsonAsync(ApiRoutes.JournalEntries.Base, model);
+
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<JournalEntryModel>();
+    }
+
+    // ---------------------------------------------------------
+    // UPDATE
+    // ---------------------------------------------------------
+    public async Task<bool> UpdateAsync(JournalEntryModel model)
+    {
+        var url = ApiRoutes.JournalEntries.ById.Replace("{id}", model.JournalEntryId.ToString());
+
+        var response = await _http.PutAsJsonAsync(url, model);
+
+        return response.IsSuccessStatusCode;
+    }
+
+    // ---------------------------------------------------------
+    // DELETE
+    // ---------------------------------------------------------
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var url = ApiRoutes.JournalEntries.ById.Replace("{id}", id.ToString());
+
+        var response = await _http.DeleteAsync(url);
+
+        return response.IsSuccessStatusCode;
     }
 }

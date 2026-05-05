@@ -1,275 +1,267 @@
 ﻿@page "/home"
+
 @using GardenHelperApp.Shared.Models
+
 @inject ObservationService ObservationService
 @inject JournalEntryService JournalEntryService
 @inject GardenService GardenService
 @inject PlantService PlantService
+@inject LocationService LocationService
 @inject UserSessionService Session
 @inject NavigationManager Nav
 
-<h1>Welcome back, @Session.CurrentUserName!</h1>
+<PageHeader Title=@($"Welcome back, {Session.CurrentUserName}!") Divider="false"/>
 
-<div class="dashboard-grid">
+<div class="page-section">
 
-    <!-- GARDENS TILE -->
-    @if (Session.CurrentGardenId != null && defaultGarden != null)
-    {
-        <div class="dash-tile card garden-hero-tile">
+    <div class="dashboard-grid">
 
-            <!-- HEADER -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-tree-fill fs-3 me-2 garden-accent"></i>
-                    <h2 class="mb-0">@defaultGarden.Name</h2>
+        <!-- DEFAULT GARDEN TILE -->
+        @if (Session.CurrentGardenId != null && DefaultGarden != null)
+        {
+            <div class="dash-tile card garden-hero-tile">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-tree-fill fs-3 me-2 garden-accent"></i>
+                        <h2 class="mb-0">@DefaultGarden.Name</h2>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">
+                            <i class="bi bi-geo me-1"></i> Zip Code: @DefaultGarden.ZipCode
+                        </div>
+                    </div>
+
+                    <button class="btn btn-sm btn-outline-primary"
+                            @onclick="@(() => Nav.NavigateTo($"/garden-profile/{DefaultGarden.GardenId}"))">
+                        View Garden
+                    </button>
                 </div>
 
-                <div class="detail-item">
-                    <div class="detail-label"><i class="bi bi-geo me-1"></i> Zip Code: @defaultGarden.ZipCode</div>
-                    
+                <div class="d-flex gap-3">
+
+                    <div class="mini-stat-card"
+                         @onclick="@(() => Nav.NavigateTo($"/garden-profile/{DefaultGarden.GardenId}"))">
+                        <div class="stat-label">Locations</div>
+                        <div class="stat-value">@LocationCount</div>
+                        <i class="bi bi-geo-alt stat-icon"></i>
+                    </div>
+
+                    <div class="mini-stat-card"
+                         @onclick="@(() => Nav.NavigateTo($"/plants?gardenId={DefaultGarden.GardenId}"))">
+                        <div class="stat-label">Plants</div>
+                        <div class="stat-value">@PlantCount</div>
+                        <i class="bi bi-flower3 stat-icon"></i>
+                    </div>
+
                 </div>
 
-                <button class="btn btn-sm btn-outline-primary"
-                        @onclick="@(() => Nav.NavigateTo($"/garden-profile/{defaultGarden.GardenId}"))">
-                    View Garden
+            </div>
+        }
+        else
+        {
+            <!-- FALLBACK: LIST OF GARDENS -->
+            <div class="dash-tile card">
+                <h4>Your Gardens</h4>
+
+                @if (GardenList == null)
+                {
+                    <LoadingSpinner Message="Loading gardens..." />
+                }
+                else if (GardenList.Count == 0)
+                {
+                    <p>No gardens yet.</p>
+                }
+                else
+                {
+                    <ul class="list-unstyled">
+                        @foreach (var g in GardenList)
+                        {
+                            <li class="clickable"
+                                @onclick="@(() => Nav.NavigateTo($"/garden-profile/{g.GardenId}"))">
+                                @g.Name
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+
+        <!-- WEATHER PLACEHOLDER -->
+        <div class="dash-tile card">
+            <h4>Weather</h4>
+            <p class="placeholder">Weather feature coming soon…</p>
+        </div>
+
+        <!-- RECENT OBSERVATIONS -->
+        <div class="dash-tile modern-tile">
+            <div class="tile-header">
+                <h4>Recent Observations</h4>
+
+                <button class="btn-add"
+                        @onclick="@(() => Nav.NavigateTo("/observations/create?returnUrl=/home"))">
+                    + Add
                 </button>
             </div>
 
-            <!-- COUNTS ROW -->
-            <div class="d-flex gap-3">
-
-                <!-- LOCATIONS CARD -->
-                <div class="mini-stat-card"
-                     @onclick="@(() => Nav.NavigateTo($"/garden-profile/{defaultGarden.GardenId}"))">
-
-                    <div class="stat-label">Locations</div>
-                    <div class="stat-value">@locationCount</div>
-                    <i class="bi bi-geo-alt stat-icon"></i>
-                </div>
-
-                <!-- PLANTS CARD -->
-                <div class="mini-stat-card"
-                     @onclick="@(() => Nav.NavigateTo($"/plants?gardenId={defaultGarden.GardenId}"))">
-
-                    <div class="stat-label">Plants</div>
-                    <div class="stat-value">@plantCount</div>
-                    <i class="bi bi-flower3 stat-icon"></i>
-                </div>
-
-            </div>
-
-        </div>
-    }
-    else
-    {
-        <!-- FALLBACK: LIST OF GARDENS -->
-        <div class="dash-tile">
-            <h4>Your Gardens</h4>
-
-            @if (gardens == null)
+            @if (RecentObservations == null)
             {
-                <p>Loading…</p>
+                <LoadingSpinner Message="Loading observations..." />
             }
-            else if (gardens.Count == 0)
+            else if (RecentObservations.Count == 0)
             {
-                <p>No gardens yet.</p>
+                <p class="placeholder">No recent observations.</p>
             }
             else
             {
-                <ul>
-                    @foreach (var g in gardens)
+                <ul class="obs-list">
+                    @foreach (var o in RecentObservations)
                     {
-                        <li style="cursor:pointer;"
-                            @onclick="@(() => Nav.NavigateTo($"/garden-profile/{g.GardenId}"))">
-                            @g.Name
+                        <li class="obs-row"
+                            @onclick="@(() => GoToObservationAsync(o))">
+
+                            <div class="obs-date-block">
+                                <span class="date">@o.CreatedAt.ToString("MMM dd")</span>
+                                <span class="time">@o.CreatedAt.ToString("h:mm tt")</span>
+                            </div>
+
+                            <div class="obs-content">
+                                <div class="plant">@GetPlantName(o.PlantId)</div>
+                                <div class="meta">@GetGardenName(o.PlantId) • @GetLocationName(o.PlantId)</div>
+                                <div class="snippet">@o.Observation</div>
+                            </div>
+
+                            <span class="status-dot @(o.ActiveObservation ? "active" : "inactive")"></span>
                         </li>
                     }
                 </ul>
             }
         </div>
-    }
 
+        <!-- RECENT JOURNAL ENTRIES -->
+        <div class="dash-tile modern-tile">
+            <div class="tile-header">
+                <h4>Recent Journal Entries</h4>
 
+                <button class="btn-add secondary"
+                        @onclick="@(() => Nav.NavigateTo("/journalentries/create?returnUrl=/home"))">
+                    + Add
+                </button>
+            </div>
 
-    <!-- WEATHER PLACEHOLDER -->
-    <div class="dash-tile card">
-        <h4>Weather</h4>
-        <p class="placeholder">Weather feature coming soon…</p>
-    </div>
+            @if (RecentJournals == null)
+            {
+                <LoadingSpinner Message="Loading journal entries..." />
+            }
+            else if (RecentJournals.Count == 0)
+            {
+                <p class="placeholder">No recent journal entries.</p>
+            }
+            else
+            {
+                <ul class="obs-list">
+                    @foreach (var j in RecentJournals)
+                    {
+                        <li class="obs-row"
+                            @onclick="@(() => Nav.NavigateTo($"/journalentries?entryId={j.JournalEntryId}"))">
 
-    <!-- RECENT OBSERVATIONS -->
-    <div class="dash-tile modern-tile">
-        <div class="tile-header">
-            <h4>Recent Observations</h4>
+                            <div class="obs-date-block">
+                                <span class="date">@j.CreatedAt.ToString("MMM dd")</span>
+                                <span class="time">@j.CreatedAt.ToString("h:mm tt")</span>
+                            </div>
 
-            <button class="btn-add"
-                    @onclick="@(() => Nav.NavigateTo("/observations/create?returnUrl=/home"))">
-                + Add
-            </button>
+                            <div class="obs-content">
+                                <div class="title fw-semibold">@j.Title</div>
+                                <div class="meta">@GetJournalGardenName(j.GardenId)</div>
+                                <div class="snippet">@j.Entry</div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
         </div>
 
-        @if (recentObservations == null)
-        {
-            <p class="placeholder">Loading…</p>
-        }
-        else if (recentObservations.Count == 0)
-        {
-            <p class="placeholder">No recent observations.</p>
-        }
-        else
-        {
-            <ul class="obs-list">
-                @foreach (var o in recentObservations)
-                {
-                    <li class="obs-row"
-                        @onclick="@(() => GoToObservation(o))">
-
-                        <div class="obs-date-block">
-                            <span class="date">@o.CreatedAt.ToString("MMM dd")</span>
-                            <span class="time">@o.CreatedAt.ToString("h:mm tt")</span>
-                        </div>
-
-                        <div class="obs-content">
-                            <div class="plant">@GetPlantName(o.PlantId)</div>
-                            <div class="meta">@GetGardenName(o.PlantId) • @GetLocationName(o.PlantId)</div>
-                            <div class="snippet">@o.Observation</div>
-                        </div>
-
-                        <span class="status-dot @(o.ActiveObservation ? "active" : "inactive")"></span>
-                    </li>
-                }
-            </ul>
-        }
     </div>
-
-    <!-- RECENT JOURNAL ENTRIES -->
-    <div class="dash-tile modern-tile">
-        <div class="tile-header">
-            <h4>Recent Journal Entries</h4>
-
-            <button class="btn-add secondary"
-                    @onclick="@(() => Nav.NavigateTo("/journalentries/create?returnUrl=/home"))">
-                + Add
-            </button>
-        </div>
-
-        @if (recentJournals == null)
-        {
-            <p class="placeholder">Loading…</p>
-        }
-        else if (recentJournals.Count == 0)
-        {
-            <p class="placeholder">No recent journal entries.</p>
-        }
-        else
-        {
-            <ul class="obs-list">
-                @foreach (var j in recentJournals)
-                {
-                    <li class="obs-row"
-                        @onclick="@(() => Nav.NavigateTo($"/journalentries?entryId={j.JournalEntryId}"))">
-
-                        <div class="obs-date-block">
-                            <span class="date">@j.CreatedAt.ToString("MMM dd")</span>
-                            <span class="time">@j.CreatedAt.ToString("h:mm tt")</span>
-                        </div>
-
-                        <div class="obs-content">
-                            <div class="title fw-semibold">@j.Title</div>
-                            <div class="meta">@GetJournalGardenName(j.GardenId)</div>
-                            <div class="snippet">@j.Entry</div>
-                        </div>
-                    </li>
-                }
-            </ul>
-        }
-    </div>
-
 
 </div>
 
 @code {
-    List<ObservationModel>? recentObservations;
-    List<JournalEntryModel>? recentJournals;
-    List<GardenModel>? gardens;
-    List<PlantWithInfoDto>? plants;
-    List<LocationModel>? locations;
+    private List<ObservationModel>? RecentObservations;
+    private List<JournalEntryModel>? RecentJournals;
+    private List<GardenModel>? GardenList;
+    private List<PlantWithInfoDto>? PlantList;
+    private List<LocationModel>? LocationList;
 
-    GardenModel? defaultGarden;
-    int locationCount = 0;
-    int plantCount = 0;
+    private GardenModel? DefaultGarden;
+    private int LocationCount = 0;
+    private int PlantCount = 0;
 
     protected override async Task OnInitializedAsync()
     {
         if (Session.CurrentUserId == null)
             return;
 
-        gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
+        GardenList = await GardenService.GetByUserAsync(Session.CurrentUserId.Value);
 
         if (Session.CurrentGardenId != null)
         {
-            defaultGarden = await GardenService.GetGarden(Session.CurrentGardenId.Value);
+            DefaultGarden = await GardenService.GetAsync(Session.CurrentGardenId.Value);
 
-            if (defaultGarden == null)
+            if (DefaultGarden == null)
             {
-                // The garden was deleted — clear session and reload gardens list
-                await Session.ClearCurrentGarden();
+                await Session.ClearCurrentGardenAsync();
                 return;
-
             }
 
-            var locs = await GardenService.GetLocationsByGarden(defaultGarden.GardenId);
-            locationCount = locs.Count;
+            LocationList = await LocationService.GetByGardenAsync(DefaultGarden.GardenId);
+            LocationCount = LocationList.Count;
 
-            var pls = await PlantService.GetPlantsByGarden(defaultGarden.GardenId);
-            plantCount = pls.Count;
+            PlantList = await PlantService.GetByGardenAsync(DefaultGarden.GardenId);
+            PlantCount = PlantList.Count;
         }
 
-
-        recentObservations = (await ObservationService.GetByUser(Session.CurrentUserId.Value))?
+        RecentObservations = (await ObservationService.GetByUserAsync(Session.CurrentUserId.Value))?
             .OrderByDescending(o => o.ActiveObservation)
             .ThenByDescending(o => o.CreatedAt)
-            .Take(5)
+            .Take(4)
             .ToList();
 
-        recentJournals = (await JournalEntryService.GetByUser(Session.CurrentUserId.Value))?
+        RecentJournals = (await JournalEntryService.GetByUserAsync(Session.CurrentUserId.Value))?
             .OrderByDescending(j => j.CreatedAt)
-            .Take(5)
+            .Take(4)
             .ToList();
 
-        plants = await PlantService.GetAllPlants();
-        locations = await GardenService.GetAllLocations();
+        PlantList = await PlantService.GetAllAsync();
+        LocationList = await LocationService.GetByGardenAsync(Session.CurrentGardenId ?? 0);
     }
 
-    async Task GoToObservation(ObservationModel o)
+    private async Task GoToObservationAsync(ObservationModel o)
     {
-        var plant = plants?.FirstOrDefault(p => p.PlantId == o.PlantId);
+        var plant = PlantList?.FirstOrDefault(p => p.PlantId == o.PlantId);
 
         if (plant != null)
-        {
-            await Session.SetGarden(plant.GardenId);
-        }
+            await Session.SetGardenAsync(plant.GardenId);
 
         Nav.NavigateTo($"/observations?obsId={o.ObservationId}");
     }
 
-    string GetPlantName(int plantId) =>
-        plants?.FirstOrDefault(p => p.PlantId == plantId)?.CommonName ?? "Unknown";
+    private string GetPlantName(int plantId) =>
+        PlantList?.FirstOrDefault(p => p.PlantId == plantId)?.CommonName ?? "Unknown";
 
-    string GetGardenName(int plantId)
+    private string GetGardenName(int plantId)
     {
-        var plant = plants?.FirstOrDefault(p => p.PlantId == plantId);
-        return gardens?.FirstOrDefault(g => g.GardenId == plant?.GardenId)?.Name ?? "Unknown";
+        var plant = PlantList?.FirstOrDefault(p => p.PlantId == plantId);
+        return GardenList?.FirstOrDefault(g => g.GardenId == plant?.GardenId)?.Name ?? "Unknown";
     }
 
-    string GetLocationName(int plantId)
+    private string GetLocationName(int plantId)
     {
-        var plant = plants?.FirstOrDefault(p => p.PlantId == plantId);
-        var location = locations?.FirstOrDefault(l => l.LocationId == plant?.LocationId);
-        return location?.Name ?? "Unknown";
+        var plant = PlantList?.FirstOrDefault(p => p.PlantId == plantId);
+        var loc = LocationList?.FirstOrDefault(l => l.LocationId == plant?.LocationId);
+        return loc?.Name ?? "Unknown";
     }
 
-    string GetJournalGardenName(int gardenId)
-    {
-        return gardens?.FirstOrDefault(g => g.GardenId == gardenId)?.Name ?? "Unknown Garden";
-    }
+    private string GetJournalGardenName(int gardenId) =>
+        GardenList?.FirstOrDefault(g => g.GardenId == gardenId)?.Name ?? "Unknown Garden";
 }

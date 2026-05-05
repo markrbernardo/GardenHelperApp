@@ -1,23 +1,42 @@
-﻿<div class="garden-summary-tile" @onclick="HandleClick">
+﻿<div class="@BuildClasses()"
+     @onclick="HandleClick"
+     @onclick:preventDefault="PreventDefault"
+     title="@Tooltip">
 
-    <div class="gst-header">
-        <div class="gst-title">@Garden.Name</div>
-        <div class="gst-sub">@Garden.ZipCode</div>
+    <div class="gst-header d-flex justify-content-between align-items-start">
+        <div>
+            <div class="gst-title">@Garden.Name</div>
+
+            @if (!string.IsNullOrWhiteSpace(Garden.ZipCode))
+            {
+                <div class="gst-sub text-muted">@Garden.ZipCode</div>
+            }
+
+            @if (!string.IsNullOrEmpty(Subtitle))
+            {
+                <div class="gst-sub text-muted small">@Subtitle</div>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            <i class="@Icon ms-2"></i>
+        }
     </div>
 
-    <div class="gst-stats">
+    <div class="gst-stats mt-2">
         <div class="gst-stat">
             <i class="bi bi-flower3 me-1"></i>
-            @PlantCount plants
+            @PlantCount @PlantLabel
         </div>
 
         <div class="gst-stat">
             <i class="bi bi-geo-alt me-1"></i>
-            @LocationCount locations
+            @LocationCount @LocationLabel
         </div>
     </div>
 
-    <div class="gst-zones">
+    <div class="gst-zones mt-2">
         @if (!string.IsNullOrWhiteSpace(Garden.HardinessZone))
         {
             <div class="gst-zone">
@@ -33,15 +52,66 @@
                 Heat @Garden.HeatZone
             </div>
         }
+
+        @if (ChildContent != null)
+        {
+            <div class="gst-extra mt-2">
+                @ChildContent
+            </div>
+        }
     </div>
 
 </div>
 
 @code {
-    [Parameter] public GardenModel Garden { get; set; }
+    [Parameter] public GardenModel Garden { get; set; } = default!;
     [Parameter] public int PlantCount { get; set; }
     [Parameter] public int LocationCount { get; set; }
+
     [Parameter] public EventCallback<int> OnSelect { get; set; }
 
-    Task HandleClick() => OnSelect.InvokeAsync(Garden.GardenId);
+    // NEW — flexibility & consistency
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public bool Selected { get; set; } = false;
+    [Parameter] public bool PreventDefault { get; set; } = false;
+
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string SelectedClass { get; set; } = "selected";
+    [Parameter] public string HoverClass { get; set; } = "tile-hover";
+
+    [Parameter] public string Size { get; set; } = "md"; // sm, md, lg
+    [Parameter] public bool Rounded { get; set; } = true;
+    [Parameter] public bool Padding { get; set; } = true;
+
+    [Parameter] public string? Tooltip { get; set; }
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? Icon { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string PlantLabel => PlantCount == 1 ? "plant" : "plants";
+    private string LocationLabel => LocationCount == 1 ? "location" : "locations";
+
+    private async Task HandleClick()
+    {
+        if (!Disabled)
+            await OnSelect.InvokeAsync(Garden.GardenId);
+    }
+
+    private string BuildClasses()
+    {
+        var sizeClass = Size switch
+        {
+            "sm" => "tile-sm",
+            "lg" => "tile-lg",
+            _ => "tile-md"
+        };
+
+        var roundedClass = Rounded ? "tile-rounded" : "";
+        var paddingClass = Padding ? "p-3" : "p-0";
+        var selectedClass = Selected ? SelectedClass : "";
+        var disabledClass = Disabled ? "tile-disabled" : "";
+
+        return $"garden-summary-tile {sizeClass} {roundedClass} {paddingClass} {HoverClass} {selectedClass} {disabledClass} {CssClass}".Trim();
+    }
 }

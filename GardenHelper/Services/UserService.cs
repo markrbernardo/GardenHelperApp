@@ -1,5 +1,8 @@
-﻿using GardenHelperApp.Shared.Models;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
+using GardenHelperApp.Shared.Models;
+using GardenHelperApp.Shared.Constants;
+
+namespace GardenHelperApp.Client.Services;
 
 public class UserService
 {
@@ -10,41 +13,87 @@ public class UserService
         _http = http;
     }
 
-    public async Task<List<UserModel>> GetUsers()
+    // ---------------------------------------------------------
+    // GET ALL USERS
+    // ---------------------------------------------------------
+    public async Task<List<UserModel>> GetAllAsync()
     {
-        var users = await _http.GetFromJsonAsync<List<UserModel>>("api/users");
-        return users ?? new List<UserModel>();
+        return await _http.GetFromJsonAsync<List<UserModel>>(ApiRoutes.Users.Base)
+               ?? new List<UserModel>();
     }
 
-    public async Task<UserModel?> GetUser(int id)
+    // ---------------------------------------------------------
+    // GET SINGLE USER
+    // ---------------------------------------------------------
+    public async Task<UserModel?> GetAsync(int id)
     {
-        return await _http.GetFromJsonAsync<UserModel>($"api/users/{id}");
+        var url = ApiRoutes.Users.ById.Replace("{id}", id.ToString());
+
+        try
+        {
+            return await _http.GetFromJsonAsync<UserModel>(url);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
-    public async Task CreateUser(UserModel user)
+    // ---------------------------------------------------------
+    // CREATE USER
+    // ---------------------------------------------------------
+    public async Task<UserModel?> CreateAsync(UserModel user)
     {
-        await _http.PostAsJsonAsync("api/users", user);
+        var response = await _http.PostAsJsonAsync(ApiRoutes.Users.Base, user);
+
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<UserModel>();
     }
 
-    public async Task UpdateUser(UserModel user)
+    // ---------------------------------------------------------
+    // UPDATE USER
+    // ---------------------------------------------------------
+    public async Task<bool> UpdateAsync(UserModel user)
     {
-        await _http.PutAsJsonAsync($"api/users/{user.UserId}", user);
+        var url = ApiRoutes.Users.ById.Replace("{id}", user.UserId.ToString());
+
+        var response = await _http.PutAsJsonAsync(url, user);
+
+        return response.IsSuccessStatusCode;
     }
 
-    public async Task DeleteUser(int id)
+    // ---------------------------------------------------------
+    // DELETE USER
+    // ---------------------------------------------------------
+    public async Task<bool> DeleteAsync(int id)
     {
-        await _http.DeleteAsync($"api/users/{id}");
+        var url = ApiRoutes.Users.ById.Replace("{id}", id.ToString());
+
+        var response = await _http.DeleteAsync(url);
+
+        return response.IsSuccessStatusCode;
     }
 
-    public async Task SetDefaultGarden(int userId, int gardenId)
+    // ---------------------------------------------------------
+    // DEFAULT GARDEN
+    // ---------------------------------------------------------
+    public async Task<bool> SetDefaultGardenAsync(int userId, int gardenId)
     {
-        await _http.PutAsync($"api/users/{userId}/default-garden/{gardenId}", null);
+        var url = ApiRoutes.Gardens.SetDefaultGarden
+            .Replace("{userId}", userId.ToString())
+            .Replace("{gardenId}", gardenId.ToString());
+
+        var response = await _http.PutAsync(url, null);
+
+        return response.IsSuccessStatusCode;
     }
 
-    public async Task<int?> GetDefaultGarden(int userId)
+    public async Task<int?> GetDefaultGardenAsync(int userId)
     {
-        return await _http.GetFromJsonAsync<int?>($"api/users/{userId}/default-garden");
+        var url = ApiRoutes.Gardens.DefaultGarden.Replace("{userId}", userId.ToString());
+
+        return await _http.GetFromJsonAsync<int?>(url);
     }
-
-
 }

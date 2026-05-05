@@ -60,3 +60,7 @@
     .location-tag.outside {
         background-color: #D98E04; /* warm outdoor orange */
     }
+
+.location-two-col-wrapper {
+    height: 100%;
+}

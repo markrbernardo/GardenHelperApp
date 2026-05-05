@@ -1,13 +1,54 @@
-﻿<div class="loading-spinner text-center py-4">
-    <div class="spinner-border text-success" role="status" style="width: 2.5rem; height: 2.5rem;">
-    </div>
+﻿<div class="@BuildContainerClasses()">
+    <div class="@BuildSpinnerClasses()" role="status" aria-label="@AriaLabel"></div>
 
     @if (!string.IsNullOrEmpty(Message))
     {
         <div class="mt-2 text-muted">@Message</div>
     }
+
+    @if (ChildContent != null)
+    {
+        <div class="mt-2">
+            @ChildContent
+        </div>
+    }
 </div>
 
 @code {
     [Parameter] public string? Message { get; set; }
+    [Parameter] public string Color { get; set; } = "success"; // Bootstrap color
+    [Parameter] public string Size { get; set; } = "md";        // sm, md, lg
+    [Parameter] public bool Centered { get; set; } = true;
+    [Parameter] public bool FullPage { get; set; } = false;
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string AriaLabel { get; set; } = "Loading";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string BuildSpinnerClasses()
+    {
+        var sizeStyle = Size switch
+        {
+            "sm" => "width: 1.5rem; height: 1.5rem;",
+            "lg" => "width: 3rem; height: 3rem;",
+            _ => "width: 2.5rem; height: 2.5rem;"
+        };
+
+        return $"spinner-border text-{Color}\" style=\"{sizeStyle}";
+    }
+
+    private string BuildContainerClasses()
+    {
+        var classes = "loading-spinner";
+
+        if (Centered)
+            classes += " text-center py-4";
+
+        if (FullPage)
+            classes += " d-flex justify-content-center align-items-center vh-100";
+
+        if (!string.IsNullOrEmpty(CssClass))
+            classes += $" {CssClass}";
+
+        return classes;
+    }
 }

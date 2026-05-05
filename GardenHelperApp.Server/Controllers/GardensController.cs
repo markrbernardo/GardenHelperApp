@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using GardenHelperApp.Server.Data;
 using GardenHelperApp.Shared.Models;
+using GardenHelperApp.Shared.Enums;
 
 namespace GardenHelperApp.Server.Controllers;
 
@@ -16,93 +17,101 @@ public class GardensController : ControllerBase
         _context = context;
     }
 
-    // GET: api/gardens/user/2
-    [HttpGet("user/{userId}")]
-    public async Task<ActionResult<List<GardenModel>>> GetGardensByUser(int userId)
+    // ---------------------------------------------------------
+    // GET ALL GARDENS FOR A USER
+    // ---------------------------------------------------------
+    [HttpGet("user/{userId:int}")]
+    public async Task<ActionResult<List<GardenModel>>> GetByUserAsync(int userId)
     {
-        return await _context.Gardens
+        var gardens = await _context.Gardens
             .Where(g => g.UserId == userId)
             .ToListAsync();
+
+        return gardens;
     }
 
-    // GET: api/gardens/5
-    [HttpGet("{id}")]
-    public async Task<ActionResult<GardenModel>> GetGarden(int id)
+    // ---------------------------------------------------------
+    // GET SINGLE GARDEN
+    // ---------------------------------------------------------
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<GardenModel>> GetAsync(int id)
     {
         var garden = await _context.Gardens.FindAsync(id);
-        if (garden == null) return NotFound();
+        if (garden == null)
+            return NotFound();
+
         return garden;
     }
 
-    // GET: api/gardens
-    [HttpGet]
-    public async Task<ActionResult<List<GardenModel>>> GetAllGardens()
-    {
-        return await _context.Gardens.ToListAsync();
-    }
-
-    // POST: api/gardens
+    // ---------------------------------------------------------
+    // CREATE GARDEN
+    // ---------------------------------------------------------
     [HttpPost]
-    public async Task<ActionResult<GardenModel>> CreateGarden(GardenModel garden)
+    public async Task<ActionResult<GardenModel>> CreateAsync(GardenModel model)
     {
         // Validate FK
-        var userExists = await _context.Users.AnyAsync(u => u.UserId == garden.UserId);
+        var userExists = await _context.Users.AnyAsync(u => u.UserId == model.UserId);
         if (!userExists)
-            return BadRequest($"User with ID {garden.UserId} does not exist.");
+            return BadRequest($"User with ID {model.UserId} does not exist.");
 
-        // Create the garden
-        _context.Gardens.Add(garden);
+        _context.Gardens.Add(model);
         await _context.SaveChangesAsync();
 
-        // Automatically create the default "Undecided" location
+        // Create default "Undecided" location
         var undecided = new LocationModel
         {
-            GardenId = garden.GardenId,
+            GardenId = model.GardenId,
             Name = "Undecided",
-            Lighting = "N/A",
+            Lighting = LocationLighting.Unknown,
             IsOutside = null
         };
 
         _context.Locations.Add(undecided);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetGarden), new { id = garden.GardenId }, garden);
+        return CreatedAtAction(nameof(GetAsync), new { id = model.GardenId }, model);
     }
 
-    // PUT: api/gardens/5
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateGarden(int id, GardenModel garden)
+    // ---------------------------------------------------------
+    // UPDATE GARDEN
+    // ---------------------------------------------------------
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateAsync(int id, GardenModel model)
     {
-        if (id != garden.GardenId)
-            return BadRequest();
+        if (id != model.GardenId)
+            return BadRequest("Garden ID mismatch.");
 
-        // Validate FK
-        var userExists = await _context.Users.AnyAsync(u => u.UserId == garden.UserId);
+        var userExists = await _context.Users.AnyAsync(u => u.UserId == model.UserId);
         if (!userExists)
-            return BadRequest($"User with ID {garden.UserId} does not exist.");
+            return BadRequest($"User with ID {model.UserId} does not exist.");
 
-        _context.Entry(garden).State = EntityState.Modified;
+        _context.Entry(model).State = EntityState.Modified;
         await _context.SaveChangesAsync();
 
         return NoContent();
     }
 
-    // DELETE: api/gardens/5
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteGarden(int id)
+    // ---------------------------------------------------------
+    // DELETE GARDEN
+    // ---------------------------------------------------------
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteAsync(int id)
     {
         var garden = await _context.Gardens.FindAsync(id);
-        if (garden == null) return NotFound();
+        if (garden == null)
+            return NotFound();
 
-        // Cascade delete will remove Locations + Plants automatically
         _context.Gardens.Remove(garden);
         await _context.SaveChangesAsync();
 
         return NoContent();
     }
 
-    [HttpPut("{userId}/default-garden/{gardenId}")]
-    public async Task<IActionResult> SetDefaultGarden(int userId, int gardenId)
+    // ---------------------------------------------------------
+    // DEFAULT GARDEN
+    // ---------------------------------------------------------
+    [HttpPut("{userId:int}/default-garden/{gardenId:int}")]
+    public async Task<IActionResult> SetDefaultGardenAsync(int userId, int gardenId)
     {
         var user = await _context.Users.FindAsync(userId);
         if (user == null)
@@ -114,8 +123,8 @@ public class GardensController : ControllerBase
         return NoContent();
     }
 
-    [HttpGet("{userId}/default-garden")]
-    public async Task<ActionResult<int?>> GetDefaultGarden(int userId)
+    [HttpGet("{userId:int}/default-garden")]
+    public async Task<ActionResult<int?>> GetDefaultGardenAsync(int userId)
     {
         var user = await _context.Users.FindAsync(userId);
         if (user == null)
@@ -123,11 +132,4 @@ public class GardensController : ControllerBase
 
         return user.DefaultGardenId;
     }
-
-    [HttpGet("locations")]
-    public async Task<IEnumerable<LocationModel>> GetAllLocations()
-    {
-        return await _context.Locations.ToListAsync();
-    }
-
 }

@@ -7,13 +7,13 @@
     <!-- TITLE -->
     <div class="mb-3">
         <label class="form-label">Title</label>
-        <InputText class="form-control" @bind-Value="Entry.Title" />
+        <InputText class="form-control" @bind-Value="Entry.Title" disabled="@IsDisabled" />
     </div>
 
     <!-- GARDEN -->
     <div class="mb-3">
         <label class="form-label">Garden</label>
-        <select class="form-select" @bind="Entry.GardenId">
+        <select class="form-select" @bind="Entry.GardenId" disabled="@IsDisabled">
             @foreach (var g in Gardens)
             {
                 <option value="@g.GardenId">@g.Name</option>
@@ -24,15 +24,16 @@
     <!-- ENTRY TEXT -->
     <div class="mb-3">
         <label class="form-label">Entry</label>
-        <InputTextArea class="form-control" rows="5" @bind-Value="Entry.Entry" />
+        <InputTextArea class="form-control" rows="5" @bind-Value="Entry.Entry" disabled="@IsDisabled" />
     </div>
 
-    <button class="btn btn-success">@SubmitLabel</button>
-    <button class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+    <!-- BUTTONS -->
+    <button class="btn btn-success" disabled="@IsDisabled">@SubmitLabel</button>
+    <button class="btn btn-secondary ms-2" @onclick="Cancel" disabled="@IsDisabled">Cancel</button>
 
     @if (ShowDelete)
     {
-        <button class="btn btn-danger ms-2" @onclick="Delete">Delete</button>
+        <button class="btn btn-danger ms-2" @onclick="Delete" disabled="@IsDisabled">Delete</button>
     }
 </EditForm>
 

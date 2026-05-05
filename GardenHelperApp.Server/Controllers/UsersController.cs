@@ -1,8 +1,8 @@
-﻿using GardenHelperApp.Server.Data;
-using GardenHelperApp.Shared.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using GardenHelperApp.Server.Data;
+using GardenHelperApp.Shared.Models;
 
 namespace GardenHelperApp.Server.Controllers;
 
@@ -13,58 +13,72 @@ public class UsersController : ControllerBase
     private readonly GardenContext _context;
     private readonly ILogger<UsersController> _logger;
 
-
     public UsersController(GardenContext context, ILogger<UsersController> logger)
     {
         _context = context;
         _logger = logger;
-        _logger.LogInformation("DB Path: {Path}", Path.GetFullPath("Data/GardenHelper.db"));
     }
 
-    // GET: api/users
+    // ---------------------------------------------------------
+    // GET ALL USERS
+    // ---------------------------------------------------------
     [HttpGet]
-    public async Task<ActionResult<List<UserModel>>> GetUsers()
+    public async Task<ActionResult<List<UserModel>>> GetAllAsync()
     {
-        return await _context.Users.ToListAsync();
+        return await _context.Users
+            .OrderBy(u => u.UserId)
+            .ToListAsync();
     }
 
-    // GET: api/users/5
-    [HttpGet("{id}")]
-    public async Task<ActionResult<UserModel>> GetUser(int id)
+    // ---------------------------------------------------------
+    // GET SINGLE USER
+    // ---------------------------------------------------------
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<UserModel>> GetAsync(int id)
     {
         var user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
-        _logger.LogInformation("DB Path: {Path}", Path.GetFullPath("Data/GardenHelper.db"));
+        if (user == null)
+            return NotFound();
+
         return user;
     }
 
-    // POST: api/users
+    // ---------------------------------------------------------
+    // CREATE USER
+    // ---------------------------------------------------------
     [HttpPost]
-    public async Task<ActionResult<UserModel>> CreateUser(UserModel user)
+    public async Task<ActionResult<UserModel>> CreateAsync(UserModel model)
     {
-        _context.Users.Add(user);
+        _context.Users.Add(model);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, user);
+
+        return CreatedAtAction(nameof(GetAsync), new { id = model.UserId }, model);
     }
 
-    // PUT: api/users/5
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateUser(int id, UserModel user)
+    // ---------------------------------------------------------
+    // UPDATE USER
+    // ---------------------------------------------------------
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateAsync(int id, UserModel model)
     {
-        if (id != user.UserId) return BadRequest();
+        if (id != model.UserId)
+            return BadRequest("User ID mismatch.");
 
-        _context.Entry(user).State = EntityState.Modified;
+        _context.Entry(model).State = EntityState.Modified;
         await _context.SaveChangesAsync();
 
         return NoContent();
     }
 
-    // DELETE: api/users/5
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUser(int id)
+    // ---------------------------------------------------------
+    // DELETE USER
+    // ---------------------------------------------------------
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteAsync(int id)
     {
         var user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
+        if (user == null)
+            return NotFound();
 
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
@@ -72,12 +86,15 @@ public class UsersController : ControllerBase
         return NoContent();
     }
 
-    //SET: Default Garden
-    [HttpPut("{id}/default-garden/{gardenId}")]
-    public async Task<IActionResult> SetDefaultGarden(int id, int gardenId)
+    // ---------------------------------------------------------
+    // SET DEFAULT GARDEN
+    // ---------------------------------------------------------
+    [HttpPut("{id:int}/default-garden/{gardenId:int}")]
+    public async Task<IActionResult> SetDefaultGardenAsync(int id, int gardenId)
     {
         var user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
+        if (user == null)
+            return NotFound();
 
         user.DefaultGardenId = gardenId;
         await _context.SaveChangesAsync();
@@ -85,17 +102,16 @@ public class UsersController : ControllerBase
         return NoContent();
     }
 
-
-    //GET: Default Garden
-    [HttpGet("{id}/default-garden")]
-    public async Task<ActionResult<int?>> GetDefaultGarden(int id)
+    // ---------------------------------------------------------
+    // GET DEFAULT GARDEN
+    // ---------------------------------------------------------
+    [HttpGet("{id:int}/default-garden")]
+    public async Task<ActionResult<int?>> GetDefaultGardenAsync(int id)
     {
         var user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
+        if (user == null)
+            return NotFound();
 
         return user.DefaultGardenId;
     }
-
-
-
 }

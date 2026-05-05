@@ -1,5 +1,6 @@
-﻿using GardenHelperApp.Shared.Models;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
+using GardenHelperApp.Shared.Models;
+using GardenHelperApp.Shared.Constants;
 
 namespace GardenHelperApp.Client.Services;
 
@@ -13,63 +14,105 @@ public class PlantService
     }
 
     // ---------------------------------------------------------
-    // GET ALL PLANTS (already joined + sorted by server)
+    // GET ALL (PlantWithInfoDto)
     // ---------------------------------------------------------
-    public async Task<List<PlantWithInfoDto>> GetAllPlants()
+    public async Task<List<PlantWithInfoDto>> GetAllAsync()
     {
-        return await _http.GetFromJsonAsync<List<PlantWithInfoDto>>("api/plants")
+        return await _http.GetFromJsonAsync<List<PlantWithInfoDto>>(ApiRoutes.Plants.Base)
                ?? new List<PlantWithInfoDto>();
     }
 
     // ---------------------------------------------------------
-    // GET PLANTS BY GARDEN (already joined + sorted by server)
+    // GET BY GARDEN (PlantWithInfoDto)
     // ---------------------------------------------------------
-    public async Task<List<PlantWithInfoDto>> GetPlantsByGarden(int gardenId)
+    public async Task<List<PlantWithInfoDto>> GetByGardenAsync(int gardenId)
     {
-        return await _http.GetFromJsonAsync<List<PlantWithInfoDto>>(
-            $"api/plants/garden/{gardenId}"
-        ) ?? new List<PlantWithInfoDto>();
+        var url = ApiRoutes.Plants.ByGarden.Replace("{gardenId}", gardenId.ToString());
+
+        return await _http.GetFromJsonAsync<List<PlantWithInfoDto>>(url)
+               ?? new List<PlantWithInfoDto>();
     }
 
     // ---------------------------------------------------------
-    // GET PLANTS BY LOCATION (already joined + sorted by server)
+    // GET BY LOCATION (PlantWithInfoDto)
     // ---------------------------------------------------------
-    public async Task<List<PlantWithInfoDto>> GetPlantsByLocation(int locationId)
+    public async Task<List<PlantWithInfoDto>> GetByLocationAsync(int locationId)
     {
-        return await _http.GetFromJsonAsync<List<PlantWithInfoDto>>(
-            $"api/plants/location/{locationId}"
-        ) ?? new List<PlantWithInfoDto>();
+        var url = ApiRoutes.Plants.ByLocation.Replace("{locationId}", locationId.ToString());
+
+        return await _http.GetFromJsonAsync<List<PlantWithInfoDto>>(url)
+               ?? new List<PlantWithInfoDto>();
     }
 
     // ---------------------------------------------------------
-    // GET SINGLE PLANT (still returns PlantModel)
+    // GET WITH INFO (PlantWithInfoDto)
     // ---------------------------------------------------------
-    public async Task<PlantModel?> GetPlant(int id)
+    public async Task<PlantWithInfoDto?> GetWithInfoAsync(int id)
     {
-        return await _http.GetFromJsonAsync<PlantModel>($"api/plants/{id}");
+        var url = ApiRoutes.Plants.WithInfo.Replace("{id}", id.ToString());
+
+        try
+        {
+            return await _http.GetFromJsonAsync<PlantWithInfoDto>(url);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+
+    // ---------------------------------------------------------
+    // GET SINGLE PLANT (PlantModel)
+    // ---------------------------------------------------------
+    public async Task<PlantModel?> GetAsync(int id)
+    {
+        var url = ApiRoutes.Plants.ById.Replace("{id}", id.ToString());
+
+        try
+        {
+            return await _http.GetFromJsonAsync<PlantModel>(url);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
     // ---------------------------------------------------------
-    // CRUD
+    // CREATE (returns created model)
     // ---------------------------------------------------------
-    public async Task Create(PlantModel model)
+    public async Task<PlantModel?> CreateAsync(PlantModel model)
     {
-        await _http.PostAsJsonAsync("api/plants", model);
+        var response = await _http.PostAsJsonAsync(ApiRoutes.Plants.Base, model);
+
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<PlantModel>();
     }
 
-    public async Task<HttpResponseMessage> CreateWithResponse(PlantModel model)
+    // ---------------------------------------------------------
+    // UPDATE
+    // ---------------------------------------------------------
+    public async Task<bool> UpdateAsync(PlantModel model)
     {
-        return await _http.PostAsJsonAsync("api/plants", model);
+        var url = ApiRoutes.Plants.ById.Replace("{id}", model.PlantId.ToString());
+
+        var response = await _http.PutAsJsonAsync(url, model);
+
+        return response.IsSuccessStatusCode;
     }
 
-
-    public async Task Update(PlantModel model)
+    // ---------------------------------------------------------
+    // DELETE
+    // ---------------------------------------------------------
+    public async Task<bool> DeleteAsync(int id)
     {
-        await _http.PutAsJsonAsync($"api/plants/{model.PlantId}", model);
-    }
+        var url = ApiRoutes.Plants.ById.Replace("{id}", id.ToString());
 
-    public async Task Delete(int id)
-    {
-        await _http.DeleteAsync($"api/plants/{id}");
+        var response = await _http.DeleteAsync(url);
+
+        return response.IsSuccessStatusCode;
     }
 }

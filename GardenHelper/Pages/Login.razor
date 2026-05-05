@@ -1,22 +1,29 @@
 ﻿@layout EmptyLayout
 @page "/login"
+
 @inject UserService UserService
 @inject UserSessionService Session
 @inject NavigationManager Nav
 
-<div class="login-container">
-    <h2>Select a User</h2>
+<PageHeader Title="Select a User" Divider="false"/>
 
-    @if (users == null)
+<div class="page-section">
+
+    @if (UserList == null)
     {
-        <p>Loading...</p>
+        <LoadingSpinner Message="Loading users..." />
+    }
+    else if (UserList.Count == 0)
+    {
+        <EmptyState Message="No users found." />
     }
     else
     {
         <div class="user-grid">
-            @foreach (var u in users)
+
+            @foreach (var u in UserList)
             {
-                <div class="user-tile" @onclick="() => SelectUser(u)">
+                <div class="user-tile" @onclick="@(() => SelectUserAsync(u))">
                     <div class="user-name">@u.Name</div>
                 </div>
             }
@@ -25,25 +32,27 @@
                 <div class="add-symbol">+</div>
                 <div>Add New User</div>
             </div>
+
         </div>
     }
+
 </div>
 
 @code {
-    List<UserModel>? users;
+    private List<UserModel>? UserList;
 
     protected override async Task OnInitializedAsync()
     {
-        users = await UserService.GetUsers();
+        UserList = await UserService.GetAllAsync();
     }
 
-    void SelectUser(UserModel user)
+    private async Task SelectUserAsync(UserModel user)
     {
-        Session.SetUser(user.UserId, user.Name);
-        Nav.NavigateTo("/home");
+        await Session.SetUserAsync(user.UserId, user.Name);
+        Nav.NavigateTo("/home", replace: true);
     }
 
-    void AddNewUser()
+    private void AddNewUser()
     {
         Nav.NavigateTo("/users/create");
     }

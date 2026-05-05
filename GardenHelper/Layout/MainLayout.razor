@@ -1,5 +1,6 @@
-﻿
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
+@using GardenHelperApp.Shared.Models
+@using GardenHelperApp.Shared.Enums
 @inject PlantService PlantService
 @inject PlantInformationService PlantInformationService
 @inject UserSessionService Session
@@ -15,14 +16,14 @@
 
             <!-- ADD DROPDOWN -->
             <AddDropdown GardenId="Session.CurrentGardenId"
-             LocationId="Session.CurrentLocationId"
-             PlantId="Session.CurrentPlantId"
-             ReturnUrl="@Nav.Uri" />
-
+                         LocationId="Session.CurrentLocationId"
+                         PlantId="Session.CurrentPlantId"
+                         ReturnUrl="@Nav.Uri" />
 
             <!-- EXISTING PLANT INFORMATION LINK -->
-            <a href="/plantinformation" class="ms-3">
-                <i class="bi bi-journal-bookmark-fill me-1"></i> Plant Information
+            <a href="/plantinformation" class="ms-3 d-inline-flex align-items-center">
+                <i class="bi bi-journal-bookmark-fill me-1"></i>
+                <span>Plant Information</span>
             </a>
 
             <!-- SEARCH BAR WITH SMART SUGGESTIONS -->
@@ -36,7 +37,7 @@
 
                 @if (showSuggestions && filteredSuggestions?.Any() == true)
                 {
-                    <div class="list-group position-absolute w-100 shadow-sm" style="z-index: 1000;">
+                    <div class="list-group position-absolute w-100 shadow-sm bg-white" style="z-index: 1000;">
                         @foreach (var s in filteredSuggestions)
                         {
                             <div class="search-suggestion-wrapper">
@@ -46,16 +47,13 @@
                         }
                     </div>
                 }
-
             </div>
 
         </div>
 
-
         <article class="content px-4">
             @Body
         </article>
-
     </main>
 </div>
 
@@ -64,62 +62,78 @@
     private bool showSuggestions = false;
 
     private List<PlantWithInfoDto>? allPlants;
-    private List<SearchSuggestionDto>? filteredSuggestions;
     private List<PlantInformationModel>? allPlantInfo;
-
-
-
+    private List<SearchSuggestionDto>? filteredSuggestions;
 
     protected override async Task OnInitializedAsync()
     {
-        allPlants = await PlantService.GetAllPlants();
-        allPlantInfo = await PlantInformationService.GetAll();
+        allPlants = await PlantService.GetAllAsync();
+        allPlantInfo = await PlantInformationService.GetAllAsync();
+
 
         // Sort alphabetically by CommonName or fallback to Name
         allPlants = allPlants
             .OrderBy(p => p.CommonName ?? p.Name)
             .ToList();
 
+        // Initial suggestions (top plants)
+        await UpdateSuggestions();
     }
 
     private void ShowSuggestions() => showSuggestions = true;
 
+    private async Task HideSuggestionsDelayed()
+    {
+        await Task.Delay(200);
+        showSuggestions = false;
+    }
+
+    private async Task OnInputChanged(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString();
+        await UpdateSuggestions();
+    }
 
     private void SelectSuggestion(SearchSuggestionDto s)
     {
         showSuggestions = false;
-        searchText = "";
+        searchText = string.Empty;
 
         switch (s.Type)
         {
-            case "plant":
+            case SuggestionType.Plant:
                 Nav.NavigateTo($"/plants?plantId={s.Id}");
                 break;
 
-            case "plantInfo":
+            case SuggestionType.PlantInformation:
                 Nav.NavigateTo($"/plantinformation/details/{s.Id}");
                 break;
 
-            case "location":
+            case SuggestionType.Location:
                 Nav.NavigateTo($"/location-profile/{s.Id}");
                 break;
 
-            case "garden":
+            case SuggestionType.Garden:
                 Nav.NavigateTo($"/garden-profile/{s.Id}");
+                break;
+
+            default:
                 break;
         }
     }
 
-
-   private async Task UpdateSuggestions()
+    private async Task UpdateSuggestions()
     {
+        if (allPlants is null || allPlantInfo is null)
+            return;
+
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            filteredSuggestions = allPlants!
+            filteredSuggestions = allPlants
                 .Take(10)
                 .Select(p => new SearchSuggestionDto
                 {
-                    Type = "plant",
+                    Type = SuggestionType.Plant,
                     Id = p.PlantId,
                     Primary = p.CommonName ?? p.Name,
                     Secondary = p.ScientificName,
@@ -127,17 +141,16 @@
                     PhotoMimeType = p.PlantPhotoMimeType
                 })
                 .ToList();
-
-            showSuggestions = true;
+                
             return;
         }
 
-        string q = searchText.Trim().ToLower();
+        var q = searchText.Trim().ToLowerInvariant();
 
-        var plantResults = allPlants!
+        var plantResults = allPlants
             .Select(p => new SearchSuggestionDto
             {
-                Type = "plant",
+                Type = SuggestionType.Plant,
                 Id = p.PlantId,
                 Primary = p.CommonName ?? p.Name,
                 Secondary = p.ScientificName,
@@ -145,10 +158,10 @@
                 PhotoMimeType = p.PlantPhotoMimeType
             });
 
-        var infoResults = allPlantInfo!
+        var infoResults = allPlantInfo
             .Select(i => new SearchSuggestionDto
             {
-                Type = "plantInfo",
+                Type = SuggestionType.PlantInformation,
                 Id = i.PlantInformationId,
                 Primary = i.CommonName,
                 Secondary = i.ScientificName,
@@ -159,64 +172,12 @@
         filteredSuggestions = plantResults
             .Concat(infoResults)
             .Where(s =>
-                (s.Primary?.ToLower().Contains(q) ?? false) ||
-                (s.Secondary?.ToLower().Contains(q) ?? false))
+                (s.Primary?.ToLowerInvariant().Contains(q) ?? false) ||
+                (s.Secondary?.ToLowerInvariant().Contains(q) ?? false))
             .OrderBy(s => s.Primary)
             .Take(10)
             .ToList();
 
         showSuggestions = true;
     }
-
-
-
-    private async Task HideSuggestionsDelayed()
-    {
-        await Task.Delay(200);
-        showSuggestions = false;
-    }
-
-    private void SelectPlant(int plantId)
-    {
-        showSuggestions = false;
-        searchText = "";
-        Nav.NavigateTo($"/plants?plantId={plantId}");
-    }
-
-    private int FuzzyScore(string text, string query)
-    {
-        if (string.IsNullOrWhiteSpace(text) || string.IsNullOrWhiteSpace(query))
-            return 0;
-
-        int score = 0;
-
-        if (text.Contains(query[0]))
-            score += 10;
-
-        if (query.Length > 1 && text.Contains(query.Substring(0, 2)))
-            score += 20;
-
-        return score;
-    }
-
-    private async Task OnInputChanged(ChangeEventArgs e)
-    {
-        searchText = e.Value?.ToString();
-        await UpdateSuggestions();
-    }
-
-    private string GetCreateGardenUrl()
-    {
-        // If we know the current user, pass it
-        if (Session.CurrentUserId != null)
-        {
-            var encodedReturnUrl = Uri.EscapeDataString(Nav.Uri);
-            return $"/gardens/create/{Session.CurrentUserId}/{encodedReturnUrl}";
-        }
-
-        // If no user is selected, fall back safely
-        return "/gardens";
-    }
-
-
 }

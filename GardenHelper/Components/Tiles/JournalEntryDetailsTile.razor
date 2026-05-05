@@ -1,37 +1,61 @@
-﻿@using GardenHelperApp.Shared.Models
+﻿<div class="@BuildContainerClasses()">
 
-<div class="journal-details-tile">
-
-    @if (SelectedDate == null)
+    @if (Loading)
     {
-        <p>Select a date to view journal entries.</p>
+        <LoadingSpinner Message="Loading journal entries..." />
+    }
+    else if (SelectedDate == null)
+    {
+        <EmptyState Icon="bi bi-calendar" Title="No date selected">
+            Select a date to view journal entries.
+        </EmptyState>
     }
     else if (EntriesForDate.Count == 0)
     {
-        <p>No journal entries for this date.</p>
+        <EmptyState Icon="bi bi-journal-x" Title="No journal entries">
+            There are no entries for this date.
+        </EmptyState>
     }
     else
     {
         @foreach (var j in EntriesForDate)
         {
-            <div class="journal-card">
+            <div class="@BuildCardClasses()" title="@Tooltip">
 
                 <!-- HEADER -->
-                <div class="journal-header">
+                <div class="journal-header d-flex justify-content-between align-items-start">
+
                     <div class="journal-meta">
+                        
+
+                        @* ⭐ NEW — Journal Title *@
+                        @if (!string.IsNullOrWhiteSpace(j.Title))
+                        {
+                            <div class="journal-title mt-1">@j.Title</div>
+                        }
                         <div class="journal-date">@FormatDate(j.CreatedAt)</div>
-                        <div class="journal-garden">@GetGardenName(j.GardenId)</div>
+                        <div class="journal-garden text-muted">@GetGardenName(j.GardenId)</div>
                     </div>
 
-                    <button class="btn btn-primary btn-sm"
-                            @onclick="() => OnEdit.InvokeAsync(j.JournalEntryId)">
-                        Edit
-                    </button>
+                    @if (!Disabled)
+                    {
+                        <IconButton Icon="bi bi-pencil-square"
+                                    Label="Edit"
+                                    Size="sm"
+                                    OnClick="() => OnEdit.InvokeAsync(j.JournalEntryId)" />
+                    }
                 </div>
 
                 <!-- ENTRY TEXT -->
-                <div class="journal-body">
-                    <p>@j.Entry</p>
+                <div class="journal-body mt-2">
+                    @if (ChildContent != null)
+                    {
+                        @ChildContent(j)
+                    }
+                    else
+                    {
+                        <p>@j.Entry</p>
+                    }
                 </div>
 
             </div>
@@ -44,20 +68,52 @@
     [Parameter] public DateTime? SelectedDate { get; set; }
     [Parameter] public List<JournalEntryModel> Entries { get; set; } = new();
     [Parameter] public List<GardenModel> Gardens { get; set; } = new();
+
     [Parameter] public EventCallback<int> OnEdit { get; set; }
 
-    // Matches your JournalEntries.razor filtering logic
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public bool Loading { get; set; } = false;
+
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string CardClass { get; set; } = "journal-card";
+    [Parameter] public string Size { get; set; } = "md";
+    [Parameter] public bool Rounded { get; set; } = true;
+    [Parameter] public bool Padding { get; set; } = true;
+
+    [Parameter] public string? Tooltip { get; set; }
+
+    [Parameter] public RenderFragment<JournalEntryModel>? ChildContent { get; set; }
+
     List<JournalEntryModel> EntriesForDate =>
         Entries
             .Where(j => j.CreatedAt.Date == SelectedDate)
             .OrderByDescending(j => j.CreatedAt)
             .ToList();
 
-    // Matches your page helper
     string GetGardenName(int gardenId) =>
         Gardens?.FirstOrDefault(g => g.GardenId == gardenId)?.Name ?? "Unknown Garden";
 
-    // Matches your page helper
     string FormatDate(DateTime dt) =>
         dt.ToString("dddd, MMM dd • hh:mm tt");
+
+    private string BuildContainerClasses()
+    {
+        var sizeClass = Size switch
+        {
+            "sm" => "tile-sm",
+            "lg" => "tile-lg",
+            _ => "tile-md"
+        };
+
+        return $"journal-details-tile {sizeClass} {CssClass}".Trim();
+    }
+
+    private string BuildCardClasses()
+    {
+        var roundedClass = Rounded ? "tile-rounded" : "";
+        var paddingClass = Padding ? "p-3" : "p-0";
+        var disabledClass = Disabled ? "tile-disabled" : "";
+
+        return $"{CardClass} {roundedClass} {paddingClass} {disabledClass}".Trim();
+    }
 }

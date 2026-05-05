@@ -1,71 +1,85 @@
 ﻿@page "/users"
+
 @inject UserService UserService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
+<PageHeader Title="Users">
+    <Actions>
+        <button class="btn btn-primary"
+                @onclick="@(() => Nav.NavigateTo("/users/create"))">
+            <i class="bi bi-plus-lg"></i> Create User
+        </button>
+    </Actions>
+</PageHeader>
 
-<h3>Users</h3>
+<div class="page-section">
 
-@if (users == null)
-{
-    <p>Loading users...</p>
-}
-else if (users.Count == 0)
-{
-    <p>No users found.</p>
-}
-else
-{
-    <button class="btn btn-primary mb-3" @onclick='() => Nav.NavigateTo("/users/create")'>
-        Create New User
-    </button>
-
-    <table class="table">
-        <thead>
-            <tr>
-                <th>User ID</th>
-                <th>Name</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var user in users)
-            {
+    @if (UserList == null)
+    {
+        <LoadingSpinner Message="Loading users..." />
+    }
+    else if (UserList.Count == 0)
+    {
+        <EmptyState Message="No users found." />
+    }
+    else
+    {
+        <table class="table table-striped table-hover shadow-sm">
+            <thead class="table-light">
                 <tr>
-                    <td>@user.UserId</td>
-                    <td>@user.Name</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm" @onclick="() => EditUser(user.UserId)">Edit</button>
-
-                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteUser(user.UserId)">Delete</button>
-                    </td>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th style="width: 160px;">Actions</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-}
+            </thead>
+            <tbody>
+                @foreach (var user in UserList)
+                {
+                    <tr>
+                        <td>@user.UserId</td>
+                        <td>@user.Name</td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-sm"
+                                        @onclick="() => EditUser(user.UserId)">
+                                    Edit
+                                </button>
+
+                                <button class="btn btn-danger btn-sm"
+                                        @onclick="() => DeleteUserAsync(user.UserId)">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+</div>
 
 @code {
-    List<UserModel>? users;
+    private List<UserModel>? UserList;
 
     protected override async Task OnInitializedAsync()
     {
-        users = await UserService.GetUsers();
+        UserList = await UserService.GetAllAsync();
     }
 
-    void EditUser(int id)
+    private void EditUser(int id)
     {
         Nav.NavigateTo($"/users/edit/{id}");
     }
 
-    async void DeleteUser(int id)
+    private async Task DeleteUserAsync(int id)
     {
-        if (await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this user?"))
-        {
-            await UserService.DeleteUser(id);
-            users = await UserService.GetUsers(); //refresh list
-        }
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this user?");
+        if (!confirm)
+            return;
+
+        await UserService.DeleteAsync(id);
+        UserList = await UserService.GetAllAsync();
     }
-
-
 }

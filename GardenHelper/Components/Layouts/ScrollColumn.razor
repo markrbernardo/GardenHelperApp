@@ -1,7 +1,60 @@
-﻿<div class="scroll-y">
-@ChildContent
+﻿<div class="@BuildClasses()" style="@BuildStyle()">
+    @ChildContent
 </div>
 
 @code {
-    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; } = default!;
+
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public bool Horizontal { get; set; } = false;
+    [Parameter] public bool Padding { get; set; } = true;
+    [Parameter] public string? Height { get; set; }
+    [Parameter] public string? MaxHeight { get; set; }
+    [Parameter] public bool FullPage { get; set; } = false;
+
+    [Parameter] public bool DisableScroll { get; set; } = false;
+    [Parameter] public bool HideScrollbar { get; set; } = false;
+
+
+    // NEW
+    [Parameter] public bool ThinScroll { get; set; } = false;
+    [Parameter] public string? ScrollColor { get; set; } // e.g. "#999", "rgba(0,0,0,0.3)"
+    [Parameter] public string? ScrollTrackColor { get; set; }
+
+    private string BuildClasses()
+    {
+        var scrollClass = DisableScroll
+            ? ""
+            : Horizontal ? "scroll-x" : "scroll-y";
+
+        var paddingClass = Padding ? "p-3" : "";
+        var fullPageClass = FullPage ? "vh-100" : "";
+
+        // Thin scrollbar class (CSS handles the styling)
+        var thinClass = ThinScroll ? "scroll-thin" : "";
+
+        var hideScrollClass = HideScrollbar ? "scroll-hide" : "";
+
+        return $"{scrollClass} {paddingClass} {fullPageClass} {thinClass} {hideScrollClass} {CssClass}".Trim();
+    }
+
+    private string BuildStyle()
+    {
+        var styles = new List<string>();
+
+        if (!string.IsNullOrEmpty(Height))
+            styles.Add($"height:{Height}");
+
+        if (!string.IsNullOrEmpty(MaxHeight))
+            styles.Add($"max-height:{MaxHeight}");
+
+        // Inline scrollbar colors (supported in modern browsers)
+        if (!string.IsNullOrEmpty(ScrollColor))
+            styles.Add($"--scroll-thumb:{ScrollColor}");
+
+        if (!string.IsNullOrEmpty(ScrollTrackColor))
+            styles.Add($"--scroll-track:{ScrollTrackColor}");
+
+        return string.Join(";", styles);
+    }
 }

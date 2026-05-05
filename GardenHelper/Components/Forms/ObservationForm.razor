@@ -7,21 +7,36 @@
     <!-- PLANT -->
     <div class="mb-3">
         <label class="form-label">Plant</label>
-        <PlantDropdown Plants="Plants" @bind-Value="Observation.PlantId" />
+        <PlantDropdown Plants="Plants"
+                       @bind-Value="Observation.PlantId"
+                       Disabled="IsDisabled" />
     </div>
 
     <!-- OBSERVATION TEXT -->
     <div class="mb-3">
         <label class="form-label">Observation</label>
-        <InputTextArea class="form-control" rows="4" @bind-Value="Observation.Observation" />
+        <InputTextArea class="form-control"
+                       rows="4"
+                       @bind-Value="Observation.Observation"
+                       disabled="@IsDisabled" />
     </div>
 
-    <button class="btn btn-success">@SubmitLabel</button>
-    <button class="btn btn-secondary ms-2" @onclick="Cancel">Cancel</button>
+    <!-- BUTTONS -->
+    <button class="btn btn-success" disabled="@IsDisabled">@SubmitLabel</button>
+
+    <button class="btn btn-secondary ms-2"
+            @onclick="Cancel"
+            disabled="@IsDisabled">
+        Cancel
+    </button>
 
     @if (ShowDelete)
     {
-        <button class="btn btn-danger ms-2" @onclick="Delete">Delete</button>
+        <button class="btn btn-danger ms-2"
+                @onclick="Delete"
+                disabled="@IsDisabled">
+            Delete
+        </button>
     }
 </EditForm>
 
@@ -38,21 +53,7 @@
     [Parameter] public bool ShowDelete { get; set; } = false;
     [Parameter] public bool IsDisabled { get; set; } = false;
 
-    private async Task OnSubmit()
-    {
-        if (!IsDisabled)
-            await OnSubmitCallback.InvokeAsync();
-    }
-
-    private async Task Cancel()
-    {
-        if (!IsDisabled)
-            await OnCancelCallback.InvokeAsync();
-    }
-
-    private async Task Delete()
-    {
-        if (!IsDisabled)
-            await OnDeleteCallback.InvokeAsync();
-    }
+    private Task OnSubmit() => !IsDisabled ? OnSubmitCallback.InvokeAsync() : Task.CompletedTask;
+    private Task Cancel() => !IsDisabled ? OnCancelCallback.InvokeAsync() : Task.CompletedTask;
+    private Task Delete() => !IsDisabled ? OnDeleteCallback.InvokeAsync() : Task.CompletedTask;
 }

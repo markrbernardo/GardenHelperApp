@@ -1,73 +1,79 @@
 ﻿@page "/journalentries/create"
+
 @inject JournalEntryService JournalEntryService
 @inject GardenService GardenService
 @inject UserSessionService Session
 @inject NavigationManager Nav
 
-<h3>Create Journal Entry</h3>
+<PageHeader Title="Create Journal Entry" />
 
-@if (gardens == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <JournalEntryForm Entry="entry"
-                      Gardens="gardens"
-                      SubmitLabel="Create"
-                      OnSubmitCallback="HandleSubmit"
-                      OnCancelCallback="GoBack"
-                      ShowDelete="false" />
+<div class="page-section">
 
-}
+    @if (Gardens == null)
+    {
+        <LoadingSpinner Message="Loading gardens..." />
+    }
+    else
+    {
+        <JournalEntryForm Entry="Entry"
+                          Gardens="Gardens"
+                          SubmitLabel="Create"
+                          OnSubmitCallback="HandleSubmitAsync"
+                          OnCancelCallback="GoBack"
+                          ShowDelete="false" />
+    }
+
+</div>
 
 @code {
-    JournalEntryModel entry = new();
-
-    List<GardenModel>? gardens;
-    string? returnUrl;
+    private JournalEntryModel Entry { get; set; } = new();
+    private List<GardenModel>? Gardens;
+    private string? ReturnUrl;
 
     protected override async Task OnInitializedAsync()
     {
-        // ⭐ Assign the logged-in user
-        entry.UserId = Session.CurrentUserId!.Value;
+        // Always assign the logged-in user
+        Entry.UserId = Session.CurrentUserId!.Value;
 
         // Load only this user's gardens
-        gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
+        Gardens = await GardenService.GetByUserAsync(Session.CurrentUserId.Value);
 
         // Default to current garden if available
         if (Session.CurrentGardenId != null)
-            entry.GardenId = Session.CurrentGardenId.Value;
-        else if (gardens.Count > 0)
-            entry.GardenId = gardens.First().GardenId;
+        {
+            Entry.GardenId = Session.CurrentGardenId.Value;
+        }
+        else if (Gardens.Count > 0)
+        {
+            Entry.GardenId = Gardens.First().GardenId;
+        }
 
-        // Read returnUrl
+        // Read returnUrl from query string
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
         if (query.TryGetValue("returnUrl", out var url))
-            returnUrl = url!;
+            ReturnUrl = url!;
     }
 
-    async Task HandleSubmit()
+    private async Task HandleSubmitAsync()
     {
-        // Safety: ensure UserId is always set
-        entry.UserId = Session.CurrentUserId!.Value;
-        entry.CreatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+        // Ensure UserId is always set
+        Entry.UserId = Session.CurrentUserId!.Value;
+        Entry.CreatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
 
+        await JournalEntryService.CreateAsync(Entry);
 
-        await JournalEntryService.Create(entry);
-
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
             Nav.NavigateTo("/journalentries");
     }
 
-    void GoBack()
+    private void GoBack()
     {
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
             Nav.NavigateTo("/journalentries");
     }

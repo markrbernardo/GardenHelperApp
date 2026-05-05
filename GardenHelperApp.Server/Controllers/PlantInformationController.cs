@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using GardenHelperApp.Shared.Models;
 using GardenHelperApp.Server.Data;
+using GardenHelperApp.Shared.Enums;
 
 namespace GardenHelperApp.Server.Controllers;
 
@@ -16,32 +17,50 @@ public class PlantInformationController : ControllerBase
         _context = context;
     }
 
+    // ---------------------------------------------------------
+    // GET ALL
+    // ---------------------------------------------------------
     [HttpGet]
-    public async Task<ActionResult<List<PlantInformationModel>>> GetAll()
+    public async Task<ActionResult<List<PlantInformationModel>>> GetAllAsync()
     {
-        return await _context.PlantInformation.ToListAsync();
+        return await _context.PlantInformation
+            .OrderBy(pi => pi.ScientificName ?? pi.CommonName)
+            .ToListAsync();
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<PlantInformationModel>> Get(int id)
+    // ---------------------------------------------------------
+    // GET SINGLE
+    // ---------------------------------------------------------
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<PlantInformationModel>> GetAsync(int id)
     {
-        var plant = await _context.PlantInformation.FindAsync(id);
-        if (plant == null) return NotFound();
-        return plant;
+        var info = await _context.PlantInformation.FindAsync(id);
+        if (info == null)
+            return NotFound();
+
+        return info;
     }
 
+    // ---------------------------------------------------------
+    // CREATE
+    // ---------------------------------------------------------
     [HttpPost]
-    public async Task<IActionResult> Create(PlantInformationModel model)
+    public async Task<ActionResult<PlantInformationModel>> CreateAsync(PlantInformationModel model)
     {
         _context.PlantInformation.Add(model);
         await _context.SaveChangesAsync();
-        return Ok(model);
+
+        return CreatedAtAction(nameof(GetAsync), new { id = model.PlantInformationId }, model);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, PlantInformationModel model)
+    // ---------------------------------------------------------
+    // UPDATE
+    // ---------------------------------------------------------
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateAsync(int id, PlantInformationModel model)
     {
-        if (id != model.PlantInformationId) return BadRequest();
+        if (id != model.PlantInformationId)
+            return BadRequest("PlantInformation ID mismatch.");
 
         _context.Entry(model).State = EntityState.Modified;
         await _context.SaveChangesAsync();
@@ -49,13 +68,17 @@ public class PlantInformationController : ControllerBase
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    // ---------------------------------------------------------
+    // DELETE
+    // ---------------------------------------------------------
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteAsync(int id)
     {
-        var plant = await _context.PlantInformation.FindAsync(id);
-        if (plant == null) return NotFound();
+        var info = await _context.PlantInformation.FindAsync(id);
+        if (info == null)
+            return NotFound();
 
-        _context.PlantInformation.Remove(plant);
+        _context.PlantInformation.Remove(info);
         await _context.SaveChangesAsync();
 
         return NoContent();

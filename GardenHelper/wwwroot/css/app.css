@@ -325,3 +325,24 @@ code {
 .loading-spinner {
     opacity: 0.9;
 }
+
+
+/* Hide scrollbar but keep scroll functionality */
+.scroll-hide {
+    scrollbar-width: none; /* Firefox */
+}
+
+    .scroll-hide::-webkit-scrollbar {
+        display: none; /* Chrome, Edge, Safari */
+    }
+
+.scroll-y {
+    overflow-y: auto;
+}
+
+.scroll-x {
+    overflow-x: auto;
+}
+
+
+

@@ -1,55 +1,69 @@
 ﻿@page "/locations/create"
+
 @inject LocationService LocationService
 @inject GardenService GardenService
 @inject UserSessionService UserSession
 @inject NavigationManager Nav
 
-<h3>Create Location</h3>
+<PageHeader Title="Create Location" />
 
-@if (gardens == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <LocationForm Location="location"
-                  Gardens="gardens"
-                  SubmitLabel="Create"
-                  OnSubmitCallback="HandleSubmit"
-                  OnCancelCallback="GoBack"
-                  ShowDelete="false" />
+<div class="page-section">
 
-}
+    @if (Gardens == null)
+    {
+        <LoadingSpinner Message="Loading gardens..." />
+    }
+    else
+    {
+        <LocationForm Location="Location"
+                      Gardens="Gardens"
+                      SubmitLabel="Create"
+                      OnSubmitCallback="HandleSubmitAsync"
+                      OnCancelCallback="GoBack"
+                      ShowDelete="false" />
+    }
+
+</div>
 
 @code {
-    LocationModel location = new();
-    List<GardenModel>? gardens;
+    private LocationModel Location { get; set; } = new();
+    private List<GardenModel>? Gardens;
 
     protected override async Task OnInitializedAsync()
     {
+        // Require login
         if (UserSession.CurrentUserId == null)
         {
             Nav.NavigateTo("/login");
             return;
         }
 
-        gardens = await GardenService.GetGardensByUser(UserSession.CurrentUserId.Value);
+        // Load gardens for this user
+        Gardens = await GardenService.GetByUserAsync(UserSession.CurrentUserId.Value);
 
+        // Default to current garden if available
         if (UserSession.CurrentGardenId != null)
-            location.GardenId = UserSession.CurrentGardenId.Value;
-        else if (gardens.Count > 0)
-            location.GardenId = gardens.First().GardenId;
+        {
+            Location.GardenId = UserSession.CurrentGardenId.Value;
+        }
+        else if (Gardens.Count > 0)
+        {
+            Location.GardenId = Gardens.First().GardenId;
+        }
     }
 
-    async Task HandleSubmit()
+    private async Task HandleSubmitAsync()
     {
-        var newId = await LocationService.Create(location);
-        await UserSession.TriggerChange();
+        var newId = await LocationService.CreateAsync(Location);
+
+        // Notify session listeners (NavMenu, etc.)
+        await UserSession.InitializeAsync();
+
         Nav.NavigateTo($"/location-profile/{newId}");
     }
 
-    void GoBack()
+    private void GoBack()
     {
-        Nav.NavigateTo($"/garden-profile/{location.GardenId}");
+        Nav.NavigateTo($"/garden-profile/{Location.GardenId}");
     }
 }

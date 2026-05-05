@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using GardenHelperApp.Shared.Models;
 using GardenHelperApp.Server.Data;
-using Microsoft.EntityFrameworkCore;
 
 namespace GardenHelperApp.Server.Controllers;
 
@@ -9,65 +9,56 @@ namespace GardenHelperApp.Server.Controllers;
 [Route("api/[controller]")]
 public class PlantPhotosController : ControllerBase
 {
-    private readonly GardenContext _db;
+    private readonly GardenContext _context;
 
-    public PlantPhotosController(GardenContext db)
+    public PlantPhotosController(GardenContext context)
     {
-        _db = db;
+        _context = context;
     }
 
-    // GET: api/plantphotos/plant/3
-    [HttpGet("plant/{plantId}")]
-    public async Task<IActionResult> GetPhotosForPlant(int plantId)
+    // ---------------------------------------------------------
+    // GET PHOTOS BY PLANT
+    // ---------------------------------------------------------
+    [HttpGet("plant/{plantId:int}")]
+    public async Task<ActionResult<List<PlantPhotoModel>>> GetByPlantAsync(int plantId)
     {
-        try
-        {
-            var photos = await _db.PlantPhotos
-                .Where(p => p.PlantId == plantId)
-                .OrderByDescending(p => p.PhotoId)
-                .ToListAsync();
+        var photos = await _context.PlantPhotos
+            .Where(p => p.PlantId == plantId)
+            .OrderByDescending(p => p.PhotoId)
+            .ToListAsync();
 
-            return Ok(photos);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("ERROR in GetPhotosForPlant: " + ex);
-            return StatusCode(500, ex.Message);
-        }
+        return photos;
     }
 
-    // POST: api/plantphotos
+    // ---------------------------------------------------------
+    // CREATE PHOTO
+    // ---------------------------------------------------------
     [HttpPost]
-    public async Task<IActionResult> AddPhoto(PlantPhotoModel model)
+    public async Task<ActionResult<PlantPhotoModel>> CreateAsync(PlantPhotoModel model)
     {
-        try
-        {
-            model.CreatedAt = DateTime.UtcNow.ToString("o");
+        // Server controls timestamps
+        model.CreatedAt = DateTime.UtcNow;
 
-            _db.PlantPhotos.Add(model);
-            await _db.SaveChangesAsync();
+        _context.PlantPhotos.Add(model);
+        await _context.SaveChangesAsync();
 
-            return Ok(model);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("ERROR in AddPhoto: " + ex);
-            return StatusCode(500, ex.Message);
-        }
+        return CreatedAtAction(nameof(GetByPlantAsync), new { plantId = model.PlantId }, model);
     }
 
-    // DELETE: api/plantphotos/5
-    [HttpDelete("{photoId}")]
-    public async Task<IActionResult> DeletePhoto(int photoId)
-    {
-        var photo = await _db.PlantPhotos.FindAsync(photoId);
 
+    // ---------------------------------------------------------
+    // DELETE PHOTO
+    // ---------------------------------------------------------
+    [HttpDelete("{photoId:int}")]
+    public async Task<IActionResult> DeleteAsync(int photoId)
+    {
+        var photo = await _context.PlantPhotos.FindAsync(photoId);
         if (photo == null)
             return NotFound();
 
-        _db.PlantPhotos.Remove(photo);
-        await _db.SaveChangesAsync();
+        _context.PlantPhotos.Remove(photo);
+        await _context.SaveChangesAsync();
 
-        return Ok();
+        return NoContent();
     }
 }

@@ -1,7 +1,11 @@
 ﻿<div class="plant-dropdown-container">
 
     <!-- SELECTED VALUE -->
-    <div class="plant-dropdown-selected" @onclick="Toggle">
+    <div class="plant-dropdown-selected @(Disabled ? "disabled" : "")"
+         @onclick="() => { if (!Disabled) Toggle(); }"
+         @onkeydown="HandleKeyDown"
+         tabindex="0">
+
         @if (SelectedPlant != null)
         {
             <div class="plant-tile selected">
@@ -32,7 +36,11 @@
     <!-- DROPDOWN LIST -->
     @if (IsOpen)
     {
-        <div class="plant-dropdown-list" tabindex="0" @onblur="Close">
+        <div class="plant-dropdown-list"
+             tabindex="0"
+             @onblur="Close"
+             @onclick:outside="Close">
+
             @foreach (var p in Plants)
             {
                 <div class="plant-tile @(SelectedPlant?.PlantId == p.PlantId ? "selected" : "")"
@@ -63,6 +71,7 @@
     [Parameter] public List<PlantWithInfoDto> Plants { get; set; } = new();
     [Parameter] public int Value { get; set; }
     [Parameter] public EventCallback<int> ValueChanged { get; set; }
+    [Parameter] public bool Disabled { get; set; }
 
     PlantWithInfoDto? SelectedPlant;
     bool IsOpen = false;
@@ -77,8 +86,23 @@
 
     async Task Select(PlantWithInfoDto plant)
     {
+        if (Disabled)
+            return;
+
         SelectedPlant = plant;
         IsOpen = false;
         await ValueChanged.InvokeAsync(plant.PlantId);
+    }
+
+    void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (Disabled)
+            return;
+
+        if (e.Key == "Enter" || e.Key == " ")
+            Toggle();
+
+        if (e.Key == "Escape")
+            Close();
     }
 }

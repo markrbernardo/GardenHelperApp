@@ -1,4 +1,5 @@
 ﻿@using GardenHelperApp.Shared.Models
+@using GardenHelperApp.Shared.Enums
 
 <EditForm Model="@PlantInfo" OnValidSubmit="OnSubmit">
     <DataAnnotationsValidator />
@@ -7,18 +8,24 @@
     <!-- BASIC INFO -->
     <div class="mb-3">
         <label class="form-label">Common Name</label>
-        <InputText class="form-control" @bind-Value="PlantInfo.CommonName" />
+        <InputText class="form-control"
+                   @bind-Value="PlantInfo.CommonName"
+                   disabled="@IsDisabled" />
     </div>
 
     <div class="mb-3">
         <label class="form-label">Scientific Name</label>
-        <InputText class="form-control" @bind-Value="PlantInfo.ScientificName" />
+        <InputText class="form-control"
+                   @bind-Value="PlantInfo.ScientificName"
+                   disabled="@IsDisabled" />
     </div>
 
     <!-- PHOTO UPLOAD -->
     <div class="mb-3">
         <label class="form-label">Upload Photo</label>
-        <InputFile OnChange="HandleFileSelected" accept="image/*" />
+        <InputFile OnChange="HandleFileSelected"
+                   accept="image/*"
+                   disabled="@IsDisabled" />
         <small class="text-muted">Choose an image to upload.</small>
     </div>
 
@@ -28,7 +35,9 @@
             <img src="@($"data:{PlantInfo.PhotoMimeType};base64,{PlantInfo.Photo}")"
                  style="max-width:200px; border-radius:8px;" />
 
-            <button class="btn btn-danger btn-sm mt-2" @onclick="RemovePhoto">
+            <button class="btn btn-danger btn-sm mt-2"
+                    @onclick="RemovePhoto"
+                    disabled="@IsDisabled">
                 Remove Photo
             </button>
         </div>
@@ -37,66 +46,135 @@
     <!-- DESCRIPTION -->
     <div class="mb-3">
         <label class="form-label">Description</label>
-        <InputTextArea class="form-control" rows="3" @bind-Value="PlantInfo.Description" />
+        <InputTextArea class="form-control"
+                       rows="3"
+                       @bind-Value="PlantInfo.Description"
+                       disabled="@IsDisabled" />
     </div>
 
-    <!-- GROWING SEASON -->
+    <!-- ENUM: GROWING SEASON -->
     <div class="mb-3">
         <label class="form-label">Growing Season</label>
-        <InputText class="form-control" @bind-Value="PlantInfo.GrowingSeason" />
+        <select class="form-select"
+                @bind="PlantInfo.GrowingSeason"
+                disabled="@IsDisabled">
+            @foreach (var value in Enum.GetValues<Season>())
+            {
+                <option value="@value">@value</option>
+            }
+        </select>
     </div>
 
     <!-- CARE SECTIONS -->
     <h5 class="mt-4">Care Information</h5>
 
+    <!-- ENUM: LIGHT -->
     <div class="mb-3">
-        <label class="form-label">Seeds</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Seeds" />
+        <label class="form-label">Light Requirement</label>
+        <select class="form-select"
+                @bind="PlantInfo.Light"
+                disabled="@IsDisabled">
+            @foreach (var value in Enum.GetValues<LightRequirement>())
+            {
+                <option value="@value">@value</option>
+            }
+        </select>
     </div>
 
+    <!-- ENUM: WATER -->
     <div class="mb-3">
-        <label class="form-label">Light</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Light" />
+        <label class="form-label">Water Requirement</label>
+        <select class="form-select"
+                @bind="PlantInfo.Water"
+                disabled="@IsDisabled">
+            @foreach (var value in Enum.GetValues<WaterRequirement>())
+            {
+                <option value="@value">@value</option>
+            }
+        </select>
     </div>
 
-    <div class="mb-3">
-        <label class="form-label">Water</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Water" />
-    </div>
-
+    <!-- AIR (string) -->
     <div class="mb-3">
         <label class="form-label">Air</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Air" />
+        <InputTextArea class="form-control"
+                       rows="2"
+                       @bind-Value="PlantInfo.Air"
+                       disabled="@IsDisabled" />
     </div>
 
+    <!-- ENUM: SOIL -->
     <div class="mb-3">
-        <label class="form-label">Soil</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Soil" />
+        <label class="form-label">Soil Type</label>
+        <select class="form-select"
+                @bind="PlantInfo.Soil"
+                disabled="@IsDisabled">
+            @foreach (var value in Enum.GetValues<SoilType>())
+            {
+                <option value="@value">@value</option>
+            }
+        </select>
     </div>
 
+    <!-- ENUM: CONTAINER -->
     <div class="mb-3">
-        <label class="form-label">Container</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Container" />
+        <label class="form-label">Container Type</label>
+        <select class="form-select"
+                @bind="PlantInfo.Container"
+                disabled="@IsDisabled">
+            @foreach (var value in Enum.GetValues<ContainerType>())
+            {
+                <option value="@value">@value</option>
+            }
+        </select>
     </div>
 
+    <!-- ENUM: FERTILIZATION -->
     <div class="mb-3">
         <label class="form-label">Fertilization</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Fertilization" />
+        <select class="form-select"
+                @bind="PlantInfo.Fertilization"
+                disabled="@IsDisabled">
+            @foreach (var value in Enum.GetValues<FertilizerType>())
+            {
+                <option value="@value">@value</option>
+            }
+        </select>
     </div>
 
+    <!-- PRUNING (string) -->
     <div class="mb-3">
         <label class="form-label">Pruning</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Pruning" />
+        <InputTextArea class="form-control"
+                       rows="2"
+                       @bind-Value="PlantInfo.Pruning"
+                       disabled="@IsDisabled" />
     </div>
 
+    <!-- ENUM: PROPAGATION -->
     <div class="mb-3">
-        <label class="form-label">Propagation</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Propagation" />
+        <label class="form-label">Propagation Method</label>
+        <select class="form-select"
+                @bind="PlantInfo.Propagation"
+                disabled="@IsDisabled">
+            @foreach (var value in Enum.GetValues<PropagationMethod>())
+            {
+                <option value="@value">@value</option>
+            }
+        </select>
     </div>
 
+    <!-- ENUM: HEALTH -->
     <div class="mb-3">
-        <label class="form-label">Health</label>
-        <InputTextArea class="form-control" rows="2" @bind-Value="PlantInfo.Health" />
+        <label class="form-label">Health Status</label>
+        <select class="form-select"
+                @bind="PlantInfo.Health"
+                disabled="@IsDisabled">
+            @foreach (var value in Enum.GetValues<PlantHealthStatus>())
+            {
+                <option value="@value">@value</option>
+            }
+        </select>
     </div>
 
     <!-- BUTTONS -->
@@ -106,7 +184,9 @@
 
         @if (ShowDelete)
         {
-            <button class="btn btn-danger ms-auto" @onclick="Delete" disabled="@IsDisabled">
+            <button class="btn btn-danger ms-auto"
+                    @onclick="Delete"
+                    disabled="@IsDisabled">
                 Delete
             </button>
         }
@@ -126,23 +206,9 @@
 
     [Inject] public IJSRuntime JS { get; set; } = default!;
 
-    private async Task OnSubmit()
-    {
-        if (!IsDisabled)
-            await OnSubmitCallback.InvokeAsync();
-    }
-
-    private async Task Cancel()
-    {
-        if (!IsDisabled)
-            await OnCancelCallback.InvokeAsync();
-    }
-
-    private async Task Delete()
-    {
-        if (!IsDisabled)
-            await OnDeleteCallback.InvokeAsync();
-    }
+    private Task OnSubmit() => !IsDisabled ? OnSubmitCallback.InvokeAsync() : Task.CompletedTask;
+    private Task Cancel() => !IsDisabled ? OnCancelCallback.InvokeAsync() : Task.CompletedTask;
+    private Task Delete() => !IsDisabled ? OnDeleteCallback.InvokeAsync() : Task.CompletedTask;
 
     async Task HandleFileSelected(InputFileChangeEventArgs e)
     {

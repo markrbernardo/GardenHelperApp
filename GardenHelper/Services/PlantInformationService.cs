@@ -1,5 +1,7 @@
 ﻿using System.Net.Http.Json;
 using GardenHelperApp.Shared.Models;
+using GardenHelperApp.Shared.Enums;
+using GardenHelperApp.Shared.Constants;
 
 namespace GardenHelperApp.Client.Services;
 
@@ -12,56 +14,85 @@ public class PlantInformationService
         _http = http;
     }
 
-    public async Task<List<PlantInformationModel>> GetAll()
+    // ---------------------------------------------------------
+    // GET ALL
+    // ---------------------------------------------------------
+    public async Task<List<PlantInformationModel>> GetAllAsync()
     {
-        var list = await _http.GetFromJsonAsync<List<PlantInformationModel>>("api/plantinformation")
-                   ?? new List<PlantInformationModel>();
-
-        return list
-            .OrderBy(pi => pi.ScientificName ?? pi.CommonName)
-            .ToList();
+        return await _http.GetFromJsonAsync<List<PlantInformationModel>>(ApiRoutes.PlantInformation.Base)
+               ?? new List<PlantInformationModel>();
     }
 
-
-    public async Task<PlantInformationModel?> Get(int id)
+    // ---------------------------------------------------------
+    // GET SINGLE
+    // ---------------------------------------------------------
+    public async Task<PlantInformationModel?> GetAsync(int id)
     {
-        return await _http.GetFromJsonAsync<PlantInformationModel>($"api/plantinformation/{id}");
-    }
+        var url = ApiRoutes.PlantInformation.ById.Replace("{id}", id.ToString());
 
-    public async Task Create(PlantInformationModel model)
-    {
-        var resp = await _http.PostAsJsonAsync("api/plantinformation", model);
-        if (!resp.IsSuccessStatusCode)
+        try
         {
-            var err = await resp.Content.ReadAsStringAsync();
-            throw new Exception($"Create failed: {err}");
+            return await _http.GetFromJsonAsync<PlantInformationModel>(url);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
         }
     }
 
-    public async Task Update(PlantInformationModel model)
+    // ---------------------------------------------------------
+    // CREATE
+    // ---------------------------------------------------------
+    public async Task<PlantInformationModel?> CreateAsync(PlantInformationModel model)
     {
-        var resp = await _http.PutAsJsonAsync($"api/plantinformation/{model.PlantInformationId}", model);
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync();
-            throw new Exception($"Update failed: {err}");
-        }
+        EnsureEnumDefaults(model);
+
+        var response = await _http.PostAsJsonAsync(ApiRoutes.PlantInformation.Base, model);
+
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<PlantInformationModel>();
     }
 
-    public async Task Delete(int id)
+    // ---------------------------------------------------------
+    // UPDATE
+    // ---------------------------------------------------------
+    public async Task<bool> UpdateAsync(PlantInformationModel model)
     {
-        var resp = await _http.DeleteAsync($"api/plantinformation/{id}");
-        if (!resp.IsSuccessStatusCode)
-        {
-            var err = await resp.Content.ReadAsStringAsync();
-            throw new Exception($"Delete failed: {err}");
-        }
+        EnsureEnumDefaults(model);
+
+        var url = ApiRoutes.PlantInformation.ById.Replace("{id}", model.PlantInformationId.ToString());
+
+        var response = await _http.PutAsJsonAsync(url, model);
+
+        return response.IsSuccessStatusCode;
     }
 
-    public async Task<PlantInformationModel?> GetById(int id)
+    // ---------------------------------------------------------
+    // DELETE
+    // ---------------------------------------------------------
+    public async Task<bool> DeleteAsync(int id)
     {
-        return await _http.GetFromJsonAsync<PlantInformationModel>(
-            $"api/plantinformation/{id}"
-        );
+        var url = ApiRoutes.PlantInformation.ById.Replace("{id}", id.ToString());
+
+        var response = await _http.DeleteAsync(url);
+
+        return response.IsSuccessStatusCode;
+    }
+
+    // ---------------------------------------------------------
+    // ENUM SAFETY
+    // ---------------------------------------------------------
+    private static void EnsureEnumDefaults(PlantInformationModel model)
+    {
+        model.GrowingSeason = model.GrowingSeason == 0 ? Season.Unknown : model.GrowingSeason;
+        model.Light = model.Light == 0 ? LightRequirement.Unknown : model.Light;
+        model.Water = model.Water == 0 ? WaterRequirement.Unknown : model.Water;
+        model.Soil = model.Soil == 0 ? SoilType.Unknown : model.Soil;
+        model.Container = model.Container == 0 ? ContainerType.Unknown : model.Container;
+        model.Fertilization = model.Fertilization == 0 ? FertilizerType.Unknown : model.Fertilization;
+        model.Propagation = model.Propagation == 0 ? PropagationMethod.Unknown : model.Propagation;
+        model.Health = model.Health == 0 ? PlantHealthStatus.Unknown : model.Health;
     }
 }

@@ -15,6 +15,7 @@
     <Content Remove="Components\PlantTile.razor" />
     <Content Remove="Pages\Dashboard.razor" />
     <Content Remove="Pages\DbCheck.razor" />
+    <Content Remove="Pages\Locations.razor" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,9 +24,17 @@
     <None Remove="Components\PlantInfoHeader.razor.css" />
     <None Remove="Components\PlantTile.razor.css" />
     <None Remove="Pages\Dashboard.razor.css" />
+    <None Remove="Pages\Locations.razor.css" />
   </ItemGroup>
 
-  <ItemGroup>
+	<ItemGroup>
+		<Content Update="**\*.razor.css">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+
+	<ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.72" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.13" PrivateAssets="all" />

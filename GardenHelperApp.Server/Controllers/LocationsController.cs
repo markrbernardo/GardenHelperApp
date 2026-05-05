@@ -1,12 +1,13 @@
 ﻿using GardenHelperApp.Server.Data;
 using GardenHelperApp.Shared.Models;
+using GardenHelperApp.Shared.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace GardenHelperApp.Server.Controllers;
 
-[Route("api/[controller]")]
 [ApiController]
+[Route("api/[controller]")]
 public class LocationsController : ControllerBase
 {
     private readonly GardenContext _context;
@@ -16,35 +17,51 @@ public class LocationsController : ControllerBase
         _context = context;
     }
 
+    // ---------------------------------------------------------
+    // GET ALL LOCATIONS
+    // ---------------------------------------------------------
     [HttpGet]
-    public async Task<ActionResult<List<LocationModel>>> GetAll()
+    public async Task<ActionResult<List<LocationModel>>> GetAllAsync()
     {
-        return await _context.Locations
+        var locations = await _context.Locations
             .OrderBy(l => l.Name)
             .ToListAsync();
+
+        return locations;
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<LocationModel>> Get(int id)
+    // ---------------------------------------------------------
+    // GET SINGLE LOCATION
+    // ---------------------------------------------------------
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<LocationModel>> GetAsync(int id)
     {
         var location = await _context.Locations.FindAsync(id);
-        if (location == null) return NotFound();
+        if (location == null)
+            return NotFound();
+
         return location;
     }
 
-    [HttpGet("garden/{gardenId}")]
-    public async Task<ActionResult<List<LocationModel>>> GetByGarden(int gardenId)
+    // ---------------------------------------------------------
+    // GET LOCATIONS BY GARDEN
+    // ---------------------------------------------------------
+    [HttpGet("garden/{gardenId:int}")]
+    public async Task<ActionResult<List<LocationModel>>> GetByGardenAsync(int gardenId)
     {
         var locations = await _context.Locations
             .Where(l => l.GardenId == gardenId)
             .OrderBy(l => l.Name)
             .ToListAsync();
 
-        return Ok(locations);
+        return locations;
     }
 
+    // ---------------------------------------------------------
+    // CREATE LOCATION
+    // ---------------------------------------------------------
     [HttpPost]
-    public async Task<IActionResult> Create(LocationModel model)
+    public async Task<ActionResult<int>> CreateAsync(LocationModel model)
     {
         _context.Locations.Add(model);
         await _context.SaveChangesAsync();
@@ -52,11 +69,14 @@ public class LocationsController : ControllerBase
         return Ok(model.LocationId);
     }
 
-    // Single Update action (no duplicate route)
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, LocationModel model)
+    // ---------------------------------------------------------
+    // UPDATE LOCATION
+    // ---------------------------------------------------------
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateAsync(int id, LocationModel model)
     {
-        if (id != model.LocationId) return BadRequest();
+        if (id != model.LocationId)
+            return BadRequest("Location ID mismatch.");
 
         _context.Entry(model).State = EntityState.Modified;
         await _context.SaveChangesAsync();
@@ -64,11 +84,15 @@ public class LocationsController : ControllerBase
         return NoContent();
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    // ---------------------------------------------------------
+    // DELETE LOCATION
+    // ---------------------------------------------------------
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteAsync(int id)
     {
         var location = await _context.Locations.FindAsync(id);
-        if (location == null) return NotFound();
+        if (location == null)
+            return NotFound();
 
         _context.Locations.Remove(location);
         await _context.SaveChangesAsync();

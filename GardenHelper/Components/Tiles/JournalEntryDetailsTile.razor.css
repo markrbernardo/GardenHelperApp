@@ -33,6 +33,14 @@
     font-size: 0.85rem;
 }
 
+/* ⭐ NEW — Journal Title */
+.journal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin-top: 0.25rem;
+}
+
 /* BODY */
 .journal-body p {
     margin: 0;

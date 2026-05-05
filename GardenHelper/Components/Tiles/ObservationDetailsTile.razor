@@ -1,17 +1,23 @@
 ﻿@using GardenHelperApp.Shared.Models
 @inject ObservationService ObservationService
 
-<div class="observation-details-tile">
+<div class="@BuildContainerClasses()">
 
-    <h3 class="section-title">Details</h3>
-
-    @if (SelectedDate == null)
+    @if (Loading)
     {
-        <p class="placeholder">Select a date to view observations.</p>
+        <LoadingSpinner Message="Loading observations..." />
+    }
+    else if (SelectedDate == null)
+    {
+        <EmptyState Icon="bi bi-calendar" Title="No date selected">
+            Select a date to view observations.
+        </EmptyState>
     }
     else if (ObservationsForDate.Count == 0)
     {
-        <p class="placeholder">No observations for this date.</p>
+        <EmptyState Icon="bi bi-eye-slash" Title="No observations">
+            There are no observations for this date.
+        </EmptyState>
     }
     else
     {
@@ -19,26 +25,28 @@
         {
             var plant = Plants.First(p => p.PlantId == o.PlantId);
 
-            <div class="obs-card @(o.ActiveObservation ? "active" : "")">
+            <div class="@BuildCardClasses(o)" title="@Tooltip">
 
                 <!-- TOP ROW -->
-                <div class="obs-top-row">
-                    <div class="created-at">@FormatDate(o.CreatedAt)</div>
+                <div class="obs-top-row d-flex justify-content-between align-items-center">
+                    <div class="created-at text-muted">@FormatDate(o.CreatedAt)</div>
 
-                    <div class="active-toggle">
-                        <label>Active</label>
+                    <div class="active-toggle d-flex align-items-center gap-2">
+                        <label class="small m-0">Active</label>
                         <input type="checkbox"
                                checked="@o.ActiveObservation"
+                               disabled="@Disabled"
                                @onchange="() => ToggleActive(o)" />
                     </div>
                 </div>
 
                 <!-- PLANT TILE -->
-                <div class="obs-plant-tile">
-                    <div class="plant-thumb">
+                <div class="obs-plant-tile d-flex mt-2">
+                    <div class="plant-thumb me-2">
                         @if (!string.IsNullOrWhiteSpace(plant.Photo))
                         {
-                            <img src="@($"data:{plant.PhotoMimeType ?? "image/jpeg"};base64,{plant.Photo}")" />
+                            <img src="@($"data:{plant.PhotoMimeType ?? "image/jpeg"};base64,{plant.Photo}")"
+                                 alt="Plant photo" />
                         }
                         else
                         {
@@ -47,32 +55,41 @@
                     </div>
 
                     <div class="plant-text">
-                        <div class="plant-name"><strong>@plant.Name</strong></div>
-                        <div class="plant-common">@plant.CommonName</div>
-                        <div class="plant-scientific"><em>@plant.ScientificName</em></div>
+                        <div class="plant-name fw-bold">@plant.Name</div>
+                        <div class="plant-common text-muted">@plant.CommonName</div>
+                        <div class="plant-scientific fst-italic">@plant.ScientificName</div>
                     </div>
                 </div>
 
                 <!-- OBSERVATION BODY -->
-                <div class="obs-body">
-                    <h5>Observation</h5>
-                    <p>@o.Observation</p>
+                <div class="obs-body mt-3">
+                    <h5 class="mb-1">Observation</h5>
+
+                    @if (ChildContent != null)
+                    {
+                        @ChildContent(o)
+                    }
+                    else
+                    {
+                        <p>@o.Observation</p>
+                    }
                 </div>
 
                 <!-- UPDATED AT -->
                 @if (o.UpdatedAt > o.CreatedAt)
                 {
-                    <div class="updated-at">
+                    <div class="updated-at text-muted mt-2 small">
                         <strong>Updated:</strong> @FormatDate(o.UpdatedAt)
                     </div>
                 }
 
                 <!-- EDIT BUTTON -->
-                <div class="edit-row">
-                    <button class="btn btn-primary btn-sm"
-                            @onclick="() => OnEdit.InvokeAsync(o.ObservationId)">
-                        Edit
-                    </button>
+                <div class="edit-row mt-2">
+                    <IconButton Icon="bi bi-pencil-square"
+                                Label="Edit"
+                                Size="sm"
+                                Disabled="@Disabled"
+                                OnClick="() => OnEdit.InvokeAsync(o.ObservationId)" />
                 </div>
 
             </div>
@@ -83,11 +100,28 @@
 
 @code {
     [Parameter] public DateTime? SelectedDate { get; set; }
-    [Parameter] public List<ObservationModel> Observations { get; set; }
-    [Parameter] public List<PlantWithInfoDto> Plants { get; set; }
+    [Parameter] public List<ObservationModel> Observations { get; set; } = new();
+    [Parameter] public List<PlantWithInfoDto> Plants { get; set; } = new();
     [Parameter] public EventCallback<int> OnEdit { get; set; }
     [Parameter] public EventCallback OnRefresh { get; set; }
     [Parameter] public int? SelectedGardenId { get; set; }
+
+    // NEW — standardized component features
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public bool Loading { get; set; } = false;
+
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string CardClass { get; set; } = "obs-card";
+    [Parameter] public string SelectedClass { get; set; } = "active";
+    [Parameter] public string HoverClass { get; set; } = "tile-hover";
+
+    [Parameter] public string Size { get; set; } = "md"; // sm, md, lg
+    [Parameter] public bool Rounded { get; set; } = true;
+    [Parameter] public bool Padding { get; set; } = true;
+
+    [Parameter] public string? Tooltip { get; set; }
+
+    [Parameter] public RenderFragment<ObservationModel>? ChildContent { get; set; }
 
     List<ObservationModel> ObservationsForDate =>
         Observations
@@ -100,11 +134,41 @@
 
     async Task ToggleActive(ObservationModel obs)
     {
+        if (Disabled)
+            return;
+
         obs.ActiveObservation = !obs.ActiveObservation;
-        await ObservationService.UpdateActiveStatus(obs.ObservationId, obs.ActiveObservation);
+
+        await ObservationService.UpdateActiveStatusAsync(
+            obs.ObservationId,
+            obs.ActiveObservation
+        );
+
         await OnRefresh.InvokeAsync();
     }
 
     string FormatDate(DateTime dt) =>
         dt.ToString("dddd, MMM dd • hh:mm tt");
+
+    private string BuildContainerClasses()
+    {
+        var sizeClass = Size switch
+        {
+            "sm" => "tile-sm",
+            "lg" => "tile-lg",
+            _ => "tile-md"
+        };
+
+        return $"observation-details-tile {sizeClass} {CssClass}".Trim();
+    }
+
+    private string BuildCardClasses(ObservationModel obs)
+    {
+        var roundedClass = Rounded ? "tile-rounded" : "";
+        var paddingClass = Padding ? "p-3" : "p-0";
+        var selectedClass = obs.ActiveObservation ? SelectedClass : "";
+        var disabledClass = Disabled ? "tile-disabled" : "";
+
+        return $"{CardClass} {roundedClass} {paddingClass} {HoverClass} {selectedClass} {disabledClass}".Trim();
+    }
 }

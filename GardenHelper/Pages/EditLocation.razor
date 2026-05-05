@@ -1,91 +1,80 @@
-﻿@page "/locations/edit/{id:int}"
+﻿@page "/locations/edit/{Id:int}"
+
 @inject LocationService LocationService
-@inject GardenService GardenService
 @inject NavigationManager Nav
-@inject UserSessionService UserSessionService
+@inject UserSessionService Session
 @inject IJSRuntime JS
 
-<h3>Edit Location</h3>
+<PageHeader Title="Edit Location" />
 
+<div class="page-section">
 
-@if (isDeleted)
-{
-    <p>Redirecting...</p>
-    return;
-}
+    @if (IsDeleted)
+    {
+        <LoadingSpinner Message="Deleting..." />
+    }
+    else if (Location == null)
+    {
+        <LoadingSpinner Message="Loading location..." />
+    }
+    else
+    {
+        <LocationForm Location="Location"
+                      SubmitLabel="Save"
+                      OnSubmitCallback="HandleSubmitAsync"
+                      OnCancelCallback="GoBack"
+                      OnDeleteCallback="DeleteLocationAsync"
+                      ShowDelete="true"
+                      IsDisabled="IsDeleted" />
+    }
 
-@if (location == null || gardens == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <LocationForm Location="location"
-                  Gardens="gardens"
-                  SubmitLabel="Save"
-                  OnSubmitCallback="HandleSubmit"
-                  OnCancelCallback="GoBack"
-                  OnDeleteCallback="DeleteLocation"
-                  ShowDelete="true"
-                  IsDisabled="isDeleted" />
-
-
-}
-@if (isDeleted)
-{
-    <p>Deleting...</p>
-    return;
-}
-
+</div>
 
 @code {
-    [Parameter] public int id { get; set; }
-    [Parameter] public bool IsDisabled { get; set; }
-    bool isDeleted = false;
+    [Parameter] public int Id { get; set; }
 
-
-    LocationModel? location;
-    List<GardenModel>? gardens;
+    private LocationModel? Location;
+    private bool IsDeleted = false;
 
     protected override async Task OnInitializedAsync()
     {
-        gardens = await GardenService.GetAllGardens();
-        location = await LocationService.Get(id);
+        Location = await LocationService.GetAsync(Id);
 
-        if (location == null)
+        if (Location == null)
         {
             Nav.NavigateTo("/not-found");
             return;
         }
     }
 
-    async Task HandleSubmit()
+    private async Task HandleSubmitAsync()
     {
-        await LocationService.Update(location!);
-        Nav.NavigateTo($"/location-profile/{id}");
+        await LocationService.UpdateAsync(Location!);
+        Nav.NavigateTo($"/location-profile/{Id}");
     }
 
-    void GoBack()
+    private void GoBack()
     {
-        Nav.NavigateTo($"/location-profile/{id}");
+        Nav.NavigateTo($"/location-profile/{Id}");
     }
 
-    async Task DeleteLocation()
+    private async Task DeleteLocationAsync()
     {
-        var confirmed = await JS.InvokeAsync<bool>("confirm",
-            $"Are you sure you want to delete the location '{location?.Name}'?");
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"Are you sure you want to delete the location '{Location?.Name}'?"
+        );
 
         if (!confirmed)
             return;
 
-        await LocationService.Delete(id);
-        await UserSessionService.TriggerChange();
+        await LocationService.DeleteAsync(Id);
 
-        isDeleted = true; // ← stop the form from rendering
+        // Refresh session (NavMenu, etc.)
+        await Session.InitializeAsync();
 
-        Nav.NavigateTo($"/garden-profile/{location.GardenId}", forceLoad: true);
+        IsDeleted = true;
+
+        Nav.NavigateTo($"/garden-profile/{Location!.GardenId}", forceLoad: true);
     }
-
-
-
 }

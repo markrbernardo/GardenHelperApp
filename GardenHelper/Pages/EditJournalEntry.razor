@@ -1,120 +1,107 @@
-﻿@page "/journalentries/edit/{id:int}"
+﻿@page "/journalentries/edit/{Id:int}"
+
 @inject JournalEntryService JournalEntryService
 @inject GardenService GardenService
 @inject UserSessionService Session
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<h3>Edit Journal Entry</h3>
+<PageHeader Title="Edit Journal Entry" />
 
-@if (entry == null || gardens == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    @if (isDeleted)
+<div class="page-section">
+
+    @if (Entry == null || Gardens == null)
     {
-        <p>Redirecting...</p>
-        return;
+        <LoadingSpinner Message="Loading journal entry..." />
+    }
+    else
+    {
+        @if (IsDeleted)
+        {
+            <LoadingSpinner Message="Deleting..." />
+        }
+        else
+        {
+            <JournalEntryForm Entry="Entry"
+                              Gardens="Gardens"
+                              SubmitLabel="Save"
+                              OnSubmitCallback="HandleSubmitAsync"
+                              OnCancelCallback="GoBack"
+                              OnDeleteCallback="DeleteEntryAsync"
+                              ShowDelete="true"
+                              IsDisabled="IsDeleted" />
+        }
     }
 
-    <JournalEntryForm Entry="entry"
-                      Gardens="gardens"
-                      SubmitLabel="Save"
-                      OnSubmitCallback="HandleSubmit"
-                      OnCancelCallback="GoBack"
-                      OnDeleteCallback="DeleteEntry"
-                      ShowDelete="true"
-                      IsDisabled="isDeleted" />
-
-}
+</div>
 
 @code {
-    [Parameter] public int id { get; set; }
+    [Parameter] public int Id { get; set; }
 
-    JournalEntryModel? entry;
-    List<GardenModel>? gardens;
-    string? returnUrl;
-    bool isDeleted = false;
-
-
-    bool showDeleteConfirm = false;
-
-    void ShowDeleteConfirm() => showDeleteConfirm = true;
-    void HideDeleteConfirm() => showDeleteConfirm = false;
-
-    async Task ConfirmDelete()
-    {
-        await JournalEntryService.Delete(entry!.JournalEntryId);
-
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
-        else
-            Nav.NavigateTo("/journal");
-    }
-
-
+    private JournalEntryModel? Entry;
+    private List<GardenModel>? Gardens;
+    private string? ReturnUrl;
+    private bool IsDeleted = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // Load the journal entry
-        entry = await JournalEntryService.Get(id);
+        // Load entry
+        Entry = await JournalEntryService.GetAsync(Id);
 
-        if (entry == null)
+        if (Entry == null)
             return;
 
-        // ⭐ Force the entry to belong to the logged-in user
-        entry.UserId = Session.CurrentUserId!.Value;
+        // Force ownership
+        Entry.UserId = Session.CurrentUserId!.Value;
 
-        // Load only this user's gardens
-        gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
+        // Load user's gardens
+        Gardens = await GardenService.GetByUserAsync(Session.CurrentUserId.Value);
 
-        // Read returnUrl
+        // Parse returnUrl
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
         if (query.TryGetValue("returnUrl", out var url))
-            returnUrl = url!;
+            ReturnUrl = url!;
     }
 
-    async Task HandleSubmit()
+    private async Task HandleSubmitAsync()
     {
-        // Safety: ensure UserId is always correct
-        entry!.UserId = Session.CurrentUserId!.Value;
+        Entry!.UserId = Session.CurrentUserId!.Value;
 
-        await JournalEntryService.Update(entry);
+        await JournalEntryService.UpdateAsync(Entry);
 
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
             Nav.NavigateTo("/journalentries");
     }
 
-    void GoBack()
+    private void GoBack()
     {
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
             Nav.NavigateTo("/journalentries");
     }
 
-    async Task DeleteEntry()
+    private async Task DeleteEntryAsync()
     {
-        var confirmed = await JS.InvokeAsync<bool>("confirm",
-            "Are you sure you want to delete this journal entry?");
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            "Are you sure you want to delete this journal entry?"
+        );
 
         if (!confirmed)
             return;
 
-        await JournalEntryService.Delete(entry!.JournalEntryId);
+        await JournalEntryService.DeleteAsync(Entry!.JournalEntryId);
 
-        isDeleted = true;
+        IsDeleted = true;
 
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!, forceLoad: true);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl, forceLoad: true);
         else
             Nav.NavigateTo("/journalentries", forceLoad: true);
     }
-
 }

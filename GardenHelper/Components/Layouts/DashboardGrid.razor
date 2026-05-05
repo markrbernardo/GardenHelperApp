@@ -1,7 +1,30 @@
-﻿<div class="dashboard-grid">
+﻿<div class="@BuildClasses()">
     @ChildContent
 </div>
 
 @code {
-    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; } = default!;
+
+    // Optional enhancements
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public int Gap { get; set; } = 3; // Bootstrap gap scale: 0–5
+    [Parameter] public string Columns { get; set; } = "auto"; // auto, 2, 3, 4, etc.
+
+    private string BuildClasses()
+    {
+        var baseClass = "dashboard-grid";
+
+        var gapClass = $"gap-{Gap}";
+
+        var colClass = Columns switch
+        {
+            "auto" => "grid-auto",
+            "2" => "grid-2",
+            "3" => "grid-3",
+            "4" => "grid-4",
+            _ => "grid-auto"
+        };
+
+        return $"{baseClass} {gapClass} {colClass} {CssClass}".Trim();
+    }
 }

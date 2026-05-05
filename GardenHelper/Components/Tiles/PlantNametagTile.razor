@@ -1,10 +1,14 @@
-﻿<div class="plant-nametag-tile @(Selected ? "selected" : "")"
-     @onclick="() => OnSelect.InvokeAsync(Plant)">
+﻿<div class="@BuildClasses()"
+     @onclick="HandleClick"
+     @onclick:preventDefault="PreventDefault"
+     title="@Tooltip">
 
+    <!-- THUMB -->
     <div class="plant-thumb">
-        @if (!string.IsNullOrWhiteSpace(Plant.PlantPhoto))   @* FUTURE FIELD *@
+        @if (!string.IsNullOrWhiteSpace(Plant.PlantPhoto))
         {
-            <img src="data:image/jpeg;base64,@Plant.PlantPhoto" />
+            <img src="@($"data:image/jpeg;base64,{Plant.PlantPhoto}")"
+                 alt="Plant photo" />
         }
         else
         {
@@ -12,6 +16,7 @@
         }
     </div>
 
+    <!-- TEXT -->
     <div class="plant-text">
         <div class="plant-name">@Plant.Name</div>
 
@@ -22,13 +27,59 @@
 
         @if (!string.IsNullOrWhiteSpace(Plant.ScientificName))
         {
-            <div class="plant-sub plant-scientific">@Plant.ScientificName</div>
+            <div class="plant-sub plant-scientific fst-italic">@Plant.ScientificName</div>
+        }
+
+        @if (ChildContent != null)
+        {
+            <div class="plant-extra mt-1">
+                @ChildContent
+            </div>
         }
     </div>
+
 </div>
 
 @code {
     [Parameter] public PlantWithInfoDto Plant { get; set; } = default!;
     [Parameter] public bool Selected { get; set; }
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public bool PreventDefault { get; set; } = false;
+
     [Parameter] public EventCallback<PlantWithInfoDto> OnSelect { get; set; }
+
+    // Standardized component features
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string SelectedClass { get; set; } = "selected";
+    [Parameter] public string HoverClass { get; set; } = "tile-hover";
+
+    [Parameter] public string Size { get; set; } = "md"; // sm, md, lg
+    [Parameter] public bool Rounded { get; set; } = true;
+    [Parameter] public bool Padding { get; set; } = true;
+
+    [Parameter] public string? Tooltip { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private async Task HandleClick()
+    {
+        if (!Disabled)
+            await OnSelect.InvokeAsync(Plant);
+    }
+
+    private string BuildClasses()
+    {
+        var sizeClass = Size switch
+        {
+            "sm" => "tile-sm",
+            "lg" => "tile-lg",
+            _ => "tile-md"
+        };
+
+        var roundedClass = Rounded ? "tile-rounded" : "";
+        var paddingClass = Padding ? "p-2" : "p-0";
+        var selectedClass = Selected ? SelectedClass : "";
+        var disabledClass = Disabled ? "tile-disabled" : "";
+
+        return $"plant-nametag-tile {sizeClass} {roundedClass} {paddingClass} {HoverClass} {selectedClass} {disabledClass} {CssClass}".Trim();
+    }
 }

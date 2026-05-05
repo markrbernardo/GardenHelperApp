@@ -3,13 +3,17 @@
 @inject LocationService LocationService
 @inject NavigationManager Nav
 
+<!-- TOP BAR -->
 <div class="top-row navbar navbar-dark">
     <div class="container-fluid" id="logo">
-        <a class="navbar-brand" href="/home">
-            <i class="bi bi-flower1 me-2"></i>Garden Helper
+        <a class="navbar-brand d-flex align-items-center ps-2" href="/home">
+            <i class="bi bi-flower1 mb-3"></i>
+            Garden Helper
         </a>
 
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+        <button title="Navigation menu"
+                class="navbar-toggler"
+                @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
     </div>
@@ -17,169 +21,158 @@
 
 @if (Session.CurrentUserId != null)
 {
-    <!-- NOTE: 'collapse' is always present; 'show' is toggled via @NavMenuCssClass -->
     <div class="collapse nav-scrollable nav-container @NavMenuCssClass">
-        <nav class="nav d-flex flex-column">
+        <nav class="nav flex-column">
 
-            <span class="nav-header px-3 mt-3 text-white">Gardener:</span>
-            <span class="mx-3 px-3 p-1 card text-black">@Session.CurrentUserName</span>
+            <!-- USER -->
+            <div class="d-flex align-items-center px-3 mt-3">
+                <span class="nav-header text-white me-2">Gardener:</span>
 
-            <!-- PLANT INFORMATION HEADER -->
-            <div class="nav-section px-3 mt-3" @onclick="TogglePlantInfo" style="cursor:pointer;">
-                <span class="nav-header">Plant Information</span>
-                <span class="float-end">@((PlantInfoOpen ? "▼" : "►"))</span>
+                <div class="px-3 card text-black m-0 flex-grow-1 text-center">
+                    @Session.CurrentUserName
+                </div>
             </div>
 
-            @if (PlantInfoOpen)
+            <hr class="nav-divider" />
+
+            <!-- ----------------------------- -->
+            <!-- GARDEN DROPDOWN (NO COLLAPSE) -->
+            <!-- ----------------------------- -->
+            @if (gardens == null)
             {
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="/plantinformation">
-                        <span class="bi bi-list-nested-nav-menu"></span>
-                        Plant Information
-                    </NavLink>
+                @NavText("Loading...")
+            }
+            else if (gardens.Count == 0)
+            {
+                @NavText("No gardens")
+            }
+            else if (gardens.Count == 1)
+            {
+                <!-- Single garden: show as plain text -->
+                <div class="nav-section px-3 mt-3">
+                    <span class="nav-header">Garden</span>
+                </div>
+
+                <div class="nav-item px-3 active">
+                    <a class="nav-link" href="/garden-profile/@gardens[0].GardenId">
+                        @gardens[0].Name
+                    </a>
+                </div>
+            }
+            else
+            {
+                <!-- Multiple gardens: show dropdown -->
+                <div class="nav-section px-3 mt-3">
+                    <span class="nav-header">Garden</span>
+                </div>
+
+                <div class="px-3">
+                    <select class="form-select py-1"
+                            @onchange="OnGardenDropdownChange"
+                            style="background-color: #fff;">
+                        @foreach (var g in gardens.OrderBy(g => g.Name))
+                        {
+                            <option value="@g.GardenId"
+                                    selected="@(SelectedGardenId == g.GardenId)">
+                                @g.Name
+                            </option>
+                        }
+                    </select>
                 </div>
             }
 
 
-
-            <!-- GARDEN HEADER -->
-            <div class="nav-section px-3 mt-3" @onclick="ToggleGarden" style="cursor:pointer;">
-                <span class="nav-header">Garden</span>
-                <span class="float-end">@((GardenOpen ? "▼" : "►"))</span>
-            </div>
-
-            @if (GardenOpen)
-            {
-                @if (gardens == null)
-                {
-                    <div class="nav-item px-3">Loading...</div>
-                }
-                else if (gardens.Count == 0)
-                {
-                    <div class="nav-item px-3">No gardens</div>
-                }
-                else
-                {
-                    <!-- GARDEN LINKS -->
-                    @foreach (var g in gardens.OrderBy(g => g.Name))
-                    {
-                        <div class="nav-item px-3">
-                            <NavLink class="@($"nav-link {(SelectedGardenId == g.GardenId ? "active" : "")}")"
-                                     href="@($"/garden-profile/{g.GardenId}")"
-                                     @onclick="() => SelectGarden(g.GardenId)">
-                                <span class="bi bi-list-nested-nav-menu"></span>
-                                @g.Name
-                            </NavLink>
-                        </div>
-                    }
-                }
-            }
-
-
-            <!-- LOCATIONS HEADER -->
+            <!-- ----------------------------- -->
+            <!-- COLLAPSIBLE: LOCATIONS        -->
+            <!-- ----------------------------- -->
             @if (SelectedGardenId > 0)
             {
-                <div class="nav-section px-3 mt-3" @onclick="ToggleLocations" style="cursor:pointer;">
-                    <span class="nav-header">Locations</span>
-                    <span class="float-end">@((LocationsOpen ? "▼" : "►"))</span>
-                </div>
+                @SectionHeader("Locations", LocationsOpen, ToggleLocations)
 
-                <!-- LOCATIONS LIST -->
                 @if (LocationsOpen)
                 {
-                    @if (locations == null)
+                    if (locations == null)
                     {
-                        <div class="nav-item px-3">Loading...</div>
+                        @NavText("Loading...")
                     }
                     else if (!locations.Any(l => l.GardenId == SelectedGardenId))
                     {
-                        <div class="nav-item px-3">No locations</div>
+                        @NavText("No locations")
                     }
                     else
                     {
                         @foreach (var loc in locations
-                                .Where(l => l.GardenId == SelectedGardenId)
-                                .OrderBy(l => l.Name))
+                            .Where(l => l.GardenId == SelectedGardenId)
+                            .OrderBy(l => l.Name))
                         {
                             <div class="nav-item px-3">
-                                <NavLink class="nav-link" href="@($"/location-profile/{loc.LocationId}")">
-                                    <span class="bi bi-list-nested-nav-menu"></span>
-                                    @loc.Name
-                                </NavLink>
+                                <a class="nav-link" href="/location-profile/@loc.LocationId">@loc.Name</a>
                             </div>
                         }
                     }
                 }
             }
 
-            <!-- PLANTS HEADER -->
-            <div class="nav-section px-3 mt-3" @onclick="TogglePlants" style="cursor:pointer;">
-                <span class="nav-header">Plants</span>
-                <span class="float-end">@((PlantsOpen ? "▼" : "►"))</span>
+            <hr class="nav-divider" />
+            
+            <!-- ----------------------------- -->
+            <!-- STATIC: PLANTS                -->
+            <!-- ----------------------------- -->
+            <div class="nav-item px-3 pt-4">
+                <a class="nav-link" href="/plants">
+                    <i class="bi bi-list-ul mb-4 me-2"></i>
+                    Plant Inventory
+                </a>
             </div>
 
-            @if (PlantsOpen)
-            {
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="/plants">
-                        <span class="bi bi-list-nested-nav-menu"></span>
-                        Plant Inventory
-                    </NavLink>
-                </div>
-            }
-
-
-            <!-- OBSERVATIONS HEADER -->
-            <div class="nav-section px-3 mt-3" @onclick="ToggleObservations" style="cursor:pointer;">
-                <span class="nav-header">Observations</span>
-                <span class="float-end">@((ObservationsOpen ? "▼" : "►"))</span>
+            <!-- ----------------------------- -->
+            <!-- STATIC: OBSERVATIONS          -->
+            <!-- ----------------------------- -->
+            <div class="nav-item px-3">
+                <a class="nav-link" href="/observations">
+                    <i class="bi bi-eye mb-4 me-2"></i>
+                    Observations
+                </a>
             </div>
 
-            @if (ObservationsOpen)
-            {
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="/observations">
-                        <span class="bi bi-list-nested-nav-menu"></span>
-                        Observations
-                    </NavLink>
-                </div>
-
-            }
-
-            <!-- JOURNAL HEADER -->
-            <div class="nav-section px-3 mt-3" @onclick="ToggleJournal" style="cursor:pointer;">
-                <span class="nav-header">Journal</span>
-                <span class="float-end">@((JournalOpen ? "▼" : "►"))</span>
+            <!-- ----------------------------- -->
+            <!-- STATIC: JOURNAL               -->
+            <!-- ----------------------------- -->
+            <div class="nav-item px-3">
+                <a class="nav-link" href="/journalentries">
+                    <i class="bi bi-journal-text mb-4 me-2"></i>
+                    Journal Entries
+                </a>
             </div>
 
-            @if (JournalOpen)
-            {
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="/journalentries">
-                        <span class="bi bi-list-nested-nav-menu"></span>
-                        Journal Entries
-                    </NavLink>
-                </div>
+            <hr class="nav-divider" />
 
-            }
+            <!-- ----------------------------- -->
+            <!-- STATIC: PLANT INFORMATION     -->
+            <!-- ----------------------------- -->
+            <div class="nav-item px-3 pb-0 pt-3">
+                <a class="nav-link" href="/plantinformation">
+                    <i class="bi bi-info-circle mb-4 me-2"></i>
+                    Plant Information
+                </a>
+            </div>
 
-                <hr class="nav-divider" />
+            <hr class="nav-divider" />
 
-                <!-- ACCOUNT SETTINGS -->
-                <div class="nav-item mt-2">
-                    <NavLink class="nav-link" href="/user-profile">
-                        <span class="bi bi-gear-fill mb-4"></span>
-                        Account Settings
-                    </NavLink>
-                </div>
+            <!-- ACCOUNT SETTINGS -->
+            <div class="nav-item pt-3 px-3">
+                <a class="nav-link" href="/user-profile">
+                    <i class="bi bi-gear-fill mb-4 me-2"></i> Account Settings
+                </a>
+            </div>
 
-                <!-- SIGN OUT -->
-                <div class="nav-item mt-2">
-                    <button class="nav-link text-white-50" @onclick="SignOut">
-                        <span class="bi bi-box-arrow-right"></span>
-                        Sign Out
-                    </button>
-                </div>
+            <!-- SIGN OUT -->
+            <div class="nav-item mt-2 px-3">
+                <button class="nav-link text-white-50" @onclick="SignOut">
+                    <span class="bi bi-box-arrow-right"></span>
+                    Sign Out
+                </button>
+            </div>
 
         </nav>
     </div>
@@ -189,35 +182,40 @@
     List<LocationModel>? locations;
     List<GardenModel>? gardens;
 
-    bool PlantInfoOpen = true;
     bool GardenOpen = true;
     bool LocationsOpen = true;
-    bool PlantsOpen = true;
-    bool ObservationsOpen = true;
-    bool JournalOpen = true;
 
     void ToggleGarden() => GardenOpen = !GardenOpen;
-    void TogglePlantInfo() => PlantInfoOpen = !PlantInfoOpen;
     void ToggleLocations() => LocationsOpen = !LocationsOpen;
-    void TogglePlants() => PlantsOpen = !PlantsOpen;
-    void ToggleObservations() => ObservationsOpen = !ObservationsOpen;
-    void ToggleJournal() => JournalOpen = !JournalOpen;
+
+    private void OnGardenDropdownChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            SelectedGardenId = id;
+            Nav.NavigateTo($"/garden-profile/{id}");
+        }
+    }
+
 
     private int SelectedGardenId
     {
         get => Session.CurrentGardenId ?? 0;
-        set => Session.SetGarden(value);
+        set => Session.SetGardenAsync(value);
     }
 
     protected override void OnInitialized()
     {
-        Session.OnChange += async () =>
+        _sessionHandler = async () =>
         {
             await LoadGardens();
             await LoadLocations();
             StateHasChanged();
         };
+
+        Session.OnChange += _sessionHandler;
     }
+
 
     protected override async Task OnParametersSetAsync()
     {
@@ -229,18 +227,18 @@
     {
         if (Session.CurrentUserId != null)
         {
-            gardens = (await GardenService.GetGardensByUser(Session.CurrentUserId.Value))
+            gardens = (await GardenService.GetByUserAsync(Session.CurrentUserId.Value))
                 .OrderBy(g => g.Name)
                 .ToList();
 
             if ((Session.CurrentGardenId == null || Session.CurrentGardenId == 0) && gardens.Any())
             {
-                var defaultGardenId = await GardenService.GetDefaultGardenId(Session.CurrentUserId.Value);
+                var defaultGardenId = await GardenService.GetDefaultGardenAsync(Session.CurrentUserId.Value);
 
                 if (defaultGardenId != null && gardens.Any(g => g.GardenId == defaultGardenId))
-                    await Session.SetGarden(defaultGardenId.Value);
+                    await Session.SetGardenAsync(defaultGardenId.Value);
                 else
-                    await Session.SetGarden(gardens.First().GardenId);
+                    await Session.SetGardenAsync(gardens.First().GardenId);
             }
         }
         else
@@ -253,31 +251,59 @@
     {
         if (SelectedGardenId <= 0)
         {
-            locations = new List<LocationModel>();
+            locations = new();
             return;
         }
 
-        locations = await LocationService.GetLocationsByGarden(SelectedGardenId);
+        locations = await LocationService.GetByGardenAsync(SelectedGardenId);
     }
 
-    // Now using Bootstrap-style: 'collapse' always present, 'show' toggled
     private bool collapseNavMenu = true;
     private string? NavMenuCssClass => collapseNavMenu ? "show" : null;
-
     private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
+
+    private Func<Task>? _sessionHandler;
+
 
     private async Task SignOut()
     {
-        await Session.Clear();
-        gardens = new List<GardenModel>();
-        locations = new List<LocationModel>();
+        if (_sessionHandler != null)
+            Session.OnChange -= _sessionHandler;
+
+        await Session.ClearAsync();
+        gardens = new();
+        locations = new();
         SelectedGardenId = 0;
+
         Nav.NavigateTo("/login", forceLoad: true);
     }
+
+
 
     private void SelectGarden(int id)
     {
         SelectedGardenId = id;
         Nav.NavigateTo($"/garden-profile/{id}");
     }
+
+    // ---------- REUSABLE RENDER HELPERS ----------
+
+    RenderFragment SectionHeader(string title, bool open, Action toggle) => __builder =>
+    {
+        __builder.OpenElement(0, "div");
+        __builder.AddAttribute(1, "class", "nav-section px-3 mt-3");
+        __builder.AddAttribute(2, "style", "cursor:pointer;");
+        __builder.AddAttribute(3, "onclick", EventCallback.Factory.Create(this, toggle));
+        __builder.AddContent(4, (MarkupString)$"<span class='nav-header'>{title}</span>");
+        __builder.AddContent(5, (MarkupString)$"<span class='float-end'>{(open ? "▼" : "►")}</span>");
+        __builder.CloseElement();
+    };
+
+    RenderFragment NavText(string text) => __builder =>
+    {
+        __builder.OpenElement(0, "div");
+        __builder.AddAttribute(1, "class", "nav-item px-3");
+        __builder.AddContent(2, text);
+        __builder.CloseElement();
+    };
 }

@@ -1,12 +1,59 @@
-﻿<div class="photo-gallery">
-    @foreach (var photo in Photos)
+﻿<div class="@BuildClasses()">
+
+    @if (Loading)
     {
-        <img src="@($"data:{photo.PhotoMimeType ?? "image/jpeg"};base64,{photo.Photo}")"
-             class="gallery-photo"
-             alt="Plant photo" />
+        <LoadingSpinner Message="Loading photos..." />
     }
+    else if (Photos == null || Photos.Count == 0)
+    {
+        <EmptyState Icon="bi bi-image" Title="No photos">
+            This plant has no photos yet.
+        </EmptyState>
+    }
+    else
+    {
+        <div class="photo-gallery">
+            @foreach (var photo in Photos)
+            {
+                <img src="@($"data:{photo.PhotoMimeType ?? "image/jpeg"};base64,{photo.Photo}")"
+                     class="gallery-photo @HoverClass"
+                     alt="Plant photo"
+                     title="@Tooltip" />
+            }
+        </div>
+    }
+
 </div>
 
 @code {
     [Parameter] public List<PlantPhotoModel> Photos { get; set; } = new();
+
+    // Standardized component features
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public bool Loading { get; set; } = false;
+
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string HoverClass { get; set; } = "tile-hover";
+
+    [Parameter] public string Size { get; set; } = "md"; // sm, md, lg
+    [Parameter] public bool Rounded { get; set; } = true;
+    [Parameter] public bool Padding { get; set; } = false;
+
+    [Parameter] public string? Tooltip { get; set; }
+
+    private string BuildClasses()
+    {
+        var sizeClass = Size switch
+        {
+            "sm" => "gallery-sm",
+            "lg" => "gallery-lg",
+            _ => "gallery-md"
+        };
+
+        var roundedClass = Rounded ? "tile-rounded" : "";
+        var paddingClass = Padding ? "p-2" : "p-0";
+        var disabledClass = Disabled ? "tile-disabled" : "";
+
+        return $"photo-gallery-container {sizeClass} {roundedClass} {paddingClass} {disabledClass} {CssClass}".Trim();
+    }
 }

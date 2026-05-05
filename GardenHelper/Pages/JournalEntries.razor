@@ -1,168 +1,169 @@
 ﻿@page "/journalentries"
+
 @using Microsoft.AspNetCore.WebUtilities
+
 @inject JournalEntryService JournalEntryService
 @inject GardenService GardenService
 @inject UserSessionService Session
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<PageHeader Title="Journal" />
+<PageHeader Title="Journal"  Divider="false"/>
 
-@if (entries == null || gardens == null)
-{
-    <p>Loading...</p>
-}
-else if (entries.Count == 0)
-{
-    <p>No journal entries found.</p>
-}
-else
-{
-    <!-- MOBILE DROPDOWN -->
-    <div class="d-md-none mb-3">
-        <select class="form-select" @onchange="OnMobileDateChange">
-            <option value="">Select a date...</option>
-            @foreach (var group in groupedEntries)
-            {
-                <option value="@group.Key.ToString("yyyy-MM-dd")">
-                    @group.Key.ToString("MMM dd, yyyy") (@group.Count())
-                </option>
-            }
-        </select>
-    </div>
+<div class="page-section">
 
-    <!-- MOBILE DETAILS -->
-    <div class="d-md-none mt-3">
-        <JournalEntryDetailsTile SelectedDate="selectedDate"
-                             Entries="filteredEntries"
-                             Gardens="gardens"
-                             OnEdit="EditEntry" />
-    </div>
+    @if (Entries == null || GardenList == null)
+    {
+        <LoadingSpinner Message="Loading journal entries..." />
+    }
+    else if (Entries.Count == 0)
+    {
+        <EmptyState Message="No journal entries found." />
+    }
+    else
+    {
+        <!-- MOBILE DROPDOWN -->
+        <div class="d-md-none mb-3">
+            <select class="form-select" @onchange="OnMobileDateChange">
+                <option value="">Select a date...</option>
+                @foreach (var group in GroupedEntries)
+                {
+                    <option value="@group.Key.ToString("yyyy-MM-dd")">
+                        @group.Key.ToString("MMM dd, yyyy") (@group.Count())
+                    </option>
+                }
+            </select>
+        </div>
 
-    <!-- DESKTOP LAYOUT -->
-    <div class="d-none d-md-block">
-        <TwoColumnLayout>
-            <Left>
-                <ScrollColumn>
-                    <h3 class="mb-3">Dates</h3>
+        <!-- MOBILE DETAILS -->
+        <div class="d-md-none mt-3">
+            <JournalEntryDetailsTile SelectedDate="SelectedDate"
+                                     Entries="FilteredEntries"
+                                     Gardens="GardenList"
+                                     OnEdit="EditEntry" />
+        </div>
 
-                    @foreach (var group in groupedEntries)
-                    {
-                        <DateTile Date="group.Key"
-                                  Count="group.Count()"
-                                  Label="entry"
-                                  Selected="(selectedDate == group.Key)"
-                                  OnSelect="SelectDate" />
+        <!-- DESKTOP LAYOUT -->
+        <div class="d-none d-md-block">
+            <TwoColumnLayout>
+                <Left>
+                    <ScrollColumn>
 
-                    }
-                </ScrollColumn>
-            </Left>
+                        @foreach (var group in GroupedEntries)
+                        {
+                            <DateTile Date="group.Key"
+                                      Count="group.Count()"
+                                      Label="entry"
+                                      Selected="(SelectedDate == group.Key)"
+                                      OnSelect="SelectDate" />
+                        }
+                    </ScrollColumn>
+                </Left>
 
-            <Right>
-                <ScrollColumn>
-                    <h3 class="pb-2">Entry</h3>
+                <Right>
+                    <ScrollColumn CssClass="pt-0">
+                        <JournalEntryDetailsTile SelectedDate="SelectedDate"
+                                                 Entries="FilteredEntries"
+                                                 Gardens="GardenList"
+                                                 OnEdit="EditEntry" />
+                    </ScrollColumn>
+                </Right>
+            </TwoColumnLayout>
+        </div>
+    }
 
-                    <JournalEntryDetailsTile SelectedDate="selectedDate"
-                                         Entries="filteredEntries"
-                                         Gardens="gardens"
-                                         OnEdit="EditEntry" />
-                </ScrollColumn>
-            </Right>
-        </TwoColumnLayout>
-    </div>
-}
-
+</div>
 
 @code {
-    List<JournalEntryModel>? entries;
-    List<GardenModel>? gardens;
+    private List<JournalEntryModel>? Entries;
+    private List<GardenModel>? GardenList;
 
-    List<IGrouping<DateTime, JournalEntryModel>> groupedEntries = new();
-    List<JournalEntryModel> filteredEntries = new();
+    private List<IGrouping<DateTime, JournalEntryModel>> GroupedEntries = new();
+    private List<JournalEntryModel> FilteredEntries = new();
 
-    DateTime? selectedDate;
+    private DateTime? SelectedDate;
 
     protected override async Task OnInitializedAsync()
     {
-        entries = await JournalEntryService.GetByUser(Session.CurrentUserId!.Value);
-        gardens = await GardenService.GetGardensByUser(Session.CurrentUserId.Value);
+        if (Session.CurrentUserId == null)
+            return;
 
-        groupedEntries = entries
+        Entries = await JournalEntryService.GetByUserAsync(Session.CurrentUserId.Value);
+        GardenList = await GardenService.GetByUserAsync(Session.CurrentUserId.Value);
+
+        GroupedEntries = Entries
             .GroupBy(e => e.CreatedAt.Date)
             .OrderByDescending(g => g.Key)
             .ToList();
 
-        // check querystring for entryId to pre-select
+        // Pre-select based on ?entryId=
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
         if (query.TryGetValue("entryId", out var val) && int.TryParse(val, out var entryId))
         {
-            var entry = entries.FirstOrDefault(e => e.JournalEntryId == entryId);
+            var entry = Entries.FirstOrDefault(e => e.JournalEntryId == entryId);
             if (entry != null)
-                selectedDate = entry.CreatedAt.Date;
+                SelectedDate = entry.CreatedAt.Date;
         }
 
-        if (selectedDate == null && groupedEntries.Any())
-            selectedDate = groupedEntries.First().Key;
+        if (SelectedDate == null && GroupedEntries.Any())
+            SelectedDate = GroupedEntries.First().Key;
 
         ApplyFilter();
     }
 
-    void ApplyFilter()
+    private void ApplyFilter()
     {
-        if (selectedDate == null)
+        if (SelectedDate == null)
         {
-            filteredEntries = new();
+            FilteredEntries = new();
             return;
         }
 
-        filteredEntries = entries
-            .Where(e => e.CreatedAt.Date == selectedDate.Value.Date)
+        FilteredEntries = Entries
+            .Where(e => e.CreatedAt.Date == SelectedDate.Value.Date)
+            .OrderByDescending(e => e.CreatedAt)
             .ToList();
     }
 
-    void SelectDate(DateTime date)
+    private void SelectDate(DateTime date)
     {
-        selectedDate = date;
+        SelectedDate = date;
         ApplyFilter();
     }
 
-    void OnMobileDateChange(ChangeEventArgs e)
+    private void OnMobileDateChange(ChangeEventArgs e)
     {
         if (DateTime.TryParse(e.Value?.ToString(), out var date))
         {
-            selectedDate = date;
+            SelectedDate = date;
             ApplyFilter();
         }
     }
 
-    string GetGardenName(int gardenId)
-    {
-        return gardens?.FirstOrDefault(g => g.GardenId == gardenId)?.Name ?? "Unknown Garden";
-    }
-
-    void EditEntry(int id)
+    private void EditEntry(int id)
     {
         Nav.NavigateTo($"/journalentries/edit/{id}?returnUrl=/journalentries");
     }
 
-    async Task DeleteEntry(int id)
+    private async Task DeleteEntryAsync(int id)
     {
         bool confirm = await JS.InvokeAsync<bool>("confirm", "Delete this journal entry?");
-        if (!confirm) return;
+        if (!confirm)
+            return;
 
-        await JournalEntryService.Delete(id);
+        await JournalEntryService.DeleteAsync(id);
 
-        entries = await JournalEntryService.GetByUser(Session.CurrentUserId!.Value);
+        Entries = await JournalEntryService.GetByUserAsync(Session.CurrentUserId!.Value);
 
-        groupedEntries = entries
+        GroupedEntries = Entries
             .GroupBy(e => e.CreatedAt.Date)
             .OrderByDescending(g => g.Key)
             .ToList();
 
-        if (groupedEntries.Any())
-            selectedDate = groupedEntries.First().Key;
+        if (GroupedEntries.Any())
+            SelectedDate = GroupedEntries.First().Key;
 
         ApplyFilter();
     }

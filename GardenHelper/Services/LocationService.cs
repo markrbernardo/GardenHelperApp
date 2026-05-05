@@ -1,6 +1,7 @@
-﻿using GardenHelperApp.Shared.Models;
-using System.Net.Http.Json;
-using static System.Net.WebRequestMethods;
+﻿using System.Net.Http.Json;
+using GardenHelperApp.Shared.Models;
+using GardenHelperApp.Shared.Enums;
+using GardenHelperApp.Shared.Constants;
 
 namespace GardenHelperApp.Client.Services;
 
@@ -13,60 +14,76 @@ public class LocationService
         _http = http;
     }
 
-    public async Task<List<LocationModel>> GetAll()
+    // ---------------------------------------------------------
+    // GET SINGLE LOCATION
+    // ---------------------------------------------------------
+    public async Task<LocationModel?> GetAsync(int id)
     {
-        return await _http.GetFromJsonAsync<List<LocationModel>>("api/locations")
+        var url = ApiRoutes.Locations.ById.Replace("{id}", id.ToString());
+
+        try
+        {
+            return await _http.GetFromJsonAsync<LocationModel>(url);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // GET LOCATIONS BY GARDEN
+    // ---------------------------------------------------------
+    public async Task<List<LocationModel>> GetByGardenAsync(int gardenId)
+    {
+        var url = ApiRoutes.Locations.ByGarden.Replace("{gardenId}", gardenId.ToString());
+
+        return await _http.GetFromJsonAsync<List<LocationModel>>(url)
                ?? new List<LocationModel>();
     }
 
-    public async Task<LocationModel?> Get(int id)
+    // ---------------------------------------------------------
+    // CREATE LOCATION
+    // ---------------------------------------------------------
+    public async Task<int?> CreateAsync(LocationModel model)
     {
-        return await _http.GetFromJsonAsync<LocationModel>($"api/locations/{id}");
-    }
+        // Ensure enum defaults
+        if (!Enum.IsDefined(typeof(LocationLighting), model.Lighting))
+            model.Lighting = LocationLighting.Unknown;
 
-    public async Task<List<LocationModel>> GetByGarden(int gardenId)
-    {
-        return await _http.GetFromJsonAsync<List<LocationModel>>($"api/locations/garden/{gardenId}")
-               ?? new List<LocationModel>();
-    }
+        var response = await _http.PostAsJsonAsync(ApiRoutes.Locations.Base, model);
 
-    public async Task<int> Create(LocationModel location)
-    {
-        var response = await _http.PostAsJsonAsync("api/locations", location);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
         return await response.Content.ReadFromJsonAsync<int>();
     }
 
-
-
-    public async Task Update(LocationModel model)
+    // ---------------------------------------------------------
+    // UPDATE LOCATION
+    // ---------------------------------------------------------
+    public async Task<bool> UpdateAsync(LocationModel model)
     {
-        await _http.PutAsJsonAsync($"api/locations/{model.LocationId}", model);
+        // Ensure enum defaults
+        if (!Enum.IsDefined(typeof(LocationLighting), model.Lighting))
+            model.Lighting = LocationLighting.Unknown;
+
+        var url = ApiRoutes.Locations.ById.Replace("{id}", model.LocationId.ToString());
+
+        var response = await _http.PutAsJsonAsync(url, model);
+
+        return response.IsSuccessStatusCode;
     }
 
-    public async Task Delete(int id)
+    // ---------------------------------------------------------
+    // DELETE LOCATION
+    // ---------------------------------------------------------
+    public async Task<bool> DeleteAsync(int id)
     {
-        await _http.DeleteAsync($"api/locations/{id}");
+        var url = ApiRoutes.Locations.ById.Replace("{id}", id.ToString());
+
+        var response = await _http.DeleteAsync(url);
+
+        return response.IsSuccessStatusCode;
     }
-
-
-
-    public async Task<LocationModel?> GetLocation(int id)
-    {
-        return await _http.GetFromJsonAsync<LocationModel>($"api/locations/{id}");
-    }
-
-
-    public async Task<List<LocationModel>> GetLocationsByGarden(int gardenId)
-    {
-        return await _http.GetFromJsonAsync<List<LocationModel>>(
-            $"api/locations/garden/{gardenId}"
-        ) ?? new List<LocationModel>();
-    }
-
-    public async Task UpdateLocation(LocationModel location)
-    {
-        await _http.PutAsJsonAsync($"api/locations/{location.LocationId}", location);
-    }
-
-
 }

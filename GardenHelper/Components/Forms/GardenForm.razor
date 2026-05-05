@@ -1,4 +1,8 @@
-﻿<EditForm Model="@Garden" OnValidSubmit="OnSubmit">
+﻿@using GardenHelperApp.Shared.Models
+@using GardenHelperApp.Shared.Enums
+
+
+<EditForm Model="@Garden" OnValidSubmit="OnSubmit">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
@@ -25,30 +29,49 @@
         <InputNumber class="form-control" @bind-Value="Garden.ZipCode" />
     </div>
 
-    <!-- NEW FIELDS -->
+    <!-- HARDINESS ZONE -->
     <div class="mb-3">
         <label class="form-label">Hardiness Zone</label>
         <InputText class="form-control" @bind-Value="Garden.HardinessZone" />
     </div>
 
+    <!-- HEAT ZONE -->
     <div class="mb-3">
         <label class="form-label">Heat Zone</label>
         <InputText class="form-control" @bind-Value="Garden.HeatZone" />
     </div>
 
+    <!-- WIND ORIENTATION -->
     <div class="mb-3">
         <label class="form-label">Wind Orientation</label>
-        <InputText class="form-control" @bind-Value="Garden.WindOrientation" />
+        <select class="form-select" @bind="Garden.WindOrientation">
+            @foreach (var value in Enum.GetValues<WindOrientation>())
+            {
+                <option value="@value">@value</option>
+            }
+        </select>
     </div>
 
+    <!-- SOIL TYPE -->
     <div class="mb-3">
         <label class="form-label">Soil Type</label>
-        <InputText class="form-control" @bind-Value="Garden.SoilType" />
+        <select class="form-select" @bind="Garden.SoilType">
+            @foreach (var value in Enum.GetValues<SoilType>())
+            {
+                <option value="@value">@value</option>
+            }
+        </select>
     </div>
 
+    <!-- MARINE INFLUENCE -->
     <div class="mb-3">
         <label class="form-label">Marine Influence</label>
-        <InputText class="form-control" @bind-Value="Garden.MarineInfluence" />
+        <select class="form-select" @bind="Garden.MarineInfluence">
+            @foreach (var value in Enum.GetValues<MarineInfluence>())
+            {
+                <option value="@value">@value</option>
+            }
+        </select>
     </div>
 
     <!-- BUTTONS -->

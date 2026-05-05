@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using GardenHelperApp.Shared.Enums;
 
 namespace GardenHelperApp.Shared.Models;
 
@@ -10,21 +11,27 @@ public class PlantInformationModel
     public string CommonName { get; set; } = string.Empty;
     public string? ScientificName { get; set; }
 
-    // New fields you added to SQLite
+    // Description + photo
     public string? Description { get; set; }
-    public string? GrowingSeason { get; set; }
-    public string? Photo { get; set; }  // Base64 TEXT
-
-    public string? Seeds { get; set; }
-    public string? Light { get; set; }
-    public string? Water { get; set; }
-    public string? Air { get; set; }
-    public string? Soil { get; set; }
-    public string? Container { get; set; }
-    public string? Fertilization { get; set; }
-    public string? Pruning { get; set; }
-    public string? Propagation { get; set; }
-    public string? Health { get; set; }
+    public string? Photo { get; set; }  // Base64
     public string? PhotoMimeType { get; set; }
 
+    // Seeds remain free‑form text
+    public string? Seeds { get; set; }
+
+    // ENUM FIELDS
+    public Season GrowingSeason { get; set; } = Season.Unknown;
+    public LightRequirement Light { get; set; } = LightRequirement.Unknown;
+    public WaterRequirement Water { get; set; } = WaterRequirement.Unknown;
+    public SoilType Soil { get; set; } = SoilType.Unknown;
+    public ContainerType Container { get; set; } = ContainerType.Unknown;
+    public FertilizerType Fertilization { get; set; } = FertilizerType.Unknown;
+    public PropagationMethod Propagation { get; set; } = PropagationMethod.Unknown;
+    public PlantHealthStatus Health { get; set; } = PlantHealthStatus.Unknown;
+
+    // Air remains free‑form text (not enum-worthy)
+    public string? Air { get; set; }
+
+    // Pruning remains free‑form text (not enum-worthy)
+    public string? Pruning { get; set; }
 }

@@ -1,9 +1,16 @@
-﻿<div class="search-suggestion-tile" @onclick="HandleClick">
+﻿@using GardenHelperApp.Shared.Enums
 
+<div class="@BuildClasses()"
+     @onclick="HandleClick"
+     @onclick:preventDefault="PreventDefault"
+     title="@Tooltip">
+
+    <!-- THUMB -->
     <div class="sst-thumb">
         @if (!string.IsNullOrWhiteSpace(Suggestion.PhotoBase64))
         {
-            <img src="data:@Suggestion.PhotoMimeType;base64,@Suggestion.PhotoBase64" />
+            <img src="@($"data:{Suggestion.PhotoMimeType ?? "image/jpeg"};base64,{Suggestion.PhotoBase64}")"
+                 alt="Suggestion thumbnail" />
         }
         else
         {
@@ -11,35 +18,81 @@
         }
     </div>
 
+    <!-- TEXT -->
     <div class="sst-text">
         <div class="sst-primary">@Suggestion.Primary</div>
 
         @if (!string.IsNullOrWhiteSpace(Suggestion.Secondary))
         {
-            <div class="sst-secondary">@Suggestion.Secondary</div>
+            <div class="sst-secondary text-muted">@Suggestion.Secondary</div>
         }
 
         @if (!string.IsNullOrWhiteSpace(Suggestion.Tertiary))
         {
-            <div class="sst-tertiary">@Suggestion.Tertiary</div>
+            <div class="sst-tertiary text-muted">@Suggestion.Tertiary</div>
+        }
+
+        @if (ChildContent != null)
+        {
+            <div class="sst-extra mt-1">
+                @ChildContent
+            </div>
         }
     </div>
 
 </div>
 
 @code {
-    [Parameter] public SearchSuggestionDto Suggestion { get; set; }
+    [Parameter] public SearchSuggestionDto Suggestion { get; set; } = default!;
     [Parameter] public EventCallback<SearchSuggestionDto> OnSelect { get; set; }
 
-    Task HandleClick() => OnSelect.InvokeAsync(Suggestion);
+    // Standardized component features
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public bool Selected { get; set; } = false;
+    [Parameter] public bool PreventDefault { get; set; } = false;
+
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string SelectedClass { get; set; } = "selected";
+    [Parameter] public string HoverClass { get; set; } = "tile-hover";
+
+    [Parameter] public string Size { get; set; } = "md"; // sm, md, lg
+    [Parameter] public bool Rounded { get; set; } = true;
+    [Parameter] public bool Padding { get; set; } = true;
+
+    [Parameter] public string? Tooltip { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private async Task HandleClick()
+    {
+        if (!Disabled)
+            await OnSelect.InvokeAsync(Suggestion);
+    }
+
+    private string BuildClasses()
+    {
+        var sizeClass = Size switch
+        {
+            "sm" => "tile-sm",
+            "lg" => "tile-lg",
+            _ => "tile-md"
+        };
+
+        var roundedClass = Rounded ? "tile-rounded" : "";
+        var paddingClass = Padding ? "p-2" : "p-0";
+        var selectedClass = Selected ? SelectedClass : "";
+        var disabledClass = Disabled ? "tile-disabled" : "";
+
+        return $"search-suggestion-tile {sizeClass} {roundedClass} {paddingClass} {HoverClass} {selectedClass} {disabledClass} {CssClass}".Trim();
+    }
 
     string GetIcon() =>
         Suggestion.Type switch
         {
-            "plant" => "🌿",
-            "plantInfo" => "📘",
-            "location" => "📍",
-            "garden" => "🌱",
+            SuggestionType.Plant => "🌿",
+            SuggestionType.PlantInformation => "📘",
+            SuggestionType.Location => "📍",
+            SuggestionType.Garden => "🌱",
             _ => "🔎"
         };
+
 }

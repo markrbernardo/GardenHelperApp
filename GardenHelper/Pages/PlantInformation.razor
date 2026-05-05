@@ -1,129 +1,120 @@
 ﻿@page "/plantinformation"
-@page "/plantinformation/{plantId:int}"
+@page "/plantinformation/{PlantId:int}"
 
 @using GardenHelper.Components.Tiles
 
 @inject PlantInformationService PlantInfoService
+@inject PlantService PlantService
 @inject PlantPhotoService PhotoService
 @inject NavigationManager Nav
 
-
-<PageHeader Title="Plant Information">
+<PageHeader Title="Plant Information" Divider="false">
     <Actions>
         <button class="btn btn-primary" @onclick="CreateInfo">
-            <i class="bi bi-plus-lg"></i> Add Info Card
+            <i class="bi bi-plus-lg"></i> Create New Info Card
         </button>
     </Actions>
 </PageHeader>
 
-@if (allInfo == null || allInfo.Count == 0)
-{
-    <p>No plant information available.</p>
-}
-else
-{
-    <!-- MOBILE DROPDOWN -->
-    <div class="d-md-none mb-3">
-        <label class="form-label fw-bold">Select Plant</label>
-        <select class="form-select" @onchange="OnMobileSelect">
-            <option value="">-- Choose a plant --</option>
+<div class="page-section">
 
-            @foreach (var pi in allInfo)
-            {
-                <option value="@pi.PlantInformationId"
-                        selected="@(selectedId == pi.PlantInformationId)">
-                    @pi.CommonName (@pi.ScientificName)
-                </option>
-            }
-        </select>
+    @if (InfoList == null)
+    {
+        <LoadingSpinner Message="Loading plant information..." />
+    }
+    else if (InfoList.Count == 0)
+    {
+        <EmptyState Message="No plant information available." />
+    }
+    else
+    {
+        <!-- MOBILE DROPDOWN -->
+        <div class="d-md-none mb-3">
+            <label class="form-label fw-bold">Select Plant</label>
 
-        <button class="btn btn-primary mt-2" @onclick="CreateInfo">
-            <i class="bi bi-plus-lg"></i> Add Info Card
-        </button>
-    </div>
+            <select class="form-select" @onchange="OnMobileSelect">
+                <option value="">-- Choose a plant --</option>
 
-    <!-- DESKTOP LAYOUT -->
+                @foreach (var pi in InfoList)
+                {
+                    <option value="@pi.PlantInformationId"
+                            selected="@(SelectedId == pi.PlantInformationId)">
+                        @pi.CommonName (@pi.ScientificName)
+                    </option>
+                }
+            </select>
+        </div>
 
-        <TwoColumnLayout>
+        <!-- DESKTOP LAYOUT -->
+        <TwoColumnLayout FullHeight="true">
             <Left>
-                <ScrollColumn>
-                    @foreach (var pi in allInfo)
+                <ScrollColumn HideScrollbar="true" Height="100%">
+                    @foreach (var pi in InfoList)
                     {
-                    <PlantInfoNametagTile Info="pi"
-                                          Selected="(selectedId == pi.PlantInformationId)"
-                                          OnSelect="@(info => SelectPlant(info.PlantInformationId))" />
-
+                        <PlantInfoNametagTile Info="pi"
+                                              Selected="(SelectedId == pi.PlantInformationId)"
+                                              OnSelect="@(info => SelectPlantAsync(info.PlantInformationId))" />
                     }
                 </ScrollColumn>
             </Left>
 
             <Right>
-                @if (selectedId == null)
-                {
-                    <p class="text-muted">Select a plant to view its information.</p>
-                }
-                else if (info != null)
-                {
-                    <ScrollColumn>
-                        <PlantInfoDetailsTile Info="@info" />
+                <ScrollColumn>
+                    <!-- ALWAYS render the tile so it can show its empty state -->
+                    <PlantInfoDetailsTile Plant="@SelectedInfo" />
 
+                    @if (SelectedInfo != null)
+                    {
                         <SectionHeader Title="Photo Gallery" />
-                        <PlantPhotoGallery Photos="@photos" />
-                    </ScrollColumn>
-                }
+                        <PlantPhotoGallery Photos="@PhotoList" />
+                    }
+                </ScrollColumn>
             </Right>
         </TwoColumnLayout>
-}
+    }
 
+</div>
 
 @code {
-    [Parameter] public int? plantId { get; set; }
+    [Parameter] public int? PlantId { get; set; }
 
-    int? selectedId = null;
-    PlantInformationModel? info;
-    List<PlantPhotoModel> photos = new();
-    List<PlantInformationModel> allInfo = new();
+    private int? SelectedId;
+    private PlantInformationModel? SelectedInfo;
+
+    private List<PlantPhotoModel> PhotoList = new();
+    private List<PlantInformationModel>? InfoList;
 
     protected override async Task OnInitializedAsync()
     {
-        allInfo = await PlantInfoService.GetAll();
+        InfoList = await PlantInfoService.GetAllAsync();
 
-        // Auto-select when returning from edit
-        if (plantId != null)
-        {
-            await SelectPlant(plantId.Value);
-        }
+        if (PlantId != null)
+            await SelectPlantAsync(PlantId.Value);
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        // Refresh when navigating back with a plantId
-        if (plantId != null)
+        if (PlantId != null)
         {
-            allInfo = await PlantInfoService.GetAll();
-            await SelectPlant(plantId.Value);
+            InfoList = await PlantInfoService.GetAllAsync();
+            await SelectPlantAsync(PlantId.Value);
         }
     }
 
-    private async Task SelectPlant(int id)
+    private async Task SelectPlantAsync(int id)
     {
-        selectedId = id;
-        info = await PlantInfoService.GetById(id);
-        photos = await PhotoService.GetPhotosForPlant(id);
-
-        // Update URL without reloading page
-        Nav.NavigateTo($"/plantinformation/{id}", replace: true);
+        SelectedId = id;
+        SelectedInfo = await PlantInfoService.GetAsync(id);
+        PhotoList = await PhotoService.GetByPlantAsync(id);
     }
 
     private async Task OnMobileSelect(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int id))
-        {
-            await SelectPlant(id);
-        }
+            await SelectPlantAsync(id);
     }
 
-    void CreateInfo()
+    private void CreateInfo()
     {
         Nav.NavigateTo("/plantinformation/create");
     }

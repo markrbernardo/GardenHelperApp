@@ -1,46 +1,53 @@
-﻿@page "/users/edit/{id:int}"
+﻿@page "/users/edit/{Id:int}"
+
 @inject UserService UserService
 @inject NavigationManager Nav
 
-<h3>Edit User</h3>
+<PageHeader Title="Edit User" />
 
-@if (user == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <p>Loaded ID: @id</p>
+<div class="page-section">
 
-    <EditForm Model="@user" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+    @if (User == null)
+    {
+        <LoadingSpinner Message="Loading user..." />
+    }
+    else
+    {
+        <EditForm Model="@User"
+                  OnValidSubmit="HandleSubmitAsync"
+                  class="form-tile">
 
-        <div class="mb-3">
-            <label class="form-label">Name</label>
-            <InputText class="form-control" @bind-Value="user.Name" />
-        </div>
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-        <button class="btn btn-success" type="submit">Save</button>
-        <button class="btn btn-secondary" @onclick="GoBack">Cancel</button>
-    </EditForm>
-}
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <InputText class="form-control" @bind-Value="User.Name" />
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-success" type="submit">Save</button>
+                <button class="btn btn-secondary" type="button" @onclick="GoBack">Cancel</button>
+            </div>
+
+        </EditForm>
+    }
+
+</div>
 
 @code {
-    [Parameter] public int id { get; set; }
-    UserModel? user;
+    [Parameter] public int Id { get; set; }
+
+    private UserModel? User;
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine($"EditUser loading ID: {id}");
-        user = await UserService.GetUser(id);
-        Console.WriteLine($"User loaded: {user != null}");
+        User = await UserService.GetAsync(Id);
     }
 
-
-    private async Task HandleSubmit()
+    private async Task HandleSubmitAsync()
     {
-        await UserService.UpdateUser(user!);
+        await UserService.UpdateAsync(User!);
         Nav.NavigateTo("/users");
     }
 

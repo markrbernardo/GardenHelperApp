@@ -1,0 +1,110 @@
+﻿@typeparam TEnum
+
+<select class="form-select"
+        @onchange="OnChange"
+        disabled="@Disabled">
+
+    @if (GroupedValues != null)
+    {
+        @foreach (var group in GroupedValues)
+        {
+            <optgroup label="@group.Key">
+                @foreach (var value in group)
+                {
+                    <option value="@value" selected="@(Equals(Value, value))">
+                        @GetDisplayName(value)
+                    </option>
+                }
+            </optgroup>
+        }
+    }
+    else
+    {
+        @foreach (var value in SortedValues)
+        {
+            <option value="@value" selected="@(Equals(Value, value))">
+                @GetDisplayName(value)
+            </option>
+        }
+    }
+</select>
+
+@code {
+    // -----------------------------
+    // PARAMETERS
+    // -----------------------------
+    [Parameter] public TEnum Value { get; set; }
+    [Parameter] public EventCallback<TEnum> ValueChanged { get; set; }
+    [Parameter] public bool Disabled { get; set; } = false;
+
+    // Sorting
+    [Parameter] public EnumSort Sort { get; set; } = EnumSort.None;
+    [Parameter] public Func<TEnum, object>? CustomSort { get; set; }
+
+    // Grouping
+    [Parameter] public EnumGroup GroupBy { get; set; } = EnumGroup.None;
+    [Parameter] public Func<TEnum, string>? CustomGroup { get; set; }
+
+    // -----------------------------
+    // SORTED VALUES
+    // -----------------------------
+    private IEnumerable<TEnum> SortedValues
+        => ApplySorting(EnumValues);
+
+    private IEnumerable<IGrouping<string, TEnum>>? GroupedValues
+        => ApplyGrouping(EnumValues);
+
+    private IEnumerable<TEnum> EnumValues
+        => Enum.GetValues(typeof(TEnum)).Cast<TEnum>();
+
+    // -----------------------------
+    // SORTING LOGIC
+    // -----------------------------
+    private IEnumerable<TEnum> ApplySorting(IEnumerable<TEnum> values)
+    {
+        return Sort switch
+        {
+            EnumSort.Alphabetical => values.OrderBy(v => GetDisplayName(v)),
+            EnumSort.Custom when CustomSort != null => values.OrderBy(CustomSort),
+            _ => values
+        };
+    }
+
+    // -----------------------------
+    // GROUPING LOGIC
+    // -----------------------------
+    private IEnumerable<IGrouping<string, TEnum>>? ApplyGrouping(IEnumerable<TEnum> values)
+    {
+        return GroupBy switch
+        {
+            EnumGroup.None => null,
+            EnumGroup.ByFirstLetter => values.GroupBy(v => GetDisplayName(v)[0].ToString()),
+            EnumGroup.Custom when CustomGroup != null => values.GroupBy(CustomGroup),
+            _ => null
+        };
+    }
+
+    // -----------------------------
+    // EVENT HANDLING
+    // -----------------------------
+    private async Task OnChange(ChangeEventArgs e)
+    {
+        if (Enum.TryParse(typeof(TEnum), e.Value?.ToString(), out var parsed))
+        {
+            await ValueChanged.InvokeAsync((TEnum)parsed);
+        }
+    }
+
+    // -----------------------------
+    // DISPLAY NAME SUPPORT
+    // -----------------------------
+    private string GetDisplayName(TEnum value)
+    {
+        var field = typeof(TEnum).GetField(value.ToString());
+        var display = field?.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.DisplayAttribute), false)
+                           .Cast<System.ComponentModel.DataAnnotations.DisplayAttribute>()
+                           .FirstOrDefault();
+
+        return display?.Name ?? value.ToString();
+    }
+}

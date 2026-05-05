@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Json;
 using GardenHelperApp.Shared.Models;
+using GardenHelperApp.Shared.Constants;
 
 namespace GardenHelperApp.Client.Services;
 
@@ -12,55 +13,145 @@ public class ObservationService
         _http = http;
     }
 
-    public async Task<List<ObservationModel>> GetAll()
+    // ---------------------------------------------------------
+    // GET ALL (rarely used)
+    // ---------------------------------------------------------
+    public async Task<List<ObservationModel>> GetAllAsync()
     {
-        return await _http.GetFromJsonAsync<List<ObservationModel>>("api/observations")
+        return await _http.GetFromJsonAsync<List<ObservationModel>>(ApiRoutes.Observations.Base)
                ?? new List<ObservationModel>();
     }
 
-    public async Task<ObservationModel?> Get(int id)
+    // ---------------------------------------------------------
+    // GET SINGLE
+    // ---------------------------------------------------------
+    public async Task<ObservationModel?> GetAsync(int id)
     {
-        return await _http.GetFromJsonAsync<ObservationModel>($"api/observations/{id}");
+        var url = ApiRoutes.Observations.ById.Replace("{id}", id.ToString());
+
+        try
+        {
+            return await _http.GetFromJsonAsync<ObservationModel>(url);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
-    public async Task<List<ObservationModel>> GetByPlant(int plantId)
+    // ---------------------------------------------------------
+    // GET BY PLANT
+    // ---------------------------------------------------------
+    public async Task<List<ObservationModel>> GetByPlantAsync(int plantId)
     {
-        return await _http.GetFromJsonAsync<List<ObservationModel>>($"api/observations/plant/{plantId}")
+        var url = ApiRoutes.Observations.ByPlant.Replace("{plantId}", plantId.ToString());
+
+        return await _http.GetFromJsonAsync<List<ObservationModel>>(url)
                ?? new List<ObservationModel>();
     }
 
-    // CREATE with UTC timestamps
-    public async Task<int> Create(ObservationModel model)
+    // ---------------------------------------------------------
+    // GET BY USER
+    // ---------------------------------------------------------
+    public async Task<List<ObservationModel>> GetByUserAsync(int userId)
     {
-        // Ensure timestamps are UTC before sending
-        model.CreatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-        model.UpdatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
+        var url = ApiRoutes.Observations.ByUser.Replace("{userId}", userId.ToString());
 
-        var response = await _http.PostAsJsonAsync("api/observations", model);
+        return await _http.GetFromJsonAsync<List<ObservationModel>>(url)
+               ?? new List<ObservationModel>();
+    }
+
+    // ---------------------------------------------------------
+    // GET BY DATE RANGE (ALL OBSERVATIONS)
+    // ---------------------------------------------------------
+    public async Task<List<ObservationModel>> GetByDateRangeAsync(DateTime start, DateTime end)
+    {
+        var url = $"{ApiRoutes.Observations.Range}?start={start:O}&end={end:O}";
+
+        return await _http.GetFromJsonAsync<List<ObservationModel>>(url)
+               ?? new List<ObservationModel>();
+    }
+
+    // ---------------------------------------------------------
+    // GET BY PLANT + DATE RANGE
+    // ---------------------------------------------------------
+    public async Task<List<ObservationModel>> GetByPlantAndDateRangeAsync(
+        int plantId,
+        DateTime start,
+        DateTime end)
+    {
+        var url = ApiRoutes.Observations.PlantRange
+            .Replace("{plantId}", plantId.ToString());
+
+        url += $"?start={start:O}&end={end:O}";
+
+        return await _http.GetFromJsonAsync<List<ObservationModel>>(url)
+               ?? new List<ObservationModel>();
+    }
+
+    // ---------------------------------------------------------
+    // GET BY USER + DATE RANGE
+    // ---------------------------------------------------------
+    public async Task<List<ObservationModel>> GetByUserAndDateRangeAsync(
+        int userId,
+        DateTime start,
+        DateTime end)
+    {
+        var url = ApiRoutes.Observations.UserRange
+            .Replace("{userId}", userId.ToString());
+
+        url += $"?start={start:O}&end={end:O}";
+
+        return await _http.GetFromJsonAsync<List<ObservationModel>>(url)
+               ?? new List<ObservationModel>();
+    }
+
+    // ---------------------------------------------------------
+    // CREATE
+    // ---------------------------------------------------------
+    public async Task<int?> CreateAsync(ObservationModel model)
+    {
+        var response = await _http.PostAsJsonAsync(ApiRoutes.Observations.Base, model);
+
+        if (!response.IsSuccessStatusCode)
+            return null;
+
         return await response.Content.ReadFromJsonAsync<int>();
     }
 
-    public async Task Update(ObservationModel model)
+    // ---------------------------------------------------------
+    // UPDATE
+    // ---------------------------------------------------------
+    public async Task<bool> UpdateAsync(ObservationModel model)
     {
-        // UpdatedAt set to UTC now
-        model.UpdatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Local);
-        await _http.PutAsJsonAsync($"api/observations/{model.ObservationId}", model);
+        var url = ApiRoutes.Observations.ById.Replace("{id}", model.ObservationId.ToString());
+
+        var response = await _http.PutAsJsonAsync(url, model);
+
+        return response.IsSuccessStatusCode;
     }
 
-    public async Task Delete(int id)
+    // ---------------------------------------------------------
+    // DELETE
+    // ---------------------------------------------------------
+    public async Task<bool> DeleteAsync(int id)
     {
-        await _http.DeleteAsync($"api/observations/{id}");
+        var url = ApiRoutes.Observations.ById.Replace("{id}", id.ToString());
+
+        var response = await _http.DeleteAsync(url);
+
+        return response.IsSuccessStatusCode;
     }
 
-    public async Task UpdateActiveStatus(int id, bool isActive)
+    // ---------------------------------------------------------
+    // UPDATE ACTIVE STATUS
+    // ---------------------------------------------------------
+    public async Task<bool> UpdateActiveStatusAsync(int id, bool isActive)
     {
-        await _http.PutAsJsonAsync($"api/observations/{id}/active", isActive);
-    }
+        var url = ApiRoutes.Observations.ActiveStatus.Replace("{id}", id.ToString());
 
-    public async Task<List<ObservationModel>> GetByUser(int userId)
-    {
-        return await _http.GetFromJsonAsync<List<ObservationModel>>(
-            $"api/observations/user/{userId}"
-        ) ?? new List<ObservationModel>();
+        var response = await _http.PutAsJsonAsync(url, isActive);
+
+        return response.IsSuccessStatusCode;
     }
 }

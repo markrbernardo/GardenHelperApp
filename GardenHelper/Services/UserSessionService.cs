@@ -4,14 +4,15 @@ public class UserSessionService
 {
     private readonly IJSRuntime _js;
 
+    // ---------------------------------------------------------
+    // SESSION STATE
+    // ---------------------------------------------------------
     public int? CurrentUserId { get; private set; }
     public string? CurrentUserName { get; private set; }
     public int? CurrentGardenId { get; private set; }
     public int? DefaultGardenId { get; private set; }
     public int? CurrentLocationId { get; private set; }
     public int? CurrentPlantId { get; private set; }
-
-
 
     public event Func<Task>? OnChange;
 
@@ -20,108 +21,148 @@ public class UserSessionService
         _js = js;
     }
 
-    // Called once at startup in Program.cs
+    // ---------------------------------------------------------
+    // INITIALIZATION
+    // ---------------------------------------------------------
     public async Task InitializeAsync()
     {
-        var userIdString = await _js.InvokeAsync<string?>("localStorage.getItem", "userId");
-        var userNameString = await _js.InvokeAsync<string?>("localStorage.getItem", "userName");
-        var gardenIdString = await _js.InvokeAsync<string?>("localStorage.getItem", "gardenId");
-        var defaultGardenString = await _js.InvokeAsync<string?>("localStorage.getItem", "defaultGardenId");
+        CurrentUserId = await GetIntAsync("userId");
+        CurrentUserName = await GetStringAsync("userName");
+        CurrentGardenId = await GetIntAsync("gardenId");
+        DefaultGardenId = await GetIntAsync("defaultGardenId");
+        CurrentLocationId = await GetIntAsync("locationId");
+        CurrentPlantId = await GetIntAsync("plantId");
 
-        DefaultGardenId = int.TryParse(defaultGardenString, out var dg) ? dg : null;
-        CurrentUserId = int.TryParse(userIdString, out var uid) ? uid : null;
-        CurrentUserName = userNameString;
-        CurrentGardenId = int.TryParse(gardenIdString, out var gid) ? gid : null;
-
-        await NotifyStateChanged();
+        await NotifyStateChangedAsync();
     }
 
-
-    // Set the logged-in user
-    public async Task SetUser(int userId, string userName)
+    // ---------------------------------------------------------
+    // USER
+    // ---------------------------------------------------------
+    public async Task SetUserAsync(int userId, string userName)
     {
         CurrentUserId = userId;
         CurrentUserName = userName;
 
-        await _js.InvokeVoidAsync("localStorage.setItem", "userId", userId);
-        await _js.InvokeVoidAsync("localStorage.setItem", "userName", userName);
+        await SetIntAsync("userId", userId);
+        await SetStringAsync("userName", userName);
 
-        await NotifyStateChanged();
+        await NotifyStateChangedAsync();
     }
 
-    // Set the selected garden
-    public async Task SetGarden(int gardenId)
+    // ---------------------------------------------------------
+    // GARDEN
+    // ---------------------------------------------------------
+    public async Task SetGardenAsync(int gardenId)
     {
         CurrentGardenId = gardenId;
-
-        await _js.InvokeVoidAsync("localStorage.setItem", "gardenId", gardenId);
-
-        await NotifyStateChanged();
+        await SetIntAsync("gardenId", gardenId);
+        await NotifyStateChangedAsync();
     }
 
-    // Clear everything on sign-out
-    public async Task Clear()
+    public async Task SetDefaultGardenAsync(int gardenId)
+    {
+        DefaultGardenId = gardenId;
+        await SetIntAsync("defaultGardenId", gardenId);
+        await NotifyStateChangedAsync();
+    }
+
+    public async Task ClearGardenIfDeletedAsync(int deletedGardenId)
+    {
+        if (CurrentGardenId == deletedGardenId)
+        {
+            CurrentGardenId = null;
+            await RemoveAsync("gardenId");
+            await NotifyStateChangedAsync();
+        }
+    }
+
+    public async Task ClearCurrentGardenAsync()
+    {
+        CurrentGardenId = null;
+        await RemoveAsync("gardenId");
+        await NotifyStateChangedAsync();
+    }
+
+    // ---------------------------------------------------------
+    // LOCATION / PLANT CONTEXT
+    // ---------------------------------------------------------
+    public async Task SetCurrentLocationAsync(int? locationId, bool persist = false)
+    {
+        CurrentLocationId = locationId;
+
+        if (persist)
+        {
+            if (locationId.HasValue)
+                await SetIntAsync("locationId", locationId.Value);
+            else
+                await RemoveAsync("locationId");
+        }
+
+        await NotifyStateChangedAsync();
+    }
+
+    public async Task SetCurrentPlantAsync(int? plantId, bool persist = false)
+    {
+        CurrentPlantId = plantId;
+
+        if (persist)
+        {
+            if (plantId.HasValue)
+                await SetIntAsync("plantId", plantId.Value);
+            else
+                await RemoveAsync("plantId");
+        }
+
+        await NotifyStateChangedAsync();
+    }
+
+    // ---------------------------------------------------------
+    // CLEAR SESSION
+    // ---------------------------------------------------------
+    public async Task ClearAsync()
     {
         CurrentUserId = null;
         CurrentUserName = null;
         CurrentGardenId = null;
         DefaultGardenId = null;
+        CurrentLocationId = null;
+        CurrentPlantId = null;
 
-        await _js.InvokeVoidAsync("localStorage.removeItem", "userId");
-        await _js.InvokeVoidAsync("localStorage.removeItem", "userName");
-        await _js.InvokeVoidAsync("localStorage.removeItem", "gardenId");
-        await _js.InvokeVoidAsync("localStorage.removeItem", "defaultGardenId");
-        
+        await RemoveAsync("userId");
+        await RemoveAsync("userName");
+        await RemoveAsync("gardenId");
+        await RemoveAsync("defaultGardenId");
+        await RemoveAsync("locationId");
+        await RemoveAsync("plantId");
 
-        await NotifyStateChanged();
+        await NotifyStateChangedAsync();
     }
 
-    private async Task NotifyStateChanged()
+    // ---------------------------------------------------------
+    // INTERNAL HELPERS
+    // ---------------------------------------------------------
+    private async Task<int?> GetIntAsync(string key)
+    {
+        var value = await _js.InvokeAsync<string?>("localStorage.getItem", key);
+        return int.TryParse(value, out var result) ? result : null;
+    }
+
+    private Task<string?> GetStringAsync(string key) =>
+        _js.InvokeAsync<string?>("localStorage.getItem", key).AsTask();
+
+    private Task SetIntAsync(string key, int value) =>
+        _js.InvokeVoidAsync("localStorage.setItem", key, value).AsTask();
+
+    private Task SetStringAsync(string key, string value) =>
+        _js.InvokeVoidAsync("localStorage.setItem", key, value).AsTask();
+
+    private Task RemoveAsync(string key) =>
+        _js.InvokeVoidAsync("localStorage.removeItem", key).AsTask();
+
+    private async Task NotifyStateChangedAsync()
     {
         if (OnChange != null)
             await OnChange.Invoke();
     }
-
-    public async Task SetDefaultGarden(int gardenId)
-    {
-        DefaultGardenId = gardenId;
-        await _js.InvokeVoidAsync("localStorage.setItem", "defaultGardenId", gardenId);
-        await NotifyStateChanged();
-    }
-
-    public Task TriggerChange()
-    {
-        OnChange?.Invoke();
-        return Task.CompletedTask;
-    }
-
-    public async Task ClearGardenIfDeleted(int deletedGardenId)
-    {
-        if (CurrentGardenId == deletedGardenId)
-        {
-            CurrentGardenId = null;
-            await _js.InvokeVoidAsync("localStorage.removeItem", "gardenId");
-            await NotifyStateChanged();
-        }
-    }
-
-    public async Task ClearCurrentGarden()
-    {
-        CurrentGardenId = null;
-        await _js.InvokeVoidAsync("localStorage.removeItem", "gardenId");
-        await NotifyStateChanged();
-    }
-
-    public void SetCurrentLocation(int? locationId)
-    {
-        CurrentLocationId = locationId;
-        NotifyStateChanged();
-    }
-
-    public void SetCurrentPlant(int? plantId)
-    {
-        CurrentPlantId = plantId;
-        NotifyStateChanged();
-    }
-
 }

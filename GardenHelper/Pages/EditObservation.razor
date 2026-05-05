@@ -1,118 +1,107 @@
-﻿@page "/observations/edit/{id:int}"
+﻿@page "/observations/edit/{Id:int}"
+
 @using GardenHelperApp.Shared.Models
 @using Microsoft.AspNetCore.WebUtilities
+
 @inject ObservationService ObservationService
 @inject PlantService PlantService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<h3>Edit Observation</h3>
+<PageHeader Title="Edit Observation" />
 
-@if (observation == null || plants == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    @if (isDeleted)
+<div class="page-section">
+
+    @if (Observation == null || Plants == null)
     {
-        <p>Redirecting...</p>
-        return;
+        <LoadingSpinner Message="Loading observation..." />
+    }
+    else if (IsDeleted)
+    {
+        <LoadingSpinner Message="Deleting..." />
+    }
+    else
+    {
+        <ObservationForm Observation="Observation"
+                         Plants="Plants"
+                         SubmitLabel="Save"
+                         OnSubmitCallback="HandleSubmitAsync"
+                         OnCancelCallback="GoBack"
+                         OnDeleteCallback="DeleteObservationAsync"
+                         ShowDelete="true"
+                         IsDisabled="IsDeleted" />
     }
 
-    <ObservationForm Observation="observation"
-                     Plants="plants"
-                     SubmitLabel="Save"
-                     OnSubmitCallback="HandleSubmit"
-                     OnCancelCallback="GoBack"
-                     OnDeleteCallback="DeleteObservation"
-                     ShowDelete="true"
-                     IsDisabled="isDeleted" />
-
-}
+</div>
 
 @code {
-    [Parameter] public int id { get; set; }
-    string? returnUrl;
+    [Parameter] public int Id { get; set; }
 
-    ObservationModel? observation;
-    List<PlantWithInfoDto>? plants;
-
-    bool showDeleteConfirm = false;
-
-    void ShowDeleteConfirm() => showDeleteConfirm = true;
-    void HideDeleteConfirm() => showDeleteConfirm = false;
-
-    async Task ConfirmDelete()
-    {
-        await ObservationService.Delete(observation!.ObservationId);
-
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
-        else
-            Nav.NavigateTo("/observations");
-    }
+    private ObservationModel? Observation;
+    private List<PlantWithInfoDto>? Plants;
+    private string? ReturnUrl;
+    private bool IsDeleted = false;
 
     protected override async Task OnInitializedAsync()
     {
-        plants = await PlantService.GetAllPlants();
-        observation = await ObservationService.Get(id);
+        // Load plants
+        Plants = await PlantService.GetAllAsync();
 
-        // Ensure the selected plant exists in the list
-        if (observation != null && plants != null)
-        {
-            if (!plants.Any(p => p.PlantId == observation.PlantId))
-            {
-                // fallback to first plant if something is mismatched
-                observation.PlantId = plants.First().PlantId;
-            }
-        }
+        // Load observation
+        Observation = await ObservationService.GetAsync(Id);
 
+        if (Observation == null)
+            return;
+
+        // Ensure selected plant exists
+        if (!Plants.Any(p => p.PlantId == Observation.PlantId))
+            Observation.PlantId = Plants.First().PlantId;
+
+        // Parse returnUrl
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
-        if (query.TryGetValue("returnUrl", out var urlValues))
-            returnUrl = urlValues.ToString();
+        if (query.TryGetValue("returnUrl", out var url))
+            ReturnUrl = url!;
     }
 
-    async Task HandleSubmit()
+    private async Task HandleSubmitAsync()
     {
-        observation!.UpdatedAt = DateTime.UtcNow;
+        Observation!.UpdatedAt = DateTime.UtcNow;
 
-        await ObservationService.Update(observation);
+        await ObservationService.UpdateAsync(Observation);
 
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
             Nav.NavigateTo("/observations");
     }
 
-    void GoBack()
+    private void GoBack()
     {
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
             Nav.NavigateTo("/observations");
     }
 
-    bool isDeleted = false;
-
-    async Task DeleteObservation()
+    private async Task DeleteObservationAsync()
     {
-        var confirmed = await JS.InvokeAsync<bool>("confirm",
-            "Are you sure you want to delete this observation?");
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            "Are you sure you want to delete this observation?"
+        );
 
         if (!confirmed)
             return;
 
-        await ObservationService.Delete(observation!.ObservationId);
+        await ObservationService.DeleteAsync(Observation!.ObservationId);
 
-        isDeleted = true;
+        IsDeleted = true;
 
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!, forceLoad: true);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl, forceLoad: true);
         else
             Nav.NavigateTo("/observations", forceLoad: true);
     }
-
 }

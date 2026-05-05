@@ -1,184 +1,121 @@
-﻿@page "/plantinformation/edit/{id:int}"
+﻿@page "/plantinformation/edit/{Id:int}"
+
 @inject PlantInformationService PlantInfoService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<h3>Edit Plant Information</h3>
+<PageHeader Title="Edit Plant Information" />
 
-@if (isLoading)
-{
-    <p><em>Loading...</em></p>
-}
-else if (loadError != null)
-{
-    <div class="alert alert-danger">@loadError</div>
-}
-else if (plantInfo != null)
-{
-    @if (isDeleted)
+<div class="page-section">
+
+    @if (IsLoading)
     {
-        <p>Redirecting...</p>
-        return;
+        <LoadingSpinner Message="Loading plant information..." />
+    }
+    else if (LoadError != null)
+    {
+        <div class="alert alert-danger">@LoadError</div>
+    }
+    else if (PlantInfo != null)
+    {
+        @if (IsDeleted)
+        {
+            <LoadingSpinner Message="Deleting..." />
+        }
+        else
+        {
+            <PlantInfoForm PlantInfo="PlantInfo"
+                           SubmitLabel="Save"
+                           OnSubmitCallback="HandleSubmitAsync"
+                           OnCancelCallback="GoBack"
+                           OnDeleteCallback="DeleteEntryAsync"
+                           ShowDelete="true"
+                           IsDisabled="IsDeleted" />
+        }
     }
 
-    <PlantInfoForm PlantInfo="plantInfo"
-                   SubmitLabel="Save"
-                   OnSubmitCallback="HandleSubmit"
-                   OnCancelCallback="GoBack"
-                   OnDeleteCallback="DeleteEntry"
-                   ShowDelete="true"
-                   IsDisabled="isDeleted" />
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger mt-3">@ErrorMessage</div>
+    }
 
-}
-
-@if (deleteConfirm)
-{
-    <div class="alert alert-warning mt-3">
-        <strong>Are you sure?</strong> This will permanently delete this plant information.
-        <div class="mt-2 d-flex gap-2">
-            <button class="btn btn-danger" @onclick="Delete">Yes, Delete</button>
-            <button class="btn btn-secondary" @onclick="() => deleteConfirm = false">Cancel</button>
-        </div>
-    </div>
-}
-
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="alert alert-danger mt-3">@errorMessage</div>
-}
+</div>
 
 @code {
-    [Parameter] public int id { get; set; }
+    [Parameter] public int Id { get; set; }
 
-    PlantInformationModel? plantInfo;
-    bool isLoading = true;
-    bool isSubmitting = false;
-    bool deleteConfirm = false;
+    private PlantInformationModel? PlantInfo;
+    private bool IsLoading = true;
+    private bool IsDeleted = false;
 
-    string? loadError;
-    string? errorMessage;
-
-    async Task HandleFileSelected(InputFileChangeEventArgs e)
-    {
-        var file = e.File;
-        if (file == null)
-            return;
-
-        using var stream = file.OpenReadStream(maxAllowedSize: 10_000_000);
-        using var ms = new MemoryStream();
-        await stream.CopyToAsync(ms);
-        var bytes = ms.ToArray();
-
-        var base64 = Convert.ToBase64String(bytes);
-        var dataUrl = $"data:{file.ContentType};base64,{base64}";
-
-        var resizedDataUrl = await JS.InvokeAsync<string>(
-            "resizeImageFromBase64",
-            dataUrl,
-            800,
-            800
-        );
-
-        var parts = resizedDataUrl.Split(',');
-        plantInfo.PhotoMimeType = parts[0].Split(':')[1].Split(';')[0];
-        plantInfo.Photo = parts[1];
-    }
+    private string? LoadError;
+    private string? ErrorMessage;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            plantInfo = await PlantInfoService.Get(id);
+            PlantInfo = await PlantInfoService.GetAsync(Id);
 
-            if (plantInfo == null)
-                loadError = "Plant information not found.";
+            if (PlantInfo == null)
+                LoadError = "Plant information not found.";
         }
         catch (Exception ex)
         {
-            loadError = "Failed to load plant information.";
+            LoadError = "Failed to load plant information.";
             Console.WriteLine("ERROR loading plant info: " + ex);
         }
         finally
         {
-            isLoading = false;
+            IsLoading = false;
         }
     }
 
-    async Task HandleSubmit()
+    private async Task HandleSubmitAsync()
     {
         try
         {
-            isSubmitting = true;
-            errorMessage = null;
+            ErrorMessage = null;
 
-            await PlantInfoService.Update(plantInfo!);
+            await PlantInfoService.UpdateAsync(PlantInfo!);
             Nav.NavigateTo("/plantinformation");
         }
         catch (Exception ex)
         {
-            errorMessage = "Failed to save changes.";
+            ErrorMessage = "Failed to save changes.";
             Console.WriteLine("ERROR saving plant info: " + ex);
-        }
-        finally
-        {
-            isSubmitting = false;
         }
     }
 
-    void GoBack()
+    private void GoBack()
     {
-        if (plantInfo != null)
-            Nav.NavigateTo($"/plantinformation/{plantInfo.PlantInformationId}");
+        if (PlantInfo != null)
+            Nav.NavigateTo($"/plantinformation/{PlantInfo.PlantInformationId}");
         else
             Nav.NavigateTo("/plantinformation");
     }
 
-    void ConfirmDelete()
+    private async Task DeleteEntryAsync()
     {
-        deleteConfirm = true;
-    }
-
-    async Task Delete()
-    {
-        try
-        {
-            isSubmitting = true;
-            errorMessage = null;
-
-            await PlantInfoService.Delete(id);
-            Nav.NavigateTo("/plantinformation");
-        }
-        catch (Exception ex)
-        {
-            errorMessage = "Failed to delete plant information.";
-            Console.WriteLine("ERROR deleting plant info: " + ex);
-        }
-        finally
-        {
-            isSubmitting = false;
-        }
-    }
-
-    void RemovePhoto()
-    {
-        plantInfo.Photo = null;
-        plantInfo.PhotoMimeType = null;
-    }
-
-    bool isDeleted = false;
-    async Task DeleteEntry()
-    {
-        var confirmed = await JS.InvokeAsync<bool>("confirm",
-            "Are you sure you want to delete this plant information?");
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            "Are you sure you want to delete this plant information?"
+        );
 
         if (!confirmed)
             return;
 
-        await PlantInfoService.Delete(id);
+        try
+        {
+            await PlantInfoService.DeleteAsync(Id);
+            IsDeleted = true;
 
-        isDeleted = true;
-
-        Nav.NavigateTo("/plantinformation", forceLoad: true);
+            Nav.NavigateTo("/plantinformation", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Failed to delete plant information.";
+            Console.WriteLine("ERROR deleting plant info: " + ex);
+        }
     }
-
 }

@@ -14,5 +14,5 @@ public class PlantPhotoModel
 
 
     // Match SQLite TEXT column exactly
-    public string? CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 }

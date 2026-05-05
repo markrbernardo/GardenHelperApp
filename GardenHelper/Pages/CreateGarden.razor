@@ -1,60 +1,56 @@
-﻿@page "/gardens/create/{userId:int}"
-@page "/gardens/create/{userId:int}/{*returnUrl}"
+﻿@page "/gardens/create/{UserId:int}"
+@page "/gardens/create/{UserId:int}/{*ReturnUrl}"
 
 @inject GardenService GardenService
 @inject UserService UserService
 @inject NavigationManager Nav
 
-<h3>Create Garden</h3>
+<PageHeader Title="Create Garden" />
 
-@if (users == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    @if (users == null)
+<div class="page-section">
+
+    @if (Users == null)
     {
-        <p>Loading...</p>
+        <LoadingSpinner Message="Loading users..." />
     }
     else
     {
-        <GardenForm Garden="garden"
-                    Users="users"
+        <GardenForm Garden="Garden"
+                    Users="Users"
                     SubmitLabel="Create"
-                    OnSubmitCallback="HandleSubmit"
+                    OnSubmitCallback="HandleSubmitAsync"
                     OnCancelCallback="GoBack" />
     }
 
-}
+</div>
 
 @code {
-    [Parameter] public int userId { get; set; }
-    [Parameter] public string? returnUrl { get; set; }
+    [Parameter] public int UserId { get; set; }
+    [Parameter] public string? ReturnUrl { get; set; }
 
-
-    GardenModel garden = new();
-    List<UserModel>? users;
+    private GardenModel Garden { get; set; } = new();
+    private List<UserModel>? Users;
 
     protected override async Task OnInitializedAsync()
     {
-        users = await UserService.GetUsers();
-        garden.UserId = userId;
+        // ✔ Correct method name
+        Users = await UserService.GetAllAsync();
+        Garden.UserId = UserId;
     }
 
-    async Task HandleSubmit()
+    private async Task HandleSubmitAsync()
     {
-        var created = await GardenService.CreateGardenWithReturn(garden);
-        Nav.NavigateTo($"/garden-profile/{created.GardenId}");
+        var created = await GardenService.CreateAsync(Garden);
+
+        if (created != null)
+            Nav.NavigateTo($"/garden-profile/{created.GardenId}");
     }
 
-
-    void GoBack()
+    private void GoBack()
     {
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
-            Nav.NavigateTo($"/gardens?userId={garden.UserId}");
+            Nav.NavigateTo($"/gardens?userId={Garden.UserId}");
     }
-
 }

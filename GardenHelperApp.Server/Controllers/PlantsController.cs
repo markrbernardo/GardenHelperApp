@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GardenHelperApp.Server.Controllers;
 
-[Route("api/[controller]")]
 [ApiController]
+[Route("api/[controller]")]
 public class PlantsController : ControllerBase
 {
     private readonly GardenContext _context;
@@ -16,183 +16,155 @@ public class PlantsController : ControllerBase
         _context = context;
     }
 
-    // ---------------------------
-    // GET ALL PLANTS (DTO)
-    // ---------------------------
-    [HttpGet]
-    public async Task<ActionResult<List<PlantWithInfoDto>>> GetAll()
+    // ---------------------------------------------------------
+    // INTERNAL PROJECTION (shared by all DTO endpoints)
+    // ---------------------------------------------------------
+    private IQueryable<PlantWithInfoDto> ProjectToDto()
     {
-        var result =
-            await (from p in _context.Plants
-                   join i in _context.PlantInformation on p.PlantInformationId equals i.PlantInformationId
-                   join l in _context.Locations on p.LocationId equals l.LocationId
-                   select new PlantWithInfoDto
-                   {
-                       PlantId = p.PlantId,
-                       Name = p.Name,
-                       PlantInformationId = p.PlantInformationId,
-                       ScientificName = i.ScientificName,
-                       CommonName = i.CommonName,
-                       LocationId = p.LocationId,
-                       LocationName = l.Name,   // ✔ FIXED
-                       GardenId = p.GardenId,
+        return from p in _context.Plants
+               join i in _context.PlantInformation on p.PlantInformationId equals i.PlantInformationId
+               join l in _context.Locations on p.LocationId equals l.LocationId
+               select new PlantWithInfoDto
+               {
+                   PlantId = p.PlantId,
+                   Name = p.Name,
+                   PlantInformationId = p.PlantInformationId,
+                   ScientificName = i.ScientificName,
+                   CommonName = i.CommonName,
+                   LocationId = p.LocationId,
+                   LocationName = l.Name,
+                   GardenId = p.GardenId,
 
-                       Description = p.Description,
-                       Notes = p.Notes,
+                   Description = p.Description,
+                   Notes = p.Notes,
 
-                       GrowingSeason = i.GrowingSeason,
-                       Photo = i.Photo,
-                       PhotoMimeType = i.PhotoMimeType,
-                       Seeds = i.Seeds,
-                       Light = i.Light,
-                       Water = i.Water,
-                       Air = i.Air,
-                       Soil = i.Soil,
-                       Container = i.Container,
-                       Fertilization = i.Fertilization,
-                       Pruning = i.Pruning,
-                       Propagation = i.Propagation,
-                       Health = i.Health
-                   })
-            .OrderBy(x => x.ScientificName ?? x.CommonName)
-            .ToListAsync();
+                   // ENUM FIELDS
+                   GrowingSeason = i.GrowingSeason,
+                   Light = i.Light,
+                   Water = i.Water,
+                   Soil = i.Soil,
+                   Container = i.Container,
+                   Fertilization = i.Fertilization,
+                   Propagation = i.Propagation,
+                   Health = i.Health,
 
-        return Ok(result);
+                   // FREE-FORM FIELDS
+                   Seeds = i.Seeds,
+                   Air = i.Air,
+                   Pruning = i.Pruning,
+
+                   // PHOTOS
+                   Photo = i.Photo,
+                   PhotoMimeType = i.PhotoMimeType
+               };
     }
 
 
-    // ---------------------------
-    // GET SINGLE PLANT (MODEL)
-    // ---------------------------
-    [HttpGet("{id}")]
-    public async Task<ActionResult<PlantModel>> Get(int id)
+    // ---------------------------------------------------------
+    // GET WITH INFO
+    // ---------------------------------------------------------
+    [HttpGet("{id}/withinfo")]
+    public async Task<ActionResult<PlantWithInfoDto>> GetWithInfoAsync(int id)
+    {
+        var plant = await ProjectToDto()
+            .Where(p => p.PlantId == id)
+            .FirstOrDefaultAsync();
+
+        if (plant == null)
+            return NotFound();
+
+        return Ok(plant);
+    }
+
+
+
+    // ---------------------------------------------------------
+    // GET ALL (DTO)
+    // ---------------------------------------------------------
+    [HttpGet]
+    public async Task<ActionResult<List<PlantWithInfoDto>>> GetAllAsync()
+    {
+        var plants = await ProjectToDto()
+            .OrderBy(x => x.ScientificName ?? x.CommonName)
+            .ToListAsync();
+
+        return plants;
+    }
+
+    // ---------------------------------------------------------
+    // GET SINGLE (MODEL)
+    // ---------------------------------------------------------
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<PlantModel>> GetAsync(int id)
     {
         var plant = await _context.Plants.FindAsync(id);
-        if (plant == null) return NotFound();
+        if (plant == null)
+            return NotFound();
+
         return plant;
     }
 
-    // ---------------------------
-    // GET PLANTS BY GARDEN (DTO)
-    // ---------------------------
-    [HttpGet("garden/{gardenId}")]
-    public async Task<ActionResult<List<PlantWithInfoDto>>> GetByGarden(int gardenId)
+    // ---------------------------------------------------------
+    // GET BY GARDEN (DTO)
+    // ---------------------------------------------------------
+    [HttpGet("garden/{gardenId:int}")]
+    public async Task<ActionResult<List<PlantWithInfoDto>>> GetByGardenAsync(int gardenId)
     {
-        var result =
-            await (from p in _context.Plants
-                   join i in _context.PlantInformation on p.PlantInformationId equals i.PlantInformationId
-                   join l in _context.Locations on p.LocationId equals l.LocationId
-                   where p.GardenId == gardenId
-                   select new PlantWithInfoDto
-                   {
-                       PlantId = p.PlantId,
-                       Name = p.Name,
-                       PlantInformationId = p.PlantInformationId,
-                       ScientificName = i.ScientificName,
-                       CommonName = i.CommonName,
-                       LocationId = p.LocationId,
-                       LocationName = l.Name,   // ✔ FIXED
-                       GardenId = p.GardenId,
-
-                       Description = p.Description,
-                       Notes = p.Notes,
-
-                       GrowingSeason = i.GrowingSeason,
-                       Photo = i.Photo,
-                       PhotoMimeType = i.PhotoMimeType,
-                       Seeds = i.Seeds,
-                       Light = i.Light,
-                       Water = i.Water,
-                       Air = i.Air,
-                       Soil = i.Soil,
-                       Container = i.Container,
-                       Fertilization = i.Fertilization,
-                       Pruning = i.Pruning,
-                       Propagation = i.Propagation,
-                       Health = i.Health
-                   })
+        var plants = await ProjectToDto()
+            .Where(p => p.GardenId == gardenId)
             .OrderBy(x => x.ScientificName ?? x.CommonName)
             .ToListAsync();
 
-        return Ok(result);
+        return plants;
     }
 
-
-    // ---------------------------
-    // GET PLANTS BY LOCATION (DTO)
-    // ---------------------------
-    [HttpGet("location/{locationId}")]
-    public async Task<ActionResult<List<PlantWithInfoDto>>> GetByLocation(int locationId)
+    // ---------------------------------------------------------
+    // GET BY LOCATION (DTO)
+    // ---------------------------------------------------------
+    [HttpGet("location/{locationId:int}")]
+    public async Task<ActionResult<List<PlantWithInfoDto>>> GetByLocationAsync(int locationId)
     {
-        var result =
-            await (from p in _context.Plants
-                   join i in _context.PlantInformation on p.PlantInformationId equals i.PlantInformationId
-                   join l in _context.Locations on p.LocationId equals l.LocationId
-                   where p.LocationId == locationId
-                   select new PlantWithInfoDto
-                   {
-                       PlantId = p.PlantId,
-                       Name = p.Name,
-                       PlantInformationId = p.PlantInformationId,
-                       ScientificName = i.ScientificName,
-                       CommonName = i.CommonName,
-                       LocationId = p.LocationId,
-                       LocationName = l.Name,   // ✔ FIXED
-                       GardenId = p.GardenId,
-
-                       Description = p.Description,
-                       Notes = p.Notes,
-
-                       GrowingSeason = i.GrowingSeason,
-                       Photo = i.Photo,
-                       PhotoMimeType = i.PhotoMimeType,
-                       Seeds = i.Seeds,
-                       Light = i.Light,
-                       Water = i.Water,
-                       Air = i.Air,
-                       Soil = i.Soil,
-                       Container = i.Container,
-                       Fertilization = i.Fertilization,
-                       Pruning = i.Pruning,
-                       Propagation = i.Propagation,
-                       Health = i.Health
-                   })
+        var plants = await ProjectToDto()
+            .Where(p => p.LocationId == locationId)
             .OrderBy(x => x.ScientificName ?? x.CommonName)
             .ToListAsync();
 
-        return Ok(result);
+        return plants;
     }
 
-
-    // ---------------------------
-    // GET PLANTS BY PLANT INFO ID (MODEL)
-    // ---------------------------
-    [HttpGet("info/{plantInfoId}")]
-    public async Task<ActionResult<List<PlantModel>>> GetByPlantInfo(int plantInfoId)
+    // ---------------------------------------------------------
+    // GET BY PLANT INFO ID (MODEL)
+    // ---------------------------------------------------------
+    [HttpGet("info/{plantInfoId:int}")]
+    public async Task<ActionResult<List<PlantModel>>> GetByPlantInfoAsync(int plantInfoId)
     {
-        return await _context.Plants
+        var plants = await _context.Plants
             .Where(p => p.PlantInformationId == plantInfoId)
             .ToListAsync();
+
+        return plants;
     }
 
-    // ---------------------------
+    // ---------------------------------------------------------
     // CREATE
-    // ---------------------------
+    // ---------------------------------------------------------
     [HttpPost]
-    public async Task<IActionResult> Create(PlantModel model)
+    public async Task<ActionResult<PlantModel>> CreateAsync(PlantModel model)
     {
         _context.Plants.Add(model);
         await _context.SaveChangesAsync();
-        return Ok(model);
+
+        return CreatedAtAction(nameof(GetAsync), new { id = model.PlantId }, model);
     }
 
-    // ---------------------------
+    // ---------------------------------------------------------
     // UPDATE
-    // ---------------------------
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, PlantModel model)
+    // ---------------------------------------------------------
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateAsync(int id, PlantModel model)
     {
-        if (id != model.PlantId) return BadRequest();
+        if (id != model.PlantId)
+            return BadRequest("Plant ID mismatch.");
 
         _context.Entry(model).State = EntityState.Modified;
         await _context.SaveChangesAsync();
@@ -200,14 +172,15 @@ public class PlantsController : ControllerBase
         return NoContent();
     }
 
-    // ---------------------------
+    // ---------------------------------------------------------
     // DELETE
-    // ---------------------------
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    // ---------------------------------------------------------
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteAsync(int id)
     {
         var plant = await _context.Plants.FindAsync(id);
-        if (plant == null) return NotFound();
+        if (plant == null)
+            return NotFound();
 
         _context.Plants.Remove(plant);
         await _context.SaveChangesAsync();

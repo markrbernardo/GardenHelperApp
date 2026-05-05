@@ -1,7 +1,10 @@
 ﻿@inject NavigationManager Nav
 
 <div class="dropdown">
-    <button class="btn btn-success dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown">
+    <button class="btn btn-success dropdown-toggle btn-sm"
+            type="button"
+            data-bs-toggle="dropdown"
+            disabled="@Disabled">
         <i class="bi bi-plus-circle me-1"></i> Add
     </button>
 
@@ -11,19 +14,22 @@
         <li><h6 class="dropdown-header">Plant Related</h6></li>
 
         <li>
-            <a class="dropdown-item" href="@BuildUrl("/plants/create")">
+            <a class="dropdown-item @(Disabled ? "disabled" : "")"
+               href="@BuildUrl("/plants/create")">
                 <i class="bi bi-flower1 me-2"></i> Add Plant
             </a>
         </li>
 
         <li>
-            <a class="dropdown-item" href="@BuildUrl("/plantinformation/create")">
+            <a class="dropdown-item @(Disabled ? "disabled" : "")"
+               href="@BuildUrl("/plantinformation/create")">
                 <i class="bi bi-journal-plus me-2"></i> Add Plant Information
             </a>
         </li>
 
         <li>
-            <a class="dropdown-item" href="@BuildUrl("/observations/create", PlantId)">
+            <a class="dropdown-item @(Disabled ? "disabled" : "")"
+               href="@BuildUrl("/observations/create", plantId: PlantId)">
                 <i class="bi bi-eye me-2"></i> Add Observation
             </a>
         </li>
@@ -34,19 +40,22 @@
         <li><h6 class="dropdown-header">Garden Related</h6></li>
 
         <li>
-            <a class="dropdown-item" href="@BuildUrl("/locations/create", gardenId: GardenId)">
+            <a class="dropdown-item @(Disabled ? "disabled" : "")"
+               href="@BuildUrl("/locations/create", gardenId: GardenId)">
                 <i class="bi bi-geo-alt me-2"></i> Add Location
             </a>
         </li>
 
         <li>
-            <a class="dropdown-item" href="@BuildUrl("/gardens/create")">
+            <a class="dropdown-item @(Disabled ? "disabled" : "")"
+               href="@BuildUrl("/gardens/create")">
                 <i class="bi bi-tree me-2"></i> Add Garden
             </a>
         </li>
 
         <li>
-            <a class="dropdown-item" href="@BuildUrl("/journalentries/create")">
+            <a class="dropdown-item @(Disabled ? "disabled" : "")"
+               href="@BuildUrl("/journalentries/create")">
                 <i class="bi bi-pencil-square me-2"></i> Add Journal Entry
             </a>
         </li>
@@ -70,9 +79,13 @@
     [Parameter] public int? LocationId { get; set; }
     [Parameter] public int? PlantId { get; set; }
     [Parameter] public string? ReturnUrl { get; set; }
+    [Parameter] public bool Disabled { get; set; }
 
     private string BuildUrl(string baseUrl, int? plantId = null, int? gardenId = null)
     {
+        if (Disabled)
+            return "#";
+
         var url = baseUrl;
         var query = new List<string>();
 

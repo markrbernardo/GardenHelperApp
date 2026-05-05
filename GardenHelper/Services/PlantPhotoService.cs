@@ -1,5 +1,6 @@
-﻿using GardenHelperApp.Shared.Models;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
+using GardenHelperApp.Shared.Models;
+using GardenHelperApp.Shared.Constants;
 
 namespace GardenHelperApp.Client.Services;
 
@@ -12,20 +13,32 @@ public class PlantPhotoService
         _http = http;
     }
 
-    public async Task<List<PlantPhotoModel>> GetPhotosForPlant(int plantId)
+    // ---------------------------------------------------------
+    // GET PHOTOS BY PLANT
+    // ---------------------------------------------------------
+    public async Task<List<PlantPhotoModel>> GetByPlantAsync(int plantId)
     {
-        return await _http.GetFromJsonAsync<List<PlantPhotoModel>>(
-            $"api/plantphotos/plant/{plantId}"
-        ) ?? new List<PlantPhotoModel>();
+        var url = ApiRoutes.PlantPhotos.ByPlant.Replace("{plantId}", plantId.ToString());
+
+        return await _http.GetFromJsonAsync<List<PlantPhotoModel>>(url)
+               ?? new List<PlantPhotoModel>();
     }
 
-    public async Task AddPhoto(PlantPhotoModel model)
+    // ---------------------------------------------------------
+    // CREATE PHOTO
+    // ---------------------------------------------------------
+    public async Task CreateAsync(PlantPhotoModel model)
     {
-        await _http.PostAsJsonAsync("api/plantphotos", model);
+        await _http.PostAsJsonAsync(ApiRoutes.PlantPhotos.Base, model);
     }
 
-    public async Task DeletePhoto(int photoId)
+    // ---------------------------------------------------------
+    // DELETE PHOTO
+    // ---------------------------------------------------------
+    public async Task DeleteAsync(int photoId)
     {
-        await _http.DeleteAsync($"api/plantphotos/{photoId}");
+        var url = ApiRoutes.PlantPhotos.ById.Replace("{photoId}", photoId.ToString());
+
+        await _http.DeleteAsync(url);
     }
 }

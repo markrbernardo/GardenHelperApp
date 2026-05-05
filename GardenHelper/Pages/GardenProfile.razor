@@ -1,181 +1,184 @@
-﻿@page "/garden-profile/{gardenId:int}"
+﻿@page "/garden-profile/{GardenId:int}"
+
 @inject GardenService GardenService
+@inject LocationService LocationService
 @inject PlantService PlantService
 @inject NavigationManager Nav
-
-<PageHeader Title="@garden?.Name">
+ 
+<PageHeader Title="@($"{Garden?.Name ?? "Garden"}")" Divider="false">
     <Actions>
-        @if (garden != null)
+        @if (Garden != null)
         {
             <button class="btn btn-outline-primary btn-sm"
-                    @onclick="@(() => Nav.NavigateTo($"/gardens/edit/{gardenId}?returnUrl=/garden-profile/{gardenId}"))">
+                    @onclick="@(() => Nav.NavigateTo($"/gardens/edit/{GardenId}?returnUrl=/garden-profile/{GardenId}"))">
                 <i class="bi bi-pencil-square"></i> Edit Garden
             </button>
         }
     </Actions>
 </PageHeader>
 
-@if (garden == null)
-{
-    <p>Loading garden...</p>
-}
-else
-{
-    <!-- MODERN GARDEN SUMMARY -->
-    <div class="garden-summary-card card shadow-sm mb-4">
-        <div class="card-body">
+<div class="page-section">
 
-            <div class="summary-header d-flex align-items-center mb-3">
-                <i class="bi bi-tree-fill text-success fs-3 me-2"></i>
-                <h4 class="mb-0">Garden Summary</h4>
-            </div>
+    @if (Garden == null)
+    {
+        <LoadingSpinner Message="Loading garden..." />
+    }
+    else
+    {
+        <!-- GARDEN SUMMARY -->
+        <div class="garden-summary-card card shadow-sm mb-4">
+            <div class="card-body">
 
-            <div class="summary-grid">
-
-                <div class="summary-item">
-                    <div class="summary-label"><i class="bi bi-geo me-1"></i> Zip Code</div>
-                    <div class="summary-value">@garden.ZipCode</div>
+                <div class="summary-header d-flex align-items-center mb-3">
+                    <i class="bi bi-tree-fill text-success fs-3 me-2"></i>
+                    <h4 class="mb-0">Garden Summary</h4>
                 </div>
 
-                @if (!string.IsNullOrWhiteSpace(garden.HardinessZone))
-                {
-                    <div class="summary-item">
-                        <div class="summary-label"><i class="bi bi-thermometer-snow me-1"></i> Hardiness Zone</div>
-                        <div class="summary-value">@garden.HardinessZone</div>
-                    </div>
-                }
+                <div class="summary-grid">
 
-                @if (!string.IsNullOrWhiteSpace(garden.HeatZone))
-                {
                     <div class="summary-item">
-                        <div class="summary-label"><i class="bi bi-thermometer-sun me-1"></i> Heat Zone</div>
-                        <div class="summary-value">@garden.HeatZone</div>
+                        <div class="summary-label"><i class="bi bi-geo me-1"></i> Zip Code</div>
+                        <div class="summary-value">@Garden.ZipCode</div>
                     </div>
-                }
 
-                @if (!string.IsNullOrWhiteSpace(garden.WindOrientation))
-                {
-                    <div class="summary-item">
-                        <div class="summary-label"><i class="bi bi-wind me-1"></i> Wind Orientation</div>
-                        <div class="summary-value">@garden.WindOrientation</div>
-                    </div>
-                }
+                    @if (!string.IsNullOrWhiteSpace(Garden.HardinessZone))
+                    {
+                        <div class="summary-item">
+                            <div class="summary-label"><i class="bi bi-thermometer-snow me-1"></i> Hardiness Zone</div>
+                            <div class="summary-value">@Garden.HardinessZone</div>
+                        </div>
+                    }
 
-                @if (!string.IsNullOrWhiteSpace(garden.SoilType))
-                {
-                    <div class="summary-item">
-                        <div class="summary-label"><i class="bi bi-flower3 me-1"></i> Soil Type</div>
-                        <div class="summary-value">@garden.SoilType</div>
-                    </div>
-                }
+                    @if (!string.IsNullOrWhiteSpace(Garden.HeatZone))
+                    {
+                        <div class="summary-item">
+                            <div class="summary-label"><i class="bi bi-thermometer-sun me-1"></i> Heat Zone</div>
+                            <div class="summary-value">@Garden.HeatZone</div>
+                        </div>
+                    }
 
-                @if (!string.IsNullOrWhiteSpace(garden.MarineInfluence))
-                {
-                    <div class="summary-item">
-                        <div class="summary-label"><i class="bi bi-water me-1"></i> Marine Influence</div>
-                        <div class="summary-value">@garden.MarineInfluence</div>
-                    </div>
-                }
+                    @if (Garden.WindOrientation != null)
+                    {
+                        <div class="summary-item">
+                            <div class="summary-label"><i class="bi bi-wind me-1"></i> Wind Orientation</div>
+                            <div class="summary-value">@Garden.WindOrientation.ToString()</div>
+                        </div>
+                    }
+
+                    @if (Garden.SoilType != null)
+                    {
+                        <div class="summary-item">
+                            <div class="summary-label"><i class="bi bi-flower3 me-1"></i> Soil Type</div>
+                            <div class="summary-value">@Garden.SoilType.ToString()</div>
+                        </div>
+                    }
+
+                    @if (Garden.MarineInfluence != null)
+                    {
+                        <div class="summary-item">
+                            <div class="summary-label"><i class="bi bi-water me-1"></i> Marine Influence</div>
+                            <div class="summary-value">@Garden.MarineInfluence.ToString()</div>
+                        </div>
+                    }
+
+                </div>
 
             </div>
-
         </div>
-    </div>
 
+        <!-- LOCATIONS + PLANTS -->
+        <ScrollColumn>
+            <div class="gp-locations-container">
 
-    <!-- LOCATIONS LIST -->
-    <ScrollColumn>
-        <div class="gp-locations-container">
-
-            @if (locations == null)
-            {
-                <p>Loading locations...</p>
-            }
-            else if (locations.Count == 0)
-            {
-                <p>No locations yet.</p>
-            }
-            else
-            {
-                @foreach (var loc in locations)
+                @if (Locations == null)
                 {
-                    <div class="gp-location-block card mb-3">
+                    <LoadingSpinner Message="Loading locations..." />
+                }
+                else if (Locations.Count == 0)
+                {
+                    <p>No locations yet.</p>
+                }
+                else
+                {
+                    @foreach (var loc in Locations)
+                    {
+                        <div class="gp-location-block card mb-3">
 
-                        <!-- LOCATION TILE -->
-                        <LocationTile Location="loc"
-                                      PlantCount="plants.Count(p => p.LocationId == loc.LocationId)"
-                                      OnSelect="GoToLocation" />
+                            <LocationTile Location="loc"
+                                          PlantCount="Plants.Count(p => p.LocationId == loc.LocationId)"
+                                          OnSelect="GoToLocation" />
 
-                        @{
-                            var plantsInLoc = plants.Where(p => p.LocationId == loc.LocationId).ToList();
-                        }
-
-                        <div class="gp-plant-grid plant-list-scroll">
-
-                            
-                            <!-- EXISTING PLANTS -->
-                            @foreach (var p in plantsInLoc)
-                            {
-                                <PlantNametagTile Plant="p"
-                                                  Selected="false"
-                                                  OnSelect="@(() => Nav.NavigateTo($"/plants?plantId={p.PlantId}"))" />
+                            @{
+                                var plantsInLoc = Plants.Where(p => p.LocationId == loc.LocationId).ToList();
                             }
 
-                            <!-- ADD PLANT TILE (matches PlantNameTagTile) -->
-                            <div class="plant-tile add-plant-tile rounded-1"
-                                 @onclick="@(() => Nav.NavigateTo($"/plants/create?locationId={loc.LocationId}&returnUrl=/garden-profile/{gardenId}"))">
+                            <div class="gp-plant-grid plant-list-scroll">
 
-                                <div class="plant-thumb">
-                                    <div class="plant-thumb-placeholder">+</div>
+                                @foreach (var p in plantsInLoc)
+                                {
+                                    <PlantNametagTile Plant="p"
+                                                      Selected="false"
+                                                      OnSelect="@(() => Nav.NavigateTo($"/plants?plantId={p.PlantId}"))" />
+                                }
+
+                                <div class="plant-tile add-plant-tile rounded-1"
+                                     @onclick="@(() => Nav.NavigateTo($"/plants/create?locationId={loc.LocationId}&returnUrl=/garden-profile/{GardenId}"))">
+
+                                    <div class="plant-thumb">
+                                        <div class="plant-thumb-placeholder">+</div>
+                                    </div>
+
+                                    <div class="plant-text">
+                                        <div class="plant-name text-primary"><strong>Add Plant</strong></div>
+                                        <div class="plant-scientific">to this location</div>
+                                    </div>
                                 </div>
 
-                                <div class="plant-text">
-                                    <div class="plant-name text-primary"><strong>Add Plant</strong></div>
-                                    <div class="plant-scientific">to this location</div>
-                                </div>
                             </div>
 
                         </div>
+                    }
 
+                    <div class="gp-location-block card mb-3 add-location-tile"
+                         @onclick="@(() => Nav.NavigateTo($"/locations/create?gardenId={GardenId}&returnUrl=/garden-profile/{GardenId}"))">
+
+                        <div class="gp-location-header">
+                            <div>
+                                <h4 class="gp-location-title text-primary">
+                                    <i class="bi bi-plus-lg"></i> Add Location
+                                </h4>
+                                <div class="gp-location-sub">Create a new location</div>
+                            </div>
+                        </div>
 
                     </div>
                 }
-
-                <!-- ADD LOCATION TILE -->
-                <div class="gp-location-block card mb-3 add-location-tile"
-                     @onclick="@(() => Nav.NavigateTo($"/locations/create?gardenId={gardenId}&returnUrl=/garden-profile/{gardenId}"))">
-
-                    <div class="gp-location-header">
-                        <div>
-                            <h4 class="gp-location-title text-primary">
-                                <i class="bi bi-plus-lg"></i> Add Location
-                            </h4>
-                            <div class="gp-location-sub">Create a new location</div>
-                        </div>
-                    </div>
-
-                </div>
-            }
-        </div>
-    </ScrollColumn>
-}
+            </div>
+        </ScrollColumn>
+    }
+</div>
 
 @code {
-    [Parameter] public int gardenId { get; set; }
+    [Parameter] public int GardenId { get; set; }
 
-    GardenModel? garden;
-    List<LocationModel>? locations;
-    List<PlantWithInfoDto>? plants;
+    private GardenModel? Garden;
+    private List<LocationModel>? Locations;
+    private List<PlantWithInfoDto>? Plants;
 
     protected override async Task OnParametersSetAsync()
     {
-        garden = await GardenService.GetGarden(gardenId);
-        locations = await GardenService.GetLocationsByGarden(gardenId);
-        plants = await PlantService.GetPlantsByGarden(gardenId);
+        Garden = await GardenService.GetAsync(GardenId);
+
+        // Correct method
+        Locations = await LocationService.GetByGardenAsync(GardenId);
+
+        // Correct plant method
+        Plants = await PlantService.GetByGardenAsync(GardenId);
     }
 
-    void GoToLocation(int locationId)
+    private void GoToLocation(int locationId)
     {
         Nav.NavigateTo($"/location-profile/{locationId}");
     }
 }
+

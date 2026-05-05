@@ -1,5 +1,5 @@
-﻿@page "/gardens/edit/{id:int}"
-@page "/gardens/edit/{id:int}/{*returnUrl}"
+﻿@page "/gardens/edit/{Id:int}"
+@page "/gardens/edit/{Id:int}/{*ReturnUrl}"
 
 @inject GardenService GardenService
 @inject UserService UserService
@@ -7,79 +7,76 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
+<PageHeader Title="Edit Garden" />
 
-<h3>Edit Garden</h3>
+<div class="page-section">
 
-@if (garden == null || users == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    @if (users == null || garden == null)
+    @if (Garden == null || Users == null)
     {
-        <p>Loading...</p>
+        <LoadingSpinner Message="Loading garden..." />
     }
     else
     {
-        <GardenForm Garden="garden"
-                    Users="users"
+        <GardenForm Garden="Garden"
+                    Users="Users"
                     SubmitLabel="Save Changes"
-                    OnSubmitCallback="HandleSubmit"
-                    OnCancelCallback="GoBack" />
+                    OnSubmitCallback="HandleSubmitAsync"
+                    OnCancelCallback="GoBack"
+                    ShowDelete="false" />
+
         <button class="btn btn-danger mt-3"
-                @onclick="ConfirmDelete">
+                @onclick="ConfirmDeleteAsync">
             Delete Garden
         </button>
-
     }
 
-}
+</div>
 
 @code {
-    [Parameter] public int id { get; set; }
-    [Parameter] public string? returnUrl { get; set; }
+    [Parameter] public int Id { get; set; }
+    [Parameter] public string? ReturnUrl { get; set; }
 
-    GardenModel? garden;
-    List<UserModel>? users;
+    private GardenModel? Garden;
+    private List<UserModel>? Users;
 
     protected override async Task OnInitializedAsync()
     {
-        garden = await GardenService.GetGarden(id);
-        users = await UserService.GetUsers();
+        Garden = await GardenService.GetAsync(Id);
+        Users = await UserService.GetAllAsync();
     }
 
-    async Task HandleSubmit()
+    private async Task HandleSubmitAsync()
     {
-        await GardenService.UpdateGarden(garden!);
+        await GardenService.UpdateAsync(Garden!);
 
-        // Always go to the updated garden's profile
-        Nav.NavigateTo($"/garden-profile/{garden!.GardenId}");
+        // Always redirect to the updated garden profile
+        Nav.NavigateTo($"/garden-profile/{Garden!.GardenId}");
     }
 
-    void GoBack()
+    private void GoBack()
     {
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
-            Nav.NavigateTo($"/garden-profile/{garden!.GardenId}");
+            Nav.NavigateTo($"/garden-profile/{Garden!.GardenId}");
     }
 
-    private async Task ConfirmDelete()
+    private async Task ConfirmDeleteAsync()
     {
-        var confirmed = await JS.InvokeAsync<bool>("confirm",
-            $"Are you sure you want to delete '{garden.Name}'? This cannot be undone.");
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"Are you sure you want to delete '{Garden!.Name}'? This cannot be undone."
+        );
 
         if (!confirmed)
             return;
 
-        await GardenService.DeleteGarden(garden.GardenId);
+        await GardenService.DeleteAsync(Garden!.GardenId);
 
-        // If this was the default garden, clear it
-        await Session.ClearCurrentGarden();
+        // If this was the current garden, clear it
+        if (Session.CurrentGardenId == Garden.GardenId)
+            await Session.ClearCurrentGardenAsync();
 
         Nav.NavigateTo("/gardens");
     }
-
-
 }

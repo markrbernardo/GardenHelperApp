@@ -1,10 +1,15 @@
 ﻿<button class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center"
         @onclick="HandleClick"
+        @onclick:preventDefault="true"
         disabled="@Disabled">
 
-    <i class="bi bi-arrow-left me-1"></i>
+    <i class="@Icon me-1"></i>
 
-    @if (!string.IsNullOrEmpty(Label))
+    @if (ChildContent != null)
+    {
+        @ChildContent
+    }
+    else if (!string.IsNullOrEmpty(Label))
     {
         @Label
     }
@@ -12,8 +17,12 @@
 
 @code {
     [Parameter] public string? Label { get; set; } = "Back";
+    [Parameter] public string Icon { get; set; } = "bi bi-arrow-left";
     [Parameter] public string? Url { get; set; }
     [Parameter] public bool Disabled { get; set; } = false;
+
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 
     [Inject] IJSRuntime JS { get; set; } = default!;
     [Inject] NavigationManager Nav { get; set; } = default!;
@@ -22,6 +31,10 @@
     {
         if (Disabled)
             return;
+
+        // Optional user callback
+        if (OnClick.HasDelegate)
+            await OnClick.InvokeAsync();
 
         // If a specific URL is provided, use it
         if (!string.IsNullOrEmpty(Url))

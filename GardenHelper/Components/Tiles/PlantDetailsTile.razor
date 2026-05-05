@@ -2,119 +2,139 @@
 @inject ObservationService ObservationService
 @inject NavigationManager Nav
 
-@if (Plant == null)
-{
-    <p class="placeholder">Select a plant to view its profile.</p>
-}
-else
-{
-    <div class="plantdetails-tile">
+<div class="@BuildContainerClasses()">
 
-        <!-- HEADER -->
-        <div class="header-row">
-            <div>
-                <h2 class="plant-name">@Plant.Name</h2>
-                <div class="plant-sub">
-                    @Plant.CommonName • <em>@Plant.ScientificName</em>
+    @if (Plant == null)
+    {
+        <EmptyState Icon="bi bi-flower1" Title="No plant selected">
+            Select a plant to view its profile.
+        </EmptyState>
+    }
+    else
+    {
+        <div class="@BuildCardClasses()">
+
+            <!-- HEADER -->
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h2 class="m-0">@Plant.Name</h2>
+                    <div class="text-muted">
+                        @Plant.CommonName • <em>@Plant.ScientificName</em>
+                    </div>
                 </div>
+
+                <IconButton Icon="bi bi-pencil-square"
+                            Label="Edit"
+                            Size="sm"
+                            Disabled="@Disabled"
+                            OnClick="() => OnEditPlant.InvokeAsync(Plant.PlantId)" />
             </div>
 
-            <button class="btn btn-sm btn-outline-primary edit-btn"
-                    @onclick="() => OnEditPlant.InvokeAsync(Plant.PlantId)">
-                <i class="bi bi-pencil-square"></i> Edit
-            </button>
-        </div>
-
-        <!-- PHOTO -->
-        @if (!string.IsNullOrWhiteSpace(Plant.Photo))
-        {
-            <img src="@($"data:{Plant.PhotoMimeType ?? "image/jpeg"};base64,{Plant.Photo}")"
-                 class="plant-photo" />
-        }
-
-        <!-- BASIC INFO -->
-        <div class="info-section">
-            @Detail("Description", Plant.Description)
-            @Detail("Growing Season", Plant.GrowingSeason)
-        </div>
-
-        <!-- CARE INFO -->
-        <h4 class="section-title">Care Information</h4>
-
-        <div class="info-section">
-            @Detail("Seeds", Plant.Seeds)
-            @Detail("Light", Plant.Light)
-            @Detail("Water", Plant.Water)
-            @Detail("Air", Plant.Air)
-            @Detail("Soil", Plant.Soil)
-            @Detail("Container", Plant.Container)
-            @Detail("Fertilization", Plant.Fertilization)
-            @Detail("Pruning", Plant.Pruning)
-            @Detail("Propagation", Plant.Propagation)
-            @Detail("Health", Plant.Health)
-        </div>
-
-        <!-- NOTES -->
-        @Detail("Notes", Plant.Notes)
-
-        <hr />
-
-        <!-- OBSERVATIONS -->
-        <div class="obs-header">
-            <h3 class="mb-0">Observations</h3>
-
-            <button class="btn btn-sm btn-outline-success"
-                    @onclick="() => OnAddObservation.InvokeAsync(Plant.PlantId)">
-                <i class="bi bi-plus-lg"></i> Add Observation
-            </button>
-        </div>
-
-        @if (observations == null)
-        {
-            <p>Loading observations...</p>
-        }
-        else if (observations.Count == 0)
-        {
-            <p>No observations yet.</p>
-        }
-        else
-        {
-            @foreach (var o in observations
-                .OrderByDescending(o => o.ActiveObservation)
-                .ThenByDescending(o => o.CreatedAt))
+            <!-- PHOTO -->
+            @if (!string.IsNullOrWhiteSpace(Plant.Photo))
             {
-                <div class="observation-tile"
-                     @onclick="() => OpenObservation(o.ObservationId)">
-
-                    <div class="obs-date">
-                        @o.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
-                    </div>
-
-                    <div class="obs-text">
-                        <strong>@o.Observation</strong>
-                    </div>
-
-                    <div class="obs-status">
-                        @if (o.ActiveObservation)
-                        {
-                            <span class="badge bg-success">Active</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-secondary">Inactive</span>
-                        }
-                    </div>
-                </div>
+                <img src="@($"data:{Plant.PhotoMimeType ?? "image/jpeg"};base64,{Plant.Photo}")"
+                     class="plant-photo mb-3"
+                     alt="Plant photo" />
             }
-        }
-    </div>
-}
+
+            <!-- BASIC INFO -->
+            <SectionHeader Title="Basic Information" Size="h5" CssClass="mt-3" />
+            <div class="info-section">
+                @Detail("Description", Plant.Description)
+                @Detail("Growing Season", Plant.GrowingSeason)
+            </div>
+
+            <!-- CARE INFO -->
+            <SectionHeader Title="Care Information" Size="h5" CssClass="mt-4" />
+            <div class="info-section">
+                @Detail("Seeds", Plant.Seeds)
+                @Detail("Light", Plant.Light)
+                @Detail("Water", Plant.Water)
+                @Detail("Air", Plant.Air)
+                @Detail("Soil", Plant.Soil)
+                @Detail("Container", Plant.Container)
+                @Detail("Fertilization", Plant.Fertilization)
+                @Detail("Pruning", Plant.Pruning)
+                @Detail("Propagation", Plant.Propagation)
+                @Detail("Health", Plant.Health)
+            </div>
+
+            <!-- NOTES -->
+            @Detail("Notes", Plant.Notes)
+
+            <hr class="my-4" />
+
+            <!-- OBSERVATIONS -->
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h3 class="m-0">Observations</h3>
+
+                <IconButton Icon="bi bi-plus-lg"
+                            Label="Add Observation"
+                            Size="sm"
+                            Disabled="@Disabled"
+                            OnClick="() => OnAddObservation.InvokeAsync(Plant.PlantId)" />
+            </div>
+
+            @if (Loading)
+            {
+                <LoadingSpinner Message="Loading observations..." />
+            }
+            else if (observations == null)
+            {
+                <EmptyState Icon="bi bi-eye" Title="Loading">
+                    Fetching observations...
+                </EmptyState>
+            }
+            else if (observations.Count == 0)
+            {
+                <EmptyState Icon="bi bi-eye-slash" Title="No observations">
+                    This plant has no observations yet.
+                </EmptyState>
+            }
+            else
+            {
+                @foreach (var o in observations
+                    .OrderByDescending(o => o.ActiveObservation)
+                    .ThenByDescending(o => o.CreatedAt))
+                {
+                    <div class="observation-tile tile-hover tile-rounded p-2 mb-2"
+                         @onclick="() => OpenObservation(o.ObservationId)">
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-muted">
+                                @o.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")
+                            </div>
+
+                            <span class="badge @(o.ActiveObservation ? "bg-success" : "bg-secondary")">
+                                @(o.ActiveObservation ? "Active" : "Inactive")
+                            </span>
+                        </div>
+
+                        <div class="mt-1 fw-bold">@o.Observation</div>
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>
 
 @code {
     [Parameter] public PlantWithInfoDto? Plant { get; set; }
     [Parameter] public EventCallback<int> OnAddObservation { get; set; }
     [Parameter] public EventCallback<int> OnEditObservation { get; set; }
     [Parameter] public EventCallback<int> OnEditPlant { get; set; }
+
+    // NEW — standardized component features
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public bool Loading { get; set; } = false;
+
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string CardClass { get; set; } = "plantdetails-tile";
+    [Parameter] public string HoverClass { get; set; } = "tile-hover";
+    [Parameter] public string Size { get; set; } = "md";
+    [Parameter] public bool Rounded { get; set; } = true;
+    [Parameter] public bool Padding { get; set; } = true;
 
     List<ObservationModel>? observations;
 
@@ -126,7 +146,9 @@ else
             return;
         }
 
-        observations = await ObservationService.GetByPlant(Plant.PlantId);
+        Loading = true;
+        observations = await ObservationService.GetByPlantAsync(Plant.PlantId);
+        Loading = false;
     }
 
     void OpenObservation(int id)
@@ -152,4 +174,48 @@ else
             builder.CloseElement();
         }
     };
+
+    private string BuildContainerClasses()
+    {
+        var sizeClass = Size switch
+        {
+            "sm" => "tile-sm",
+            "lg" => "tile-lg",
+            _ => "tile-md"
+        };
+
+        return $"plantdetails-container {sizeClass} {CssClass}".Trim();
+    }
+
+    private string BuildCardClasses()
+    {
+        var roundedClass = Rounded ? "tile-rounded" : "";
+        var paddingClass = Padding ? "p-3" : "p-0";
+
+        return $"{CardClass} {roundedClass} {paddingClass} {HoverClass}".Trim();
+    }
+
+    RenderFragment Detail(string title, object? value) => builder =>
+{
+    if (value is null)
+        return;
+
+    var text = value.ToString();
+    if (string.IsNullOrWhiteSpace(text))
+        return;
+
+    builder.OpenElement(0, "div");
+    builder.AddAttribute(1, "class", "detail-block");
+
+    builder.OpenElement(2, "h5");
+    builder.AddContent(3, title);
+    builder.CloseElement();
+
+    builder.OpenElement(4, "p");
+    builder.AddContent(5, text);
+    builder.CloseElement();
+
+    builder.CloseElement();
+};
+
 }

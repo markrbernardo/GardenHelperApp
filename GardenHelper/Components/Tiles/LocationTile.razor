@@ -1,33 +1,102 @@
-﻿<div class="location-tile" @onclick="HandleClick">
-    <div class="location-header">
+﻿<div class="@BuildClasses()"
+     @onclick="HandleClick"
+     @onclick:preventDefault="PreventDefault"
+     title="@Tooltip">
+
+    <!-- HEADER -->
+    <div class="location-header d-flex justify-content-between align-items-start">
+
         <div class="location-name">@Location.Name</div>
 
-        @if (Location.IsOutside == true)
-        {
-            <div class="location-tag outside">Outside</div>
-        }
-        else
-        {
-            <div class="location-tag inside">Inside</div>
-        }
+        <div class="@BuildTagClasses()">
+            @if (Location.IsOutside == true)
+            {
+                <span><i class="bi bi-sun me-1"></i> Outside</span>
+            }
+            else
+            {
+                <span><i class="bi bi-house-door me-1"></i> Inside</span>
+            }
+        </div>
     </div>
 
+    <!-- PHOTO -->
     @if (!string.IsNullOrWhiteSpace(Location.Photo))
     {
-        <img class="location-photo"
-             src="@($"data:image/jpeg;base64,{Location.Photo}")" />
+        <img class="location-photo mt-2"
+             src="@($"data:image/jpeg;base64,{Location.Photo}")"
+             alt="Location photo" />
     }
 
-    <div class="location-details">
-        <div class="location-lighting">@Location.Lighting</div>
-        <div class="location-count">@PlantCount plant(s)</div>
+    <!-- DETAILS -->
+    <div class="location-details mt-2">
+        <div class="location-lighting text-muted">@Location.Lighting</div>
+        <div class="location-count text-muted">
+            @PlantCount @PlantLabel
+        </div>
+
+        @if (ChildContent != null)
+        {
+            <div class="location-extra mt-2">
+                @ChildContent
+            </div>
+        }
     </div>
+
 </div>
 
 @code {
-    [Parameter] public LocationModel Location { get; set; }
+    [Parameter] public LocationModel Location { get; set; } = default!;
     [Parameter] public int PlantCount { get; set; }
+
     [Parameter] public EventCallback<int> OnSelect { get; set; }
 
-    Task HandleClick() => OnSelect.InvokeAsync(Location.LocationId);
+    // NEW — standardized component features
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public bool Selected { get; set; } = false;
+    [Parameter] public bool PreventDefault { get; set; } = false;
+
+    [Parameter] public string CssClass { get; set; } = "";
+    [Parameter] public string SelectedClass { get; set; } = "selected";
+    [Parameter] public string HoverClass { get; set; } = "tile-hover";
+
+    [Parameter] public string Size { get; set; } = "md"; // sm, md, lg
+    [Parameter] public bool Rounded { get; set; } = true;
+    [Parameter] public bool Padding { get; set; } = true;
+
+    [Parameter] public string? Tooltip { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string PlantLabel => PlantCount == 1 ? "plant" : "plants";
+
+    private async Task HandleClick()
+    {
+        if (!Disabled)
+            await OnSelect.InvokeAsync(Location.LocationId);
+    }
+
+    private string BuildClasses()
+    {
+        var sizeClass = Size switch
+        {
+            "sm" => "tile-sm",
+            "lg" => "tile-lg",
+            _ => "tile-md"
+        };
+
+        var roundedClass = Rounded ? "tile-rounded" : "";
+        var paddingClass = Padding ? "p-3" : "p-0";
+        var selectedClass = Selected ? SelectedClass : "";
+        var disabledClass = Disabled ? "tile-disabled" : "";
+
+        return $"location-tile {sizeClass} {roundedClass} {paddingClass} {HoverClass} {selectedClass} {disabledClass} {CssClass}".Trim();
+    }
+
+    private string BuildTagClasses()
+    {
+        var baseClass = "location-tag";
+        var typeClass = Location.IsOutside == true ? "outside" : "inside";
+        return $"{baseClass} {typeClass}";
+    }
 }

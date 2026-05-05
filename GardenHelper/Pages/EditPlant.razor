@@ -1,4 +1,5 @@
-﻿@page "/plants/edit/{id:int}"
+﻿@page "/plants/edit/{Id:int}"
+
 @inject PlantService PlantService
 @inject LocationService LocationService
 @inject PlantInformationService PlantInfoService
@@ -6,92 +7,103 @@
 @inject UserSessionService Session
 @inject IJSRuntime JS
 
+<PageHeader Title="Edit Plant" />
 
-<h3>Edit Plant</h3>
+<div class="page-section">
 
-@if (plant == null || locations == null || plantInfoList == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <PlantForm Plant="plant"
-               Locations="locations"
-               PlantInfoList="plantInfoList"
-               SubmitLabel="Save"
-               OnSubmitCallback="HandleSubmit"
-               OnCancelCallback="GoBack"
-               OnDeleteCallback="DeletePlant"
-               ShowDelete="true"
-               IsDisabled="isDeleted" />
+    @if (Plant == null || Locations == null || PlantInfoList == null)
+    {
+        <LoadingSpinner Message="Loading plant..." />
+    }
+    else if (IsDeleted)
+    {
+        <LoadingSpinner Message="Deleting..." />
+    }
+    else
+    {
+        <PlantForm Plant="Plant"
+                   Locations="Locations"
+                   PlantInfoList="PlantInfoList"
+                   SubmitLabel="Save"
+                   OnSubmitCallback="HandleSubmitAsync"
+                   OnCancelCallback="GoBack"
+                   OnDeleteCallback="DeletePlantAsync"
+                   ShowDelete="true"
+                   IsDisabled="IsDeleted" />
+    }
 
-}
+</div>
 
 @code {
-    [Parameter] public int id { get; set; }
+    [Parameter] public int Id { get; set; }
 
-    string? returnUrl;
+    private PlantModel? Plant;
+    private List<LocationModel>? Locations;
+    private List<PlantInformationModel>? PlantInfoList;
 
-
-    PlantModel? plant;
-    List<LocationModel>? locations;
-    List<PlantInformationModel>? plantInfoList;
+    private string? ReturnUrl;
+    private bool IsDeleted = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // Load dropdown data
-        locations = await LocationService.GetAll();
-        plantInfoList = await PlantInfoService.GetAll();
+        // Load plant
+        Plant = await PlantService.GetAsync(Id);
 
-        // Load the plant being edited
-        plant = await PlantService.GetPlant(id);
+        if (Plant == null)
+        {
+            Nav.NavigateTo("/not-found");
+            return;
+        }
 
-        // Optional: ensure "Undecided" (LocationId = 1) appears first
-        locations = locations.OrderBy(l => l.LocationId != 1).ToList();
+        // Load locations for the plant's garden
+        Locations = await LocationService.GetByGardenAsync(Plant.GardenId);
 
+        // Load plant info list
+        PlantInfoList = await PlantInfoService.GetAllAsync();
+
+        // Parse returnUrl
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
         if (query.TryGetValue("returnUrl", out var url))
-            returnUrl = url!;
-
+            ReturnUrl = url!;
     }
 
-    async Task HandleSubmit()
+    private async Task HandleSubmitAsync()
     {
-        await PlantService.Update(plant);
+        await PlantService.UpdateAsync(Plant!);
 
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
             Nav.NavigateTo("/plants");
     }
 
-    void GoBack()
+    private void GoBack()
     {
-        if (!string.IsNullOrWhiteSpace(returnUrl))
-            Nav.NavigateTo(returnUrl!);
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl);
         else
             Nav.NavigateTo("/plants");
     }
 
-    bool isDeleted = false;
-
-    async Task DeletePlant()
+    private async Task DeletePlantAsync()
     {
-        var confirmed = await JS.InvokeAsync<bool>("confirm",
-            $"Are you sure you want to delete '{plant?.Name}'?");
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"Are you sure you want to delete '{Plant?.Name}'?"
+        );
 
         if (!confirmed)
             return;
 
-        await PlantService.Delete(id);
-        await Session.TriggerChange();
+        await PlantService.DeleteAsync(Id);
 
-        isDeleted = true;
+        // Refresh session (NavMenu, etc.)
+        await Session.InitializeAsync();
 
-        Nav.NavigateTo($"/location-profile/{plant.LocationId}", forceLoad: true);
+        IsDeleted = true;
+
+        Nav.NavigateTo($"/location-profile/{Plant!.LocationId}", forceLoad: true);
     }
-
-
 }
