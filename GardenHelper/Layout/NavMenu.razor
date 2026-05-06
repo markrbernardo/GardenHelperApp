@@ -62,8 +62,8 @@
             else
             {
                 <!-- Multiple gardens: show dropdown -->
-                <div class="nav-section px-3 mt-3">
-                    <span class="nav-header">Garden</span>
+                <div class="nav-section px-3 mt-2 mb-3">
+                    <span class="nav-header text-decoration-underline">Garden Related</span>
                 </div>
 
                 <div class="px-3">
@@ -72,7 +72,7 @@
                             style="background-color: #fff;">
                         @foreach (var g in gardens.OrderBy(g => g.Name))
                         {
-                            <option value="@g.GardenId"
+                            <option class="text-center" value="@g.GardenId"
                                     selected="@(SelectedGardenId == g.GardenId)">
                                 @g.Name
                             </option>
@@ -105,7 +105,7 @@
                             .Where(l => l.GardenId == SelectedGardenId)
                             .OrderBy(l => l.Name))
                         {
-                            <div class="nav-item px-3">
+                            <div class="nav-item m-auto">
                                 <a class="nav-link" href="/location-profile/@loc.LocationId">@loc.Name</a>
                             </div>
                         }
@@ -113,12 +113,25 @@
                 }
             }
 
+            <!-- ----------------------------- -->
+            <!-- STATIC: JOURNAL               -->
+            <!-- ----------------------------- -->
+            <div class="nav-item px-3">
+                <a class="nav-link" href="/journalentries">
+                    <i class="bi bi-journal-text mb-4 me-2"></i>
+                    Journal Entries
+                </a>
+            </div>
+
             <hr class="nav-divider" />
             
+            <div class="nav-section px-3 mt-2 mb-1">
+                <span class="nav-header text-decoration-underline">Plant Related</span>
+            </div>
             <!-- ----------------------------- -->
             <!-- STATIC: PLANTS                -->
             <!-- ----------------------------- -->
-            <div class="nav-item px-3 pt-4">
+            <div class="nav-item px-3">
                 <a class="nav-link" href="/plants">
                     <i class="bi bi-list-ul mb-4 me-2"></i>
                     Plant Inventory
@@ -134,18 +147,6 @@
                     Observations
                 </a>
             </div>
-
-            <!-- ----------------------------- -->
-            <!-- STATIC: JOURNAL               -->
-            <!-- ----------------------------- -->
-            <div class="nav-item px-3">
-                <a class="nav-link" href="/journalentries">
-                    <i class="bi bi-journal-text mb-4 me-2"></i>
-                    Journal Entries
-                </a>
-            </div>
-
-            <hr class="nav-divider" />
 
             <!-- ----------------------------- -->
             <!-- STATIC: PLANT INFORMATION     -->

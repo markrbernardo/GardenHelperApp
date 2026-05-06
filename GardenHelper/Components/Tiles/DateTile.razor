@@ -3,6 +3,7 @@
      @onclick:preventDefault="PreventDefault"
      title="@Tooltip">
 
+    <!-- DATE -->
     <div class="date-main d-flex align-items-center">
         @if (!string.IsNullOrEmpty(Icon))
         {
@@ -12,22 +13,44 @@
         @Date.ToString(Format)
     </div>
 
-    <div class="date-sub text-muted">
+    <!-- COUNTS WITH ICONS -->
+    <div class="date-sub text-muted d-flex align-items-center mt-2">
+
         @if (ChildContent != null)
         {
             @ChildContent
         }
         else
         {
-            @Count @PluralizedLabel
+            <!-- PRIMARY COUNT (entries) -->
+            <span class="d-flex align-items-center">
+                <i class="bi bi-journal-text me-1"></i>
+                @Count @PluralizedLabel
+            </span>
+
+            <!-- SECONDARY COUNT (observations) -->
+            @if (SecondaryCount > 0)
+            {
+                <span class="d-flex align-items-center ms-3">
+                    <i class="bi bi-eye me-1"></i>
+                    @SecondaryCount @SecondaryPluralizedLabel
+                </span>
+            }
         }
     </div>
 </div>
 
 @code {
     [Parameter] public DateTime Date { get; set; }
+
+    // PRIMARY COUNT (entries)
     [Parameter] public int Count { get; set; }
-    [Parameter] public string Label { get; set; } = "item";
+    [Parameter] public string Label { get; set; } = "entry";
+
+    // SECONDARY COUNT (observations)
+    [Parameter] public int SecondaryCount { get; set; } = 0;
+    [Parameter] public string SecondaryLabel { get; set; } = "observation";
+
     [Parameter] public bool Selected { get; set; }
     [Parameter] public bool Disabled { get; set; } = false;
 
@@ -48,8 +71,10 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private string PluralizedLabel =>
-        Count == 1 ? $" {Label}" : $" {Label}s";
+        Count == 1 ? Label : $"{Label}s";
 
+    private string SecondaryPluralizedLabel =>
+        SecondaryCount == 1 ? SecondaryLabel : $"{SecondaryLabel}s";
 
     private async Task HandleClick()
     {

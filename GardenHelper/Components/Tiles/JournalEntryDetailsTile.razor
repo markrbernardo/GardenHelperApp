@@ -26,15 +26,15 @@
                 <div class="journal-header d-flex justify-content-between align-items-start">
 
                     <div class="journal-meta">
-                        
 
-                        @* ⭐ NEW — Journal Title *@
                         @if (!string.IsNullOrWhiteSpace(j.Title))
                         {
                             <div class="journal-title mt-1">@j.Title</div>
                         }
-                        <div class="journal-date">@FormatDate(j.CreatedAt)</div>
-                        <div class="journal-garden text-muted">@GetGardenName(j.GardenId)</div>
+
+                        <PillTag Text="@GetGardenName(j.GardenId)" Color="default" CssClass="me-auto" />
+                        <div class="journal-date ms-1">@FormatDate(j.CreatedAt)</div>
+
                     </div>
 
                     @if (!Disabled)
@@ -54,9 +54,61 @@
                     }
                     else
                     {
-                        <p>@j.Entry</p>
+                        <p class="ms-1">@j.Entry</p>
+                        <div class="d-flex justify-content-end">
+                            <span class="">@j.CreatedAt.ToLocalTime().ToString("hh:mm tt")</span>
+                        </div>
                     }
                 </div>
+
+                <!-- SAME-DAY OBSERVATIONS -->
+                @{
+                    var sameDay = ObservationsForDate(j.CreatedAt);
+                }
+
+                @if (sameDay.Count > 0)
+                {
+                    <div class="mt-3 p-2 border-top">
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4 class="m-0">Observations From Today...</h4>
+                        </div>
+
+                        @foreach (var o in sameDay)
+                        {
+                            <div class="observation-mini-tile mb-2 p-2 tile-hover tile-rounded card"
+                                 @onclick="() => OpenObservation(o.ObservationId)">
+
+
+
+                                <!-- PLANT NAME + COMMON + SCIENTIFIC -->
+                                <div class="mt-2 d-flex justify-content-between">
+                                    <div class="d-flex gap-1">
+                                        <h5 class="fw-bold">@GetPlantName(o.PlantId)</h5>
+                                        <div class="text-muted small">| @GetCommonName(o.PlantId) |</div>
+                                        <div class="fst-italic text-muted small">@GetScientificName(o.PlantId)</div>
+                                    </div>
+                                    <div class="">
+                                        <span class="badge @(o.ActiveObservation ? "bg-success" : "bg-secondary")">
+                                            @(o.ActiveObservation ? "Active" : "Inactive")
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- OBSERVATION TEXT -->
+                                <p class="ms-1 mt-1 fw-light">@o.Observation</p>
+
+                                <div class="d-flex justify-content-end mt-4">
+                                    <span class="text-muted small">
+                                        @o.CreatedAt.ToLocalTime().ToString("hh:mm tt")
+                                    </span>
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+                }
 
             </div>
         }
@@ -67,7 +119,11 @@
 @code {
     [Parameter] public DateTime? SelectedDate { get; set; }
     [Parameter] public List<JournalEntryModel> Entries { get; set; } = new();
+    [Parameter] public List<ObservationModel> Observations { get; set; } = new();
     [Parameter] public List<GardenModel> Gardens { get; set; } = new();
+
+    // FIXED: Use PlantWithInfoDto instead of PlantModel
+    [Parameter] public List<PlantWithInfoDto> Plants { get; set; } = new();
 
     [Parameter] public EventCallback<int> OnEdit { get; set; }
 
@@ -84,17 +140,21 @@
 
     [Parameter] public RenderFragment<JournalEntryModel>? ChildContent { get; set; }
 
-    List<JournalEntryModel> EntriesForDate =>
-        Entries
-            .Where(j => j.CreatedAt.Date == SelectedDate)
-            .OrderByDescending(j => j.CreatedAt)
-            .ToList();
+    [Inject] NavigationManager Nav { get; set; }
+
+    void OpenObservation(int id)
+    {
+        Nav.NavigateTo($"/observations?obsId={id}");
+    }
 
     string GetGardenName(int gardenId) =>
         Gardens?.FirstOrDefault(g => g.GardenId == gardenId)?.Name ?? "Unknown Garden";
 
     string FormatDate(DateTime dt) =>
-        dt.ToString("dddd, MMM dd • hh:mm tt");
+        dt.ToString("dddd, MMM dd");
+
+    string FormatTime(DateTime dt) =>
+        dt.ToString("hh:mm tt");
 
     private string BuildContainerClasses()
     {
@@ -116,4 +176,29 @@
 
         return $"{CardClass} {roundedClass} {paddingClass} {disabledClass}".Trim();
     }
+
+    // FIXED: Use PlantWithInfoDto fields directly
+    string GetPlantName(int plantId) =>
+        Plants?.FirstOrDefault(p => p.PlantId == plantId)?.Name ?? "Unknown Plant";
+
+    string GetCommonName(int plantId) =>
+        Plants?.FirstOrDefault(p => p.PlantId == plantId)?.CommonName ?? "Unknown";
+
+    string GetScientificName(int plantId) =>
+        Plants?.FirstOrDefault(p => p.PlantId == plantId)?.ScientificName ?? "Unknown";
+
+    List<JournalEntryModel> EntriesForDate =>
+        Entries
+            .Where(j => SelectedDate.HasValue &&
+                        DateOnly.FromDateTime(j.CreatedAt) ==
+                        DateOnly.FromDateTime(SelectedDate.Value))
+            .OrderByDescending(j => j.CreatedAt)
+            .ToList();
+
+    List<ObservationModel> ObservationsForDate(DateTime date) =>
+        Observations
+            .Where(o => DateOnly.FromDateTime(o.CreatedAt) ==
+                        DateOnly.FromDateTime(date))
+            .OrderByDescending(o => o.CreatedAt)
+            .ToList();
 }

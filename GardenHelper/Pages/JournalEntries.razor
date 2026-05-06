@@ -4,15 +4,24 @@
 
 @inject JournalEntryService JournalEntryService
 @inject GardenService GardenService
+@inject PlantService PlantService
+@inject PlantInformationService PlantInformationService
+@inject ObservationService ObservationService
 @inject UserSessionService Session
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<PageHeader Title="Journal"  Divider="false"/>
+<PageHeader Title="Journal" Divider="false">
+    <Actions>
+        <button class="btn btn-primary" @onclick="CreateEntry">
+            <i class="bi bi-plus-lg"></i> Create New Journal Entry
+        </button>
+    </Actions>
+</PageHeader>
 
 <div class="page-section">
 
-    @if (Entries == null || GardenList == null)
+    @if (Entries == null || GardenList == null || Observations == null || PlantList == null || PlantInfoList == null)
     {
         <LoadingSpinner Message="Loading journal entries..." />
     }
@@ -28,8 +37,10 @@
                 <option value="">Select a date...</option>
                 @foreach (var group in GroupedEntries)
                 {
+                    var obsCount = ObservationCounts.TryGetValue(group.Key, out var c) ? c : 0;
+
                     <option value="@group.Key.ToString("yyyy-MM-dd")">
-                        @group.Key.ToString("MMM dd, yyyy") (@group.Count())
+                        @group.Key.ToString("MMM dd, yyyy") (@group.Count() entries, @obsCount observations)
                     </option>
                 }
             </select>
@@ -39,7 +50,9 @@
         <div class="d-md-none mt-3">
             <JournalEntryDetailsTile SelectedDate="SelectedDate"
                                      Entries="FilteredEntries"
+                                     Observations="Observations"
                                      Gardens="GardenList"
+                                     Plants="PlantList"
                                      OnEdit="EditEntry" />
         </div>
 
@@ -51,9 +64,13 @@
 
                         @foreach (var group in GroupedEntries)
                         {
+                            var obsCount = ObservationCounts.TryGetValue(group.Key, out var c) ? c : 0;
+
                             <DateTile Date="group.Key"
                                       Count="group.Count()"
+                                      SecondaryCount="@obsCount"
                                       Label="entry"
+                                      SecondaryLabel="observation"
                                       Selected="(SelectedDate == group.Key)"
                                       OnSelect="SelectDate" />
                         }
@@ -64,7 +81,9 @@
                     <ScrollColumn CssClass="pt-0">
                         <JournalEntryDetailsTile SelectedDate="SelectedDate"
                                                  Entries="FilteredEntries"
+                                                 Observations="Observations"
                                                  Gardens="GardenList"
+                                                 Plants="PlantList"
                                                  OnEdit="EditEntry" />
                     </ScrollColumn>
                 </Right>
@@ -77,6 +96,12 @@
 @code {
     private List<JournalEntryModel>? Entries;
     private List<GardenModel>? GardenList;
+    private List<ObservationModel>? Observations;
+
+    private List<PlantWithInfoDto>? PlantList;
+    private List<PlantInformationModel>? PlantInfoList;
+
+    private Dictionary<DateTime, int> ObservationCounts = new();
 
     private List<IGrouping<DateTime, JournalEntryModel>> GroupedEntries = new();
     private List<JournalEntryModel> FilteredEntries = new();
@@ -90,11 +115,21 @@
 
         Entries = await JournalEntryService.GetByUserAsync(Session.CurrentUserId.Value);
         GardenList = await GardenService.GetByUserAsync(Session.CurrentUserId.Value);
+        Observations = await ObservationService.GetByUserAsync(Session.CurrentUserId.Value);
 
+        PlantList = await PlantService.GetAllAsync();
+        PlantInfoList = await PlantInformationService.GetAllAsync();
+
+        // Group entries by date
         GroupedEntries = Entries
             .GroupBy(e => e.CreatedAt.Date)
             .OrderByDescending(g => g.Key)
             .ToList();
+
+        // Group observations by date
+        ObservationCounts = Observations
+            .GroupBy(o => o.CreatedAt.Date)
+            .ToDictionary(g => g.Key, g => g.Count());
 
         // Pre-select based on ?entryId=
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
@@ -145,6 +180,11 @@
     private void EditEntry(int id)
     {
         Nav.NavigateTo($"/journalentries/edit/{id}?returnUrl=/journalentries");
+    }
+
+    private void CreateEntry()
+    {
+        Nav.NavigateTo("/journalentries/create");
     }
 
     private async Task DeleteEntryAsync(int id)
